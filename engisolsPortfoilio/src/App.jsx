@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import SeoMeta from './components/SeoMeta'
 import Footer from './components/layout/Footer'
 import Navbar from './components/layout/Navbar'
@@ -8,46 +8,51 @@ import ContactSection from './components/sections/ContactSection'
 import HeroSection from './components/sections/HeroSection'
 import ReviewsSection from './components/sections/ReviewsSection'
 import ServicesSection from './components/sections/ServicesSection'
-import TeamSection from './components/sections/TeamSection'
 import { useScrollReveal } from './hooks/useScrollReveal'
 
 function App() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [progress, setProgress] = useState(0)
+  const progressRef = useRef(null)
 
   useScrollReveal()
 
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.scrollY
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight
-      const ratio = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0
+    let ticking = false
 
-      setProgress(Math.min(Math.max(ratio, 0), 100))
-      setScrolled(scrollTop > 30)
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        const scrollTop = window.scrollY
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight
+        const ratio = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0
+
+        if (progressRef.current) {
+          progressRef.current.style.transform = `scaleX(${Math.min(Math.max(ratio, 0), 100) / 100})`
+        }
+        setScrolled(scrollTop > 30)
+        ticking = false
+      })
     }
 
-    handleScroll()
-    window.addEventListener('scroll', handleScroll)
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const handleToggleMenu = () => {
-    setMobileOpen((previous) => !previous)
-  }
+  const handleToggleMenu = useCallback(() => {
+    setMobileOpen(prev => !prev)
+  }, [])
 
-  const handleNavigate = () => {
+  const handleNavigate = useCallback(() => {
     setMobileOpen(false)
-  }
+  }, [])
 
   return (
     <>
       <SeoMeta />
-      <div id="scroll-progress" style={{ width: `${progress}%` }} />
+      <div id="scroll-progress" ref={progressRef} />
       <div id="cursor-spotlight" />
 
       <Navbar
@@ -62,7 +67,6 @@ function App() {
         <ClientsStrip />
         <AboutSection />
         <ServicesSection />
-        {/* <TeamSection /> */}
         <ReviewsSection />
         <ContactSection />
       </main>

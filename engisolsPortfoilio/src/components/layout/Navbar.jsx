@@ -4,7 +4,7 @@ export default function Navbar({ scrolled, mobileOpen, onToggle, onNavigate }) {
     return (
         <nav id="navbar" className={scrolled ? 'scrolled' : ''}>
             <a href="#home" className="nav-logo" onClick={onNavigate} aria-label="ENGISOLS home">
-                <img src="/engisols-logo-nav.svg" alt="ENGISOLS" />
+                <img src="/engisols-logo-nav.svg" alt="ENGISOLS" width="120" height="28" />
             </a>
 
             <ul className={`nav-links ${mobileOpen ? 'open' : ''}`} id="navLinks">

@@ -98,7 +98,7 @@ export function useScrollReveal() {
       spotlight.style.left = e.clientX + 'px'
       spotlight.style.top = e.clientY + 'px'
     }
-    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mousemove', handleMouseMove, { passive: true })
     teardownFns.push(() => document.removeEventListener('mousemove', handleMouseMove))
 
     /* ─── PARTICLES (upward floating with lifecycle fade) ─── */
@@ -128,12 +128,12 @@ export function useScrollReveal() {
         reset() {
           this.x = Math.random() * W
           this.y = Math.random() * H
-          this.r = Math.random() * 1.5 + 0.4
-          this.vx = (Math.random() - 0.5) * 0.35
-          this.vy = -(Math.random() * 0.5 + 0.1)
-          this.alpha = Math.random() * 0.5 + 0.15
+          this.r = Math.random() * 2.5 + 0.8
+          this.vx = (Math.random() - 0.5) * 0.45
+          this.vy = -(Math.random() * 0.6 + 0.15)
+          this.alpha = Math.random() * 0.6 + 0.3
           this.life = 0
-          this.maxLife = Math.random() * 300 + 200
+          this.maxLife = Math.random() * 350 + 200
         }
         update() {
           this.x += this.vx
@@ -155,7 +155,7 @@ export function useScrollReveal() {
         }
       }
 
-      const particles = Array.from({ length: 70 }, () => {
+      const particles = Array.from({ length: 150 }, () => {
         const p = new Particle()
         p.life = Math.floor(Math.random() * p.maxLife)
         return p
@@ -174,7 +174,7 @@ export function useScrollReveal() {
 
     /* ─── 3D TILT CARDS ─── */
     document
-      .querySelectorAll('.team-card, .pricing-card, .review-card')
+      .querySelectorAll('.team-card')
       .forEach((card) => {
         const onMove = (e) => {
           const r = card.getBoundingClientRect()
@@ -185,7 +185,7 @@ export function useScrollReveal() {
         const onLeave = () => {
           card.style.transform = ''
         }
-        card.addEventListener('mousemove', onMove)
+        card.addEventListener('mousemove', onMove, { passive: true })
         card.addEventListener('mouseleave', onLeave)
         teardownFns.push(() => {
           card.removeEventListener('mousemove', onMove)
@@ -205,7 +205,7 @@ export function useScrollReveal() {
       const onLeave = () => {
         formCard.style.transform = ''
       }
-      formCard.addEventListener('mousemove', onMove)
+      formCard.addEventListener('mousemove', onMove, { passive: true })
       formCard.addEventListener('mouseleave', onLeave)
       teardownFns.push(() => {
         formCard.removeEventListener('mousemove', onMove)
@@ -224,7 +224,7 @@ export function useScrollReveal() {
       const onLeave = () => {
         btn.style.transform = ''
       }
-      btn.addEventListener('mousemove', onMove)
+      btn.addEventListener('mousemove', onMove, { passive: true })
       btn.addEventListener('mouseleave', onLeave)
       teardownFns.push(() => {
         btn.removeEventListener('mousemove', onMove)

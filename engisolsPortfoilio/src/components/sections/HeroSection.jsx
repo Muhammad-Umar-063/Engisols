@@ -1,84 +1,174 @@
-import { useMemo, useState } from 'react'
-import { sendHeroEmail } from '../../lib/emailjsClient'
+import { Canvas, extend, useFrame, useThree } from '@react-three/fiber'
+import { useAspect, useTexture } from '@react-three/drei'
+import { useMemo, useRef, useState, useEffect } from 'react'
+import * as THREE from 'three/webgpu'
+import { bloom } from 'three/examples/jsm/tsl/display/BloomNode.js'
+import {
+  abs,
+  blendScreen,
+  float,
+  mod,
+  mx_cell_noise_float,
+  oneMinus,
+  smoothstep,
+  texture,
+  uniform,
+  uv,
+  vec2,
+  vec3,
+  pass,
+  mix,
+  add,
+} from 'three/tsl'
 
-const emptyValues = {
-  firstName: '',
-  lastName: '',
-  phone: '',
-  email: '',
-  projectType: '',
+const TEXTUREMAP = { src: 'https://i.postimg.cc/XYwvXN8D/img-4.png' }
+const DEPTHMAP   = { src: 'https://i.postimg.cc/2SHKQh2q/raw-4.webp' }
+
+// Register all THREE classes (including WebGPU-specific ones) with R3F's reconciler
+extend(THREE)
+
+/* ─── POST-PROCESSING ─── */
+const PostProcessing = ({ strength = 1, threshold = 1, fullScreenEffect = true }) => {
+  const { gl, scene, camera } = useThree()
+  const progressRef = useRef({ value: 0 })
+
+  const render = useMemo(() => {
+    const postProcessing = new THREE.PostProcessing(gl)
+    const scenePass      = pass(scene, camera)
+    const scenePassColor = scenePass.getTextureNode('output')
+    const bloomPass      = bloom(scenePassColor, strength, 0.5, threshold)
+
+    const uScanProgress = uniform(0)
+    progressRef.current = uScanProgress
+
+    const uvY      = uv().y
+    const scanLine = smoothstep(0, float(0.05), abs(uvY.sub(float(uScanProgress.value))))
+    const redOverlay = vec3(1, 0, 0).mul(oneMinus(scanLine)).mul(0.4)
+
+    const withScanEffect = mix(
+      scenePassColor,
+      add(scenePassColor, redOverlay),
+      fullScreenEffect ? smoothstep(0.9, 1.0, oneMinus(scanLine)) : 1.0,
+    )
+
+    postProcessing.outputNode = withScanEffect.add(bloomPass)
+    return postProcessing
+  }, [camera, gl, scene, strength, threshold, fullScreenEffect])
+
+  useFrame(({ clock }) => {
+    progressRef.current.value = Math.sin(clock.getElapsedTime() * 0.5) * 0.5 + 0.5
+    render.renderAsync()
+  }, 1)
+
+  return null
 }
 
-export default function HeroSection() {
-  const [values, setValues] = useState(emptyValues)
-  const [status, setStatus] = useState('idle')
-  const [feedback, setFeedback] = useState('')
+/* ─── 3-D SCENE ─── */
+const WIDTH  = 300
+const HEIGHT = 300
 
-  const isSubmitting = status === 'submitting'
+const Scene = () => {
+  const [rawMap, depthMap] = useTexture([TEXTUREMAP.src, DEPTHMAP.src])
+  const meshRef  = useRef(null)
+  const [visible, setVisible] = useState(false)
 
-  const buttonText = useMemo(() => {
-    if (isSubmitting) return 'Sending...'
-    if (status === 'success') return 'Request Sent ✓'
-    return 'Book Your Free Call →'
-  }, [isSubmitting, status])
+  useEffect(() => {
+    if (rawMap && depthMap) setVisible(true)
+  }, [rawMap, depthMap])
 
-  const updateField = (e) => {
-    const { name, value } = e.target
-    setValues((prev) => ({ ...prev, [name]: value }))
-  }
+  const { material, uniforms } = useMemo(() => {
+    const uPointer  = uniform(new THREE.Vector2(0))
+    const uProgress = uniform(0)
+    const strength  = 0.01
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setStatus('submitting')
-    setFeedback('')
+    const tDepthMap = texture(depthMap)
+    const tMap      = texture(rawMap, uv().add(tDepthMap.r.mul(uPointer).mul(strength)))
 
-    try {
-      await sendHeroEmail(values)
-      setStatus('success')
-      setFeedback("We'll be in touch within 24 hours.")
-      setValues(emptyValues)
+    const aspect   = float(WIDTH).div(HEIGHT)
+    const tUv      = vec2(uv().x.mul(aspect), uv().y)
+    const tiling   = vec2(120.0)
+    const tiledUv  = mod(tUv.mul(tiling), 2.0).sub(1.0)
+    const brightness = mx_cell_noise_float(tUv.mul(tiling).div(2))
+    const dist     = float(tiledUv.length())
+    const dot      = float(smoothstep(0.5, 0.49, dist)).mul(brightness)
+    const flow     = oneMinus(smoothstep(0, 0.02, abs(tDepthMap.sub(uProgress))))
+    const mask     = dot.mul(flow).mul(vec3(10, 0, 0))
+    const final    = blendScreen(tMap, mask)
 
-      const toast = document.getElementById('toast')
-      if (toast) {
-        toast.classList.add('show')
-        window.setTimeout(() => toast.classList.remove('show'), 4000)
-      }
+    const mat = new THREE.MeshBasicNodeMaterial({
+      colorNode: final,
+      transparent: true,
+      opacity: 0,
+    })
 
-      window.setTimeout(() => setStatus('idle'), 3000)
-    } catch (err) {
-      setStatus('error')
-      setFeedback(err?.message || 'Could not send. Please try again.')
+    return { material: mat, uniforms: { uPointer, uProgress } }
+  }, [rawMap, depthMap])
+
+  const [w, h] = useAspect(WIDTH, HEIGHT)
+
+  useFrame(({ clock }) => {
+    uniforms.uProgress.value = Math.sin(clock.getElapsedTime() * 0.5) * 0.5 + 0.5
+    const mat = meshRef.current?.material
+    if (mat && 'opacity' in mat) {
+      mat.opacity = THREE.MathUtils.lerp(mat.opacity, visible ? 1 : 0, 0.07)
     }
-  }
+  })
+
+  useFrame(({ pointer }) => {
+    uniforms.uPointer.value = pointer
+  })
+
+  return (
+    <mesh ref={meshRef} scale={[w * 0.4, h * 0.4, 1]} material={material}>
+      <planeGeometry />
+    </mesh>
+  )
+}
+
+/* ─── TITLE WORDS ─── */
+const TITLE_WORDS = ['We', 'Engineer', "What's", 'Next.']
+
+/* ─── HERO SECTION ─── */
+export default function HeroSection() {
+  const [visibleWords, setVisibleWords]   = useState(0)
+  const [subtitleVisible, setSubtitleVisible] = useState(false)
+
+  useEffect(() => {
+    if (visibleWords < TITLE_WORDS.length) {
+      const t = setTimeout(() => setVisibleWords((v) => v + 1), 580)
+      return () => clearTimeout(t)
+    }
+    const t = setTimeout(() => setSubtitleVisible(true), 700)
+    return () => clearTimeout(t)
+  }, [visibleWords])
 
   return (
     <section id="home">
-      <div className="hero-bg" />
-      <div className="hero-grid-lines" />
       <canvas id="hero-particles" />
-      <div className="hero-orb hero-orb-1" />
-      <div className="hero-orb hero-orb-2" />
 
-      <div className="hero-content">
+      {/* ── Overlay: badge · title · subtitle · stats · CTA ── */}
+      <div className="hero-futuristic-overlay">
         <div className="hero-badge hero-animate" style={{ '--d': '0.1s' }}>
           Available for New Projects
         </div>
 
-        <h1 className="hero-title hero-animate" style={{ '--d': '0.25s' }}>
-          We Don&apos;t Just
-          <br />
-          <span className="accent">Build Software.</span>
-          <br />
-          We Engineer
-          <br />What&apos;s Next.
+        <h1 className="hero-futuristic-title">
+          {TITLE_WORDS.map((word, i) => (
+            <span
+              key={i}
+              className={`hero-fword${visibleWords > i ? ' in' : ''}`}
+              style={{ transitionDelay: `${i * 0.08}s` }}
+            >
+              {word}
+            </span>
+          ))}
         </h1>
 
-        <p className="hero-desc hero-animate" style={{ '--d': '0.45s' }}>
-          ENGISOLS is a modern software development company built for a world that never slows down.
-          We design and engineer intelligent digital solutions that power growth and scale ideas.
+        <p className={`hero-futuristic-sub${subtitleVisible ? ' in' : ''}`}>
+          ENGISOLS — intelligent digital solutions for a world that never slows down.
         </p>
 
-        <div className="hero-stats hero-animate" style={{ '--d': '0.6s' }}>
+        <div className="hero-stats hero-animate" style={{ '--d': '1.9s' }}>
           <div>
             <div className="hero-stat-num">
               <span className="count-up" data-target="120" data-suffix="+">120+</span>
@@ -98,120 +188,37 @@ export default function HeroSection() {
             <div className="hero-stat-label">Industry Experience</div>
           </div>
         </div>
-      </div>
 
-      <div className="hero-form-card hero-animate" style={{ '--d': '0.15s' }}>
-        <div className="form-card-tag">Free Consultation</div>
-        <h2 className="form-card-title">
-          Schedule a Call
-          <br />
-          With Our Team
-        </h2>
-        <p className="form-card-sub">
-          Tell us about your project — we&apos;ll get back within 24 hours.
-        </p>
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-row">
-            <div className="form-group">
-              <label>First Name</label>
-              <input
-                type="text"
-                name="firstName"
-                placeholder="Muhammad"
-                value={values.firstName}
-                onChange={updateField}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                placeholder="Umar"
-                value={values.lastName}
-                onChange={updateField}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Contact / WhatsApp</label>
-            <input
-              type="tel"
-              name="phone"
-              placeholder="+92 300 0000000"
-              value={values.phone}
-              onChange={updateField}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Email Address</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="hello@company.com"
-              value={values.email}
-              onChange={updateField}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Project Type</label>
-            <select
-              name="projectType"
-              value={values.projectType}
-              onChange={updateField}
-              required
-            >
-              <option value="" disabled>Select a service...</option>
-              <option>Web Application Development</option>
-              <option>Mobile App Development</option>
-              <option>UI/UX Design</option>
-              <option>API &amp; Backend Engineering</option>
-              <option>Cloud &amp; DevOps</option>
-              <option>Custom Software</option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="btn-primary magnetic-btn"
-            disabled={isSubmitting}
-          >
-            {buttonText}
-          </button>
-
-          <div className="form-privacy">
+        <a href="#about" className="explore-btn">
+          Scroll to explore
+          <span className="explore-arrow">
             <svg
-              width="12"
-              height="12"
+              width="20"
+              height="20"
+              viewBox="0 0 22 22"
               fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
+              className="arrow-svg"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              />
+              <path d="M11 5V17" stroke="white" strokeWidth="2" strokeLinecap="round" />
+              <path d="M6 12L11 17L16 12" stroke="white" strokeWidth="2" strokeLinecap="round" />
             </svg>
-            Your info is 100% private &amp; never shared.
-          </div>
-
-          {feedback ? (
-            <p className={`form-feedback ${status === 'error' ? 'error' : 'success'}`}>
-              {feedback}
-            </p>
-          ) : null}
-        </form>
+          </span>
+        </a>
       </div>
+
+      {/* ── WebGPU Canvas ── */}
+      <Canvas
+        flat
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+        gl={async (props) => {
+          const renderer = new THREE.WebGPURenderer(props)
+          await renderer.init()
+          return renderer
+        }}
+      >
+        <PostProcessing fullScreenEffect />
+        <Scene />
+      </Canvas>
     </section>
   )
 }
