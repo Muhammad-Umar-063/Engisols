@@ -1,16 +1,53 @@
-# React + Vite
+# ENGISOLS Portfolio (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Modern ENGISOLS portfolio rebuilt in React with a structured component architecture, custom CSS styling, animated sections, SEO metadata, and EmailJS contact integration.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Multi-section portfolio structure (hero, clients, about, services, team, reviews, contact, footer)
+- Hero form fields aligned with Contact Us form fields
+- Pricing section removed
+- Custom CSS design system in `src/index.css`
+- SEO improvements using `react-helmet-async` + `vite-plugin-sitemap`
+- EmailJS integration wired with your IDs:
+	- `service_iyr2vci`
+	- `template_q76s32a`
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Install dependencies
 
-## Expanding the ESLint configuration
+```bash
+npm install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+2. Create `.env` from `.env.example` and set your EmailJS public key
+
+```bash
+cp .env.example .env
+```
+
+3. Start development server
+
+```bash
+npm run dev
+```
+
+## EmailJS Variables
+
+Required in `.env`:
+
+```env
+VITE_EMAILJS_SERVICE_ID=service_iyr2vci
+VITE_EMAILJS_TEMPLATE_ID=template_q76s32a
+VITE_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
+VITE_CONTACT_TO_EMAIL=hello@engisols.com
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+Build output includes sitemap and robots.txt generation via Vite plugin.
