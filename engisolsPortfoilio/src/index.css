@@ -180,6 +180,73 @@ nav.scrolled {
   transition: all 0.3s;
 }
 
+@media (max-width: 1024px) {
+  nav {
+    padding: 0 4%;
+    height: 64px;
+  }
+
+  .nav-logo {
+    height: 38px;
+  }
+
+  .nav-logo svg,
+  .nav-logo img {
+    height: 32px;
+  }
+
+  .nav-links {
+    gap: 1.6rem;
+  }
+
+  .nav-links a {
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+  }
+
+  .nav-cta {
+    padding: 0.45rem 1.1rem;
+    font-size: 0.72rem !important;
+  }
+
+  .hero-futuristic-overlay {
+    max-width: 70%;
+    padding: 72px 4% 56px;
+  }
+
+  .hero-futuristic-title {
+    font-size: clamp(3.1rem, 6.2vw, 4.6rem);
+    line-height: 1.16;
+    margin-bottom: 1.4rem;
+  }
+
+  .hero-futuristic-sub {
+    font-size: 0.98rem;
+    max-width: 420px;
+    margin-bottom: 2rem;
+  }
+
+  .hero-badge {
+    padding: 0.3rem 1.4rem;
+    font-size: 0.68rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .hero-futuristic-overlay .hero-stats {
+    gap: 2.2rem;
+    padding-top: 1.2rem;
+  }
+
+  .hero-stat-num {
+    font-size: 1.6rem;
+  }
+
+  .hero-stat-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+  }
+}
+
 /* ─── HERO ─── */
 #home {
   height: 100svh;
@@ -684,7 +751,12 @@ nav.scrolled {
 
 /* ─── CLIENTS STRIP v2 (InfiniteSlider + ProgressiveBlur + Sparkles) ─── */
 .clients-strip-v2 {
-  border-top: 0.5px solid var(--border);
+  background: var(--chicago);
+}
+
+.clients-strip-container {
+  border: 0.5px solid var(--border);
+  border-radius: 24px;
   background: var(--surface);
   overflow: hidden;
   position: relative;
@@ -792,7 +864,7 @@ nav.scrolled {
 
 /* ─── SECTION BASE ─── */
 section {
-  padding: 100px 5%;
+  padding: 80px 5% 0;
 }
 
 .section-tag {
@@ -840,8 +912,14 @@ section {
 
 /* ─── ABOUT ─── */
 #about {
+  background: var(--chicago);
+}
+
+.about-container {
   background: var(--surface);
-  padding-top: 5rem;
+  border: 0.5px solid var(--border);
+  border-radius: 24px;
+  padding: 3.5rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4rem;
@@ -857,6 +935,60 @@ section {
   color: var(--text-muted);
   font-weight: 400;
   letter-spacing: 0.02em;
+}
+
+.about-mobile-nodes {
+  display: none;
+}
+
+.about-mobile-card {
+  background: var(--surface-elevated);
+  border: 0.5px solid rgba(221, 62, 94, 0.24);
+  border-radius: 12px;
+  padding: 0.85rem 0.9rem;
+}
+
+.about-mobile-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.45rem;
+}
+
+.about-mobile-card-icon {
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--crimson);
+  background: rgba(221, 62, 94, 0.15);
+  border: 1px solid rgba(221, 62, 94, 0.28);
+  flex-shrink: 0;
+}
+
+.about-mobile-card-title {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--text-primary);
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-weight: 700;
+}
+
+.about-mobile-card-date {
+  margin: 0.12rem 0 0;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.about-mobile-card-content {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
 }
 
 /* ─── ABOUT ORBITAL WRAP ─── */
@@ -1023,7 +1155,6 @@ section {
 /* ─── SERVICES ─── */
 #services {
   background: var(--chicago);
-  padding-bottom: 2rem;
 }
 
 .services-header {
@@ -1191,8 +1322,10 @@ section {
   overflow: hidden;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   flex-shrink: 0;
+  position: relative;
+  --orbit-scale: 0.75;
 }
 
 .orbit-system {
@@ -1200,7 +1333,8 @@ section {
   width: 40rem;
   height: 40rem;
   flex-shrink: 0;
-  transform: translateX(35%);
+  transform: scale(var(--orbit-scale));
+  transform-origin: center;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1587,7 +1721,15 @@ section {
 
 /* ─── CONTACT ─── */
 #contact {
+  background: var(--chicago);
+  padding-bottom: 48px;
+}
+
+.contact-container {
   background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 24px;
+  padding: 3.5rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6rem;
@@ -1803,7 +1945,7 @@ footer {
 
   .nav-links {
     position: fixed;
-    top: 72px;
+    top: 64px;
     left: 0;
     right: 0;
     background: rgba(10, 10, 10, 0.97);
@@ -1857,16 +1999,20 @@ footer {
     gap: 2rem;
   }
 
-  #about,
-  #contact {
+  .about-container,
+  .contact-container {
     grid-template-columns: 1fr;
     gap: 3rem;
   }
-  .about-visual {
-    display: none;
+
+  .about-container {
+    padding: 2.5rem 2rem;
   }
 
-  .about-orbital-wrap {
+  .contact-container {
+    padding: 2.5rem 2rem;
+  }
+  .about-visual {
     display: none;
   }
 
@@ -1878,17 +2024,23 @@ footer {
 
   .orbit-banner-left {
     width: 100%;
-    padding: 2.5rem 2rem 2rem;
+    padding: 2.5rem 2rem 0.7rem;
   }
 
   .orbit-banner-right {
     width: 100%;
-    height: 14rem;
+    height: 20rem;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    --orbit-scale: 0.56;
   }
 
   .orbit-system {
-    transform: translateY(30%);
+    transform: scale(var(--orbit-scale));
+    width: 40rem;
+    height: 40rem;
   }
 
   .services-header {
@@ -1926,6 +2078,46 @@ footer {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
+  }
+}
+
+@media (max-width: 767px) {
+  .about-orbital-wrap {
+    display: none;
+  }
+
+  .about-mobile-nodes {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+    margin-top: -0.4rem;
+  }
+}
+
+/* Tablet + Mobile: hide hint and place about text above cards */
+@media (max-width: 1024px) {
+  .about-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  /* Ensure the reading content appears above the node cards on tablet/mobile */
+  .about-text {
+    order: 1;
+  }
+  .about-mobile-nodes {
+    order: 2;
+  }
+  /* Keep orbital visible on tablet but place it after the cards */
+  .about-orbital-wrap {
+    order: 3;
+  }
+
+  /* Hide the hover hint on tablet and mobile */
+  .about-hint {
+    display: none;
   }
 }
 
@@ -2197,6 +2389,7 @@ footer {
     border-color 0.25s,
     background 0.25s;
   outline: none;
+  appearance: none;
   -webkit-appearance: none;
 }
 

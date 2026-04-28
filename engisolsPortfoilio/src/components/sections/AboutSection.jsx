@@ -74,29 +74,52 @@ export default function AboutSection() {
   return (
     <section id="about">
 
-      {/* ── Left: Orbital visualisation ── */}
-      <div className="about-orbital-wrap reveal" data-reveal>
-        <RadialOrbitalTimeline timelineData={aboutOrbitData} />
-      </div>
+      <div className="about-container">
+        {/* ── Left: Orbital visualisation ── */}
+        <div className="about-orbital-wrap reveal" data-reveal>
+          <RadialOrbitalTimeline timelineData={aboutOrbitData} />
+        </div>
 
-      {/* ── Right: Text content ── */}
-      <div className="about-text reveal" style={{ transitionDelay: '0.1s' }} data-reveal>
-        <div className="section-tag">About ENGISOLS</div>
-        <h2 className="section-title">
-          Engineering Solutions<br />
-          That <span className="accent">Scale With You</span>
-        </h2>
-        <p className="section-desc">
-          EngiSols is a modern software development company built for a world that never slows down.
-          We design and engineer intelligent digital solutions that power growth, scale ideas,
-          and solve real-world problems with precision.
-        </p>
+        {/* ── Mobile: compact cards for every value ── */}
+        <div className="about-mobile-nodes reveal" data-reveal>
+          {aboutOrbitData.map((item) => {
+            const Icon = item.icon
+            return (
+              <article key={item.id} className="about-mobile-card">
+                <div className="about-mobile-card-head">
+                  <span className="about-mobile-card-icon">
+                    <Icon size={14} />
+                  </span>
+                  <div>
+                    <h3 className="about-mobile-card-title">{item.title}</h3>
+                    <p className="about-mobile-card-date">{item.date}</p>
+                  </div>
+                </div>
+                <p className="about-mobile-card-content">{item.content}</p>
+              </article>
+            )
+          })}
+        </div>
 
-        <div className="about-hint">
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#dd3e5e" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
-          </svg>
-          Click any node to explore our core values
+        {/* ── Right: Text content ── */}
+        <div className="about-text reveal" style={{ transitionDelay: '0.1s' }} data-reveal>
+          <div className="section-tag">About ENGISOLS</div>
+          <h2 className="section-title">
+            Engineering Solutions<br />
+            That <span className="accent">Scale With You</span>
+          </h2>
+          <p className="section-desc">
+            EngiSols is a modern software development company built for a world that never slows down.
+            We design and engineer intelligent digital solutions that power growth, scale ideas,
+            and solve real-world problems with precision.
+          </p>
+
+          <div className="about-hint">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#dd3e5e" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
+            </svg>
+            Hover or click any node to explore our core values
+          </div>
         </div>
       </div>
     </section>

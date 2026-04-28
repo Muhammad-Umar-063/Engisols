@@ -1,20 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ArrowRight, Zap } from 'lucide-react'
 
-const CRIMSON    = '#dd3e5e'
-const SURFACE    = 'rgba(26, 26, 26, 0.97)'
-const BORDER     = 'rgba(221, 62, 94, 0.22)'
+const CRIMSON = '#dd3e5e'
+const SURFACE = 'rgba(26, 26, 26, 0.97)'
+const BORDER = 'rgba(221, 62, 94, 0.22)'
 const BORDER_DIM = 'rgba(255, 255, 255, 0.07)'
-const TEXT_PRI   = '#f0f0f0'
-const TEXT_SEC   = '#9a9a9a'
-const TEXT_MUT   = '#5a5a5a'
-const RADIUS     = 185
+const TEXT_PRI = '#f0f0f0'
+const TEXT_SEC = '#9a9a9a'
+const TEXT_MUT = '#5a5a5a'
+const RADIUS = 185
+const ROTATION_STEP = 0.35
+const SPEED_SMOOTHING = 0.08
+const NODE_LEAVE_DELAY = 90
 
 function StatusBadge({ status }) {
   const map = {
-    completed:     { background: CRIMSON,                 color: '#fff',   border: `1px solid ${CRIMSON}` },
-    'in-progress': { background: 'rgba(221,62,94,0.15)',  color: CRIMSON,  border: `1px solid ${CRIMSON}` },
-    pending:       { background: 'transparent',           color: TEXT_SEC, border: `1px solid ${BORDER_DIM}` },
+    completed: { background: CRIMSON, color: '#fff', border: `1px solid ${CRIMSON}` },
+    'in-progress': { background: 'rgba(221,62,94,0.15)', color: CRIMSON, border: `1px solid ${CRIMSON}` },
+    pending: { background: 'transparent', color: TEXT_SEC, border: `1px solid ${BORDER_DIM}` },
   }
   const labels = { completed: 'COMPLETE', 'in-progress': 'IN PROGRESS', pending: 'PENDING' }
   return (
@@ -32,14 +35,17 @@ function StatusBadge({ status }) {
 export default function RadialOrbitalTimeline({ timelineData }) {
   /* ── Only these cause re-renders — infrequent interactions ── */
   const [expandedItems, setExpandedItems] = useState({})
-  const [activeNodeId,  setActiveNodeId]  = useState(null)
-  const [pulseEffect,   setPulseEffect]   = useState({})
+  const [activeNodeId, setActiveNodeId] = useState(null)
+  const [pulseEffect, setPulseEffect] = useState({})
+  const [cardAboveById, setCardAboveById] = useState({})
 
   /* ── Rotation lives in a ref — never triggers re-renders ── */
-  const rotAngle   = useRef(0)
-  const isRotating = useRef(true)
-  const rafRef     = useRef(null)
-  const nodeRefs   = useRef({})   // wrapper divs for each orbit node
+  const rotAngle = useRef(0)
+  const currentSpeed = useRef(ROTATION_STEP)
+  const targetSpeed = useRef(ROTATION_STEP)
+  const rafRef = useRef(null)
+  const leaveTimerRef = useRef(null)
+  const nodeRefs = useRef({})   // wrapper divs for each orbit node
   const containerRef = useRef(null)
 
   /* ── rAF loop: update DOM directly, zero React re-renders ── */
@@ -47,9 +53,13 @@ export default function RadialOrbitalTimeline({ timelineData }) {
     const total = timelineData.length
 
     const tick = () => {
-      if (isRotating.current) {
-        rotAngle.current = (rotAngle.current + 0.22) % 360
+      const speedDelta = targetSpeed.current - currentSpeed.current
+      currentSpeed.current += speedDelta * SPEED_SMOOTHING
+      if (Math.abs(speedDelta) < 0.0001) {
+        currentSpeed.current = targetSpeed.current
       }
+
+      rotAngle.current = (rotAngle.current + currentSpeed.current + 360) % 360
 
       for (let i = 0; i < total; i++) {
         const item = timelineData[i]
@@ -57,10 +67,10 @@ export default function RadialOrbitalTimeline({ timelineData }) {
         if (!el) continue
 
         const angle = ((i / total) * 360 + rotAngle.current) % 360
-        const rad   = (angle * Math.PI) / 180
-        const x     = RADIUS * Math.cos(rad)
-        const y     = RADIUS * Math.sin(rad)
-        const op    = Math.max(0.35, Math.min(1, 0.35 + 0.65 * ((1 + Math.sin(rad)) / 2)))
+        const rad = (angle * Math.PI) / 180
+        const x = RADIUS * Math.cos(rad)
+        const y = RADIUS * Math.sin(rad)
+        const op = Math.max(0.35, Math.min(1, 0.35 + 0.65 * ((1 + Math.sin(rad)) / 2)))
 
         el.style.transform = `translate(${x}px, ${y}px)`
         /* only update opacity when not expanded */
@@ -71,7 +81,12 @@ export default function RadialOrbitalTimeline({ timelineData }) {
     }
 
     rafRef.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafRef.current)
+    return () => {
+      cancelAnimationFrame(rafRef.current)
+      if (leaveTimerRef.current) {
+        window.clearTimeout(leaveTimerRef.current)
+      }
+    }
   }, [timelineData, expandedItems])
 
   /* ── Helpers ── */
@@ -85,40 +100,97 @@ export default function RadialOrbitalTimeline({ timelineData }) {
     return getRelated(activeNodeId).includes(id)
   }, [activeNodeId, getRelated])
 
+  const clearLeaveTimer = useCallback(() => {
+    if (leaveTimerRef.current) {
+      window.clearTimeout(leaveTimerRef.current)
+      leaveTimerRef.current = null
+    }
+  }, [])
+
+  const stopRotation = useCallback(() => {
+    targetSpeed.current = 0
+  }, [])
+
+  const resumeRotation = useCallback(() => {
+    targetSpeed.current = ROTATION_STEP
+  }, [])
+
+  const resetOrbit = useCallback(() => {
+    clearLeaveTimer()
+    setExpandedItems({})
+    setActiveNodeId(null)
+    setPulseEffect({})
+    setCardAboveById({})
+    resumeRotation()
+  }, [clearLeaveTimer, resumeRotation])
+
+  const openItem = useCallback((id, { snapToNode = false } = {}) => {
+    clearLeaveTimer()
+
+    const next = {}
+    timelineData.forEach((item) => {
+      next[item.id] = item.id === id
+    })
+
+    setExpandedItems(next)
+    setActiveNodeId(id)
+    stopRotation()
+
+    if (snapToNode) {
+      const idx = timelineData.findIndex(i => i.id === id)
+      rotAngle.current = (270 - (idx / timelineData.length) * 360 + 360) % 360
+    }
+
+    const pulse = {}
+    getRelated(id).forEach(rid => { pulse[rid] = true })
+    setPulseEffect(pulse)
+
+    const nodeEl = nodeRefs.current[id]
+    const containerEl = containerRef.current
+    if (nodeEl && containerEl) {
+      const nodeRect = nodeEl.getBoundingClientRect()
+      const containerRect = containerEl.getBoundingClientRect()
+      const nodeCenterY = nodeRect.top - containerRect.top + nodeRect.height / 2
+      const showAbove = nodeCenterY > containerRect.height * 0.55
+      setCardAboveById({ [id]: showAbove })
+    } else {
+      setCardAboveById({ [id]: false })
+    }
+  }, [timelineData, getRelated, clearLeaveTimer, stopRotation])
+
   /* ── Toggle node ── */
   const toggleItem = useCallback((id) => {
-    setExpandedItems(prev => {
-      const next = {}
-      Object.keys(prev).forEach(k => { next[+k] = false })
-      next[id] = !prev[id]
+    if (expandedItems[id]) {
+      resetOrbit()
+      return
+    }
+    openItem(id, { snapToNode: true })
+  }, [expandedItems, openItem, resetOrbit])
 
-      if (!prev[id]) {
-        setActiveNodeId(id)
-        isRotating.current = false
+  const handleNodeHover = useCallback((id) => {
+    if (activeNodeId === id && expandedItems[id]) {
+      clearLeaveTimer()
+      stopRotation()
+      return
+    }
+    openItem(id, { snapToNode: false })
+  }, [activeNodeId, expandedItems, openItem, clearLeaveTimer, stopRotation])
 
-        /* snap to clicked node */
-        const idx = timelineData.findIndex(i => i.id === id)
-        rotAngle.current = (270 - (idx / timelineData.length) * 360 + 360) % 360
-
-        /* pulse related */
-        const pulse = {}
-        getRelated(id).forEach(rid => { pulse[rid] = true })
-        setPulseEffect(pulse)
-      } else {
-        setActiveNodeId(null)
-        isRotating.current = true
-        setPulseEffect({})
-      }
-      return next
-    })
-  }, [timelineData, getRelated])
-
-  const handleContainerClick = (e) => {
-    if (e.target === containerRef.current) {
+  const handleNodeLeave = useCallback(() => {
+    clearLeaveTimer()
+    leaveTimerRef.current = window.setTimeout(() => {
+      leaveTimerRef.current = null
       setExpandedItems({})
       setActiveNodeId(null)
       setPulseEffect({})
-      isRotating.current = true
+      setCardAboveById({})
+      resumeRotation()
+    }, NODE_LEAVE_DELAY)
+  }, [clearLeaveTimer, resumeRotation])
+
+  const handleContainerClick = (e) => {
+    if (e.target === containerRef.current) {
+      resetOrbit()
     }
   }
 
@@ -126,10 +198,11 @@ export default function RadialOrbitalTimeline({ timelineData }) {
     <div
       ref={containerRef}
       onClick={handleContainerClick}
+      onMouseLeave={resetOrbit}
       style={{
         position: 'relative', width: '100%', height: '100%',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        overflow: 'hidden',
+        overflow: 'visible',
       }}
     >
       {/* Orbit rings */}
@@ -169,18 +242,21 @@ export default function RadialOrbitalTimeline({ timelineData }) {
       {/* Orbit nodes — positioned by rAF loop */}
       {timelineData.map((item) => {
         const expanded = !!expandedItems[item.id]
-        const related  = isRelated(item.id)
-        const pulsing  = !!pulseEffect[item.id]
-        const Icon     = item.icon
+        const related = isRelated(item.id)
+        const pulsing = !!pulseEffect[item.id]
+        const Icon = item.icon
+        const showCardAbove = !!cardAboveById[item.id]
 
-        const nodeBg     = expanded ? CRIMSON : related ? 'rgba(221,62,94,0.25)' : 'var(--surface-elevated)'
+        const nodeBg = expanded ? CRIMSON : related ? 'rgba(221,62,94,0.25)' : 'var(--surface-elevated)'
         const nodeBorder = expanded || related ? CRIMSON : 'rgba(255,255,255,0.15)'
-        const nodeColor  = expanded ? '#fff' : related ? CRIMSON : TEXT_SEC
+        const nodeColor = expanded ? '#fff' : related ? CRIMSON : TEXT_SEC
 
         return (
           <div
             key={item.id}
             ref={el => (nodeRefs.current[item.id] = el)}
+            onMouseEnter={() => handleNodeHover(item.id)}
+            onMouseLeave={handleNodeLeave}
             onClick={e => { e.stopPropagation(); toggleItem(item.id) }}
             style={{
               position: 'absolute',
@@ -198,7 +274,7 @@ export default function RadialOrbitalTimeline({ timelineData }) {
               width: `${item.energy * 0.45 + 36}px`,
               height: `${item.energy * 0.45 + 36}px`,
               left: `-${(item.energy * 0.45) / 2}px`,
-              top:  `-${(item.energy * 0.45) / 2}px`,
+              top: `-${(item.energy * 0.45) / 2}px`,
               borderRadius: '50%',
               background: 'radial-gradient(circle, rgba(221,62,94,0.18) 0%, transparent 70%)',
               animation: pulsing ? 'about-pulse 1.2s ease-in-out infinite' : 'none',
@@ -238,7 +314,7 @@ export default function RadialOrbitalTimeline({ timelineData }) {
             {/* Popup card */}
             {expanded && (
               <div style={{
-                position: 'absolute', top: '62px', left: '50%',
+                position: 'absolute', left: '50%',
                 transform: 'translateX(-50%)',
                 width: '230px',
                 background: SURFACE,
@@ -248,8 +324,17 @@ export default function RadialOrbitalTimeline({ timelineData }) {
                 WebkitBackdropFilter: 'blur(12px)',
                 boxShadow: '0 24px 60px rgba(0,0,0,0.7), 0 0 24px rgba(221,62,94,0.1)',
                 zIndex: 300,
+                ...(showCardAbove ? { bottom: '58px' } : { top: '62px' }),
               }}>
-                <div style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', width: '1px', height: '10px', background: 'rgba(221,62,94,0.4)' }} />
+                <div style={{
+                  position: 'absolute',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '1px',
+                  height: '10px',
+                  background: 'rgba(221,62,94,0.4)',
+                  ...(showCardAbove ? { bottom: '-10px' } : { top: '-10px' }),
+                }} />
 
                 <div style={{ padding: '14px 16px 10px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
