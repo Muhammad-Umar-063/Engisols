@@ -79,29 +79,8 @@ export function useScrollReveal() {
     }, 900)
     timers.push(counterTimer)
 
-    /* ─── CURSOR SPOTLIGHT ─── */
-    const spotlight = document.getElementById('cursor-spotlight')
-    const hero = document.getElementById('home')
-    const handleMouseMove = (e) => {
-      if (!spotlight || !hero) return
-      const rect = hero.getBoundingClientRect()
-      const inHero =
-        e.clientX >= rect.left &&
-        e.clientX <= rect.right &&
-        e.clientY >= rect.top &&
-        e.clientY <= rect.bottom
-      if (!inHero) {
-        spotlight.style.opacity = '0'
-        return
-      }
-      spotlight.style.opacity = '1'
-      spotlight.style.left = e.clientX + 'px'
-      spotlight.style.top = e.clientY + 'px'
-    }
-    document.addEventListener('mousemove', handleMouseMove, { passive: true })
-    teardownFns.push(() => document.removeEventListener('mousemove', handleMouseMove))
-
     /* ─── PARTICLES (upward floating with lifecycle fade) ─── */
+    const hero = document.getElementById('home')
     const canvas = document.getElementById('hero-particles')
     const ctx = canvas?.getContext('2d')
     let animFrameId = 0

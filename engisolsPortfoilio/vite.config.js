@@ -1,13 +1,16 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import sitemap from "vite-plugin-sitemap";
+import { caseStudies } from "./src/data/caseStudies.js";
+
+const caseStudyRoutes = caseStudies.map((cs) => `/case-studies/${cs.slug}`);
 
 export default defineConfig({
   plugins: [
     react(),
     sitemap({
       hostname: "https://engisols.com",
-      dynamicRoutes: ["/"],
+      dynamicRoutes: ["/", ...caseStudyRoutes],
       generateRobotsTxt: true,
       readable: true,
     }),
@@ -31,6 +34,9 @@ export default defineConfig({
           }
           if (id.includes("lucide-react")) {
             return "vendor-lucide";
+          }
+          if (id.includes("react-router")) {
+            return "vendor-router";
           }
         },
       },

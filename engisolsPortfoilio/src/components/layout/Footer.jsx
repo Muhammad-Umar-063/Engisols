@@ -1,16 +1,31 @@
+import { Link, useLocation } from 'react-router-dom'
 import ShaderBackground from '../ui/ShaderBackground'
+
+// Smart link: stays as anchor on home (smooth scroll); becomes a router Link
+// to "/<hash>" elsewhere so the user is taken back to the homepage and scrolled to the section.
+function SmartHashLink({ href, children, className }) {
+  const { pathname } = useLocation()
+  const isHome = pathname === '/'
+  if (isHome) {
+    return (
+      <a href={href} className={className}>
+        {children}
+      </a>
+    )
+  }
+  return (
+    <Link to={`/${href}`} className={className}>
+      {children}
+    </Link>
+  )
+}
 
 export default function Footer() {
   return (
     <footer className="footer-shader">
-
-      {/* ── WebGL animated background ── */}
       <ShaderBackground />
-
-      {/* ── Glass overlay so text stays legible ── */}
       <div className="footer-glass" />
 
-      {/* ── Content (sits above canvas + glass) ── */}
       <div className="footer-content">
         <div className="footer-top">
           <div className="footer-brand">
@@ -23,22 +38,22 @@ export default function Footer() {
           <div>
             <div className="footer-col-title">Company</div>
             <ul className="footer-links">
-              <li><a href="#about">About Us</a></li>
-              <li><a href="#team">Our Team</a></li>
-              <li><a href="#reviews">Testimonials</a></li>
-              <li><a href="#contact">Careers</a></li>
-              <li><a href="#contact">Blog</a></li>
+              <li><SmartHashLink href="#about">About Us</SmartHashLink></li>
+              <li><SmartHashLink href="#case-studies">Case Studies</SmartHashLink></li>
+              <li><SmartHashLink href="#reviews">Testimonials</SmartHashLink></li>
+              <li><SmartHashLink href="#contact">Careers</SmartHashLink></li>
+              <li><SmartHashLink href="#contact">Blog</SmartHashLink></li>
             </ul>
           </div>
 
           <div>
             <div className="footer-col-title">Services</div>
             <ul className="footer-links">
-              <li><a href="#services">Web Development</a></li>
-              <li><a href="#services">Mobile Apps</a></li>
-              <li><a href="#services">UI/UX Design</a></li>
-              <li><a href="#services">Cloud &amp; DevOps</a></li>
-              <li><a href="#services">API Engineering</a></li>
+              <li><SmartHashLink href="#services">Web Development</SmartHashLink></li>
+              <li><SmartHashLink href="#services">Mobile Apps</SmartHashLink></li>
+              <li><SmartHashLink href="#services">UI/UX Design</SmartHashLink></li>
+              <li><SmartHashLink href="#services">Cloud &amp; DevOps</SmartHashLink></li>
+              <li><SmartHashLink href="#services">API Engineering</SmartHashLink></li>
             </ul>
           </div>
 
@@ -48,7 +63,7 @@ export default function Footer() {
               <li><a href="mailto:hello@engisols.com">hello@engisols.com</a></li>
               <li><a href="tel:+923000000000">+92 300 000 0000</a></li>
               <li><a href="https://maps.google.com/?q=Lahore,Pakistan" target="_blank" rel="noopener noreferrer">Lahore, Pakistan</a></li>
-              <li><a href="#contact">Book a Call</a></li>
+              <li><SmartHashLink href="#contact">Book a Call</SmartHashLink></li>
               <li><a href="https://linkedin.com/company/engisols" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
             </ul>
           </div>
@@ -57,9 +72,9 @@ export default function Footer() {
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} ENGISOLS. All rights reserved. Your Engineering Vanguard.</span>
           <div className="footer-bottom-links">
-            <a href="#contact">Privacy Policy</a>
-            <a href="#contact">Terms of Service</a>
-            <a href="#contact">Cookie Policy</a>
+            <SmartHashLink href="#contact">Privacy Policy</SmartHashLink>
+            <SmartHashLink href="#contact">Terms of Service</SmartHashLink>
+            <SmartHashLink href="#contact">Cookie Policy</SmartHashLink>
           </div>
         </div>
       </div>

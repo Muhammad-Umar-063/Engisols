@@ -1,224 +1,237 @@
-import { Canvas, extend, useFrame, useThree } from '@react-three/fiber'
-import { useAspect, useTexture } from '@react-three/drei'
-import { useMemo, useRef, useState, useEffect } from 'react'
-import * as THREE from 'three/webgpu'
-import { bloom } from 'three/examples/jsm/tsl/display/BloomNode.js'
-import {
-  abs,
-  blendScreen,
-  float,
-  mod,
-  mx_cell_noise_float,
-  oneMinus,
-  smoothstep,
-  texture,
-  uniform,
-  uv,
-  vec2,
-  vec3,
-  pass,
-  mix,
-  add,
-} from 'three/tsl'
+import { useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
+import { ArrowDown } from 'lucide-react'
 
-const TEXTUREMAP = { src: 'https://i.postimg.cc/XYwvXN8D/img-4.png' }
-const DEPTHMAP   = { src: 'https://i.postimg.cc/2SHKQh2q/raw-4.webp' }
+const PARTICLE_COLOR = 'rgba(221, 62, 94, 0.85)'
+const LINE_COLOR_BASE = 'rgba(221, 62, 94'
+const LINE_COLOR_HOVER = 'rgba(255, 200, 210'
 
-// Register all THREE classes (including WebGPU-specific ones) with R3F's reconciler
-extend(THREE)
-
-/* ─── POST-PROCESSING ─── */
-const PostProcessing = ({ strength = 1, threshold = 1, fullScreenEffect = true }) => {
-  const { gl, scene, camera } = useThree()
-  const progressRef = useRef({ value: 0 })
-
-  const render = useMemo(() => {
-    const postProcessing = new THREE.PostProcessing(gl)
-    const scenePass      = pass(scene, camera)
-    const scenePassColor = scenePass.getTextureNode('output')
-    const bloomPass      = bloom(scenePassColor, strength, 0.5, threshold)
-
-    const uScanProgress = uniform(0)
-    progressRef.current = uScanProgress
-
-    const uvY      = uv().y
-    const scanLine = smoothstep(0, float(0.05), abs(uvY.sub(float(uScanProgress.value))))
-    const redOverlay = vec3(1, 0, 0).mul(oneMinus(scanLine)).mul(0.4)
-
-    const withScanEffect = mix(
-      scenePassColor,
-      add(scenePassColor, redOverlay),
-      fullScreenEffect ? smoothstep(0.9, 1.0, oneMinus(scanLine)) : 1.0,
-    )
-
-    postProcessing.outputNode = withScanEffect.add(bloomPass)
-    return postProcessing
-  }, [camera, gl, scene, strength, threshold, fullScreenEffect])
-
-  useFrame(({ clock }) => {
-    progressRef.current.value = Math.sin(clock.getElapsedTime() * 0.5) * 0.5 + 0.5
-    render.renderAsync()
-  }, 1)
-
-  return null
-}
-
-/* ─── 3-D SCENE ─── */
-const WIDTH  = 300
-const HEIGHT = 300
-
-const Scene = () => {
-  const [rawMap, depthMap] = useTexture([TEXTUREMAP.src, DEPTHMAP.src])
-  const meshRef  = useRef(null)
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    if (rawMap && depthMap) setVisible(true)
-  }, [rawMap, depthMap])
-
-  const { material, uniforms } = useMemo(() => {
-    const uPointer  = uniform(new THREE.Vector2(0))
-    const uProgress = uniform(0)
-    const strength  = 0.01
-
-    const tDepthMap = texture(depthMap)
-    const tMap      = texture(rawMap, uv().add(tDepthMap.r.mul(uPointer).mul(strength)))
-
-    const aspect   = float(WIDTH).div(HEIGHT)
-    const tUv      = vec2(uv().x.mul(aspect), uv().y)
-    const tiling   = vec2(120.0)
-    const tiledUv  = mod(tUv.mul(tiling), 2.0).sub(1.0)
-    const brightness = mx_cell_noise_float(tUv.mul(tiling).div(2))
-    const dist     = float(tiledUv.length())
-    const dot      = float(smoothstep(0.5, 0.49, dist)).mul(brightness)
-    const flow     = oneMinus(smoothstep(0, 0.02, abs(tDepthMap.sub(uProgress))))
-    const mask     = dot.mul(flow).mul(vec3(10, 0, 0))
-    const final    = blendScreen(tMap, mask)
-
-    const mat = new THREE.MeshBasicNodeMaterial({
-      colorNode: final,
-      transparent: true,
-      opacity: 0,
-    })
-
-    return { material: mat, uniforms: { uPointer, uProgress } }
-  }, [rawMap, depthMap])
-
-  const [w, h] = useAspect(WIDTH, HEIGHT)
-
-  useFrame(({ clock }) => {
-    uniforms.uProgress.value = Math.sin(clock.getElapsedTime() * 0.5) * 0.5 + 0.5
-    const mat = meshRef.current?.material
-    if (mat && 'opacity' in mat) {
-      mat.opacity = THREE.MathUtils.lerp(mat.opacity, visible ? 1 : 0, 0.07)
-    }
-  })
-
-  useFrame(({ pointer }) => {
-    uniforms.uPointer.value = pointer
-  })
-
-  return (
-    <mesh ref={meshRef} scale={[w * 0.4, h * 0.4, 1]} material={material}>
-      <planeGeometry />
-    </mesh>
-  )
-}
-
-/* ─── TITLE WORDS ─── */
-const TITLE_WORDS = ['We', 'Engineer', "What's", 'Next.']
-
-/* ─── HERO SECTION ─── */
 export default function HeroSection() {
-  const [visibleWords, setVisibleWords]   = useState(0)
-  const [subtitleVisible, setSubtitleVisible] = useState(false)
+  const canvasRef = useRef(null)
+  const sectionRef = useRef(null)
 
   useEffect(() => {
-    if (visibleWords < TITLE_WORDS.length) {
-      const t = setTimeout(() => setVisibleWords((v) => v + 1), 580)
-      return () => clearTimeout(t)
+    const canvas = canvasRef.current
+    const section = sectionRef.current
+    if (!canvas || !section) return
+
+    const ctx = canvas.getContext('2d')
+    let animationFrameId
+    let particles = []
+    const mouse = { x: null, y: null, radius: 180 }
+
+    class Particle {
+      constructor(x, y, dirX, dirY, size) {
+        this.x = x
+        this.y = y
+        this.dirX = dirX
+        this.dirY = dirY
+        this.size = size
+      }
+      draw() {
+        ctx.beginPath()
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
+        ctx.fillStyle = PARTICLE_COLOR
+        ctx.fill()
+      }
+      update() {
+        if (this.x > canvas.width || this.x < 0) this.dirX = -this.dirX
+        if (this.y > canvas.height || this.y < 0) this.dirY = -this.dirY
+
+        if (mouse.x !== null && mouse.y !== null) {
+          const dx = mouse.x - this.x
+          const dy = mouse.y - this.y
+          const distance = Math.sqrt(dx * dx + dy * dy)
+          if (distance < mouse.radius + this.size && distance > 0) {
+            const fX = dx / distance
+            const fY = dy / distance
+            const force = (mouse.radius - distance) / mouse.radius
+            this.x -= fX * force * 4
+            this.y -= fY * force * 4
+          }
+        }
+
+        this.x += this.dirX
+        this.y += this.dirY
+        this.draw()
+      }
     }
-    const t = setTimeout(() => setSubtitleVisible(true), 700)
-    return () => clearTimeout(t)
-  }, [visibleWords])
+
+    function init() {
+      particles = []
+      const target = (canvas.height * canvas.width) / 11000
+      const numberOfParticles = Math.min(140, Math.max(40, target))
+      for (let i = 0; i < numberOfParticles; i++) {
+        const size = Math.random() * 1.8 + 0.8
+        const x = Math.random() * (canvas.width - size * 4) + size * 2
+        const y = Math.random() * (canvas.height - size * 4) + size * 2
+        const dirX = Math.random() * 0.4 - 0.2
+        const dirY = Math.random() * 0.4 - 0.2
+        particles.push(new Particle(x, y, dirX, dirY, size))
+      }
+    }
+
+    const resizeCanvas = () => {
+      const rect = section.getBoundingClientRect()
+      canvas.width = rect.width
+      canvas.height = rect.height
+      init()
+    }
+
+    window.addEventListener('resize', resizeCanvas)
+    resizeCanvas()
+
+    const connect = () => {
+      const maxDistSq = (canvas.width / 7) * (canvas.height / 7)
+      const mouseRadiusSq = mouse.radius * mouse.radius
+
+      for (let a = 0; a < particles.length; a++) {
+        for (let b = a + 1; b < particles.length; b++) {
+          const pa = particles[a]
+          const pb = particles[b]
+          const dx = pa.x - pb.x
+          const dy = pa.y - pb.y
+          const distSq = dx * dx + dy * dy
+
+          if (distSq < maxDistSq) {
+            const opacity = 1 - distSq / 20000
+            if (opacity <= 0) continue
+
+            let near = false
+            if (mouse.x !== null) {
+              const mdx = pa.x - mouse.x
+              const mdy = pa.y - mouse.y
+              if (mdx * mdx + mdy * mdy < mouseRadiusSq) near = true
+            }
+
+            ctx.strokeStyle = near
+              ? `${LINE_COLOR_HOVER}, ${opacity})`
+              : `${LINE_COLOR_BASE}, ${opacity * 0.55})`
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.moveTo(pa.x, pa.y)
+            ctx.lineTo(pb.x, pb.y)
+            ctx.stroke()
+          }
+        }
+      }
+    }
+
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate)
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      for (let i = 0; i < particles.length; i++) particles[i].update()
+      connect()
+    }
+
+    const handleMouseMove = (e) => {
+      const rect = canvas.getBoundingClientRect()
+      mouse.x = e.clientX - rect.left
+      mouse.y = e.clientY - rect.top
+    }
+
+    const handleMouseOut = () => {
+      mouse.x = null
+      mouse.y = null
+    }
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true })
+    window.addEventListener('mouseout', handleMouseOut)
+
+    animate()
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseout', handleMouseOut)
+      cancelAnimationFrame(animationFrameId)
+    }
+  }, [])
+
+  const fadeUp = {
+    hidden: { opacity: 0, y: 22 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.16 + 0.3,
+        duration: 0.85,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    }),
+  }
 
   return (
-    <section id="home">
-      <canvas id="hero-particles" />
+    <section id="home" ref={sectionRef}>
+      <canvas ref={canvasRef} className="hero-net-canvas" aria-hidden="true" />
 
-      {/* ── Overlay: badge · title · subtitle · stats · CTA ── */}
-      <div className="hero-futuristic-overlay">
-        <div className="hero-badge hero-animate" style={{ '--d': '0.1s' }}>
+      <div className="hero-net-overlay">
+        <motion.div
+          custom={0}
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          className="hero-net-badge"
+        >
+          <span className="hero-net-badge-dot" />
           Available for New Projects
-        </div>
+        </motion.div>
 
-        <h1 className="hero-futuristic-title">
-          {TITLE_WORDS.map((word, i) => (
-            <span
-              key={i}
-              className={`hero-fword${visibleWords > i ? ' in' : ''}`}
-              style={{ transitionDelay: `${i * 0.08}s` }}
-            >
-              {word}
-            </span>
-          ))}
-        </h1>
+        <motion.h1
+          custom={1}
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          className="hero-net-title"
+        >
+          We Engineer
+          <br />
+          <span className="accent">What&apos;s Next.</span>
+        </motion.h1>
 
-        <p className={`hero-futuristic-sub${subtitleVisible ? ' in' : ''}`}>
+        <motion.p
+          custom={2}
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          className="hero-net-sub"
+        >
           ENGISOLS — intelligent digital solutions for a world that never slows down.
-        </p>
+        </motion.p>
 
-        <div className="hero-stats hero-animate" style={{ '--d': '1.9s' }}>
-          <div>
-            <div className="hero-stat-num">
-              <span className="count-up" data-target="120" data-suffix="+">120+</span>
-            </div>
-            <div className="hero-stat-label">Projects Delivered</div>
+        <motion.div
+          custom={3}
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          className="hero-net-stats"
+        >
+          <div className="hero-net-stat">
+            <div className="hero-net-stat-num">120+</div>
+            <div className="hero-net-stat-label">Projects Delivered</div>
           </div>
-          <div>
-            <div className="hero-stat-num">
-              <span className="count-up" data-target="98" data-suffix="%">98%</span>
-            </div>
-            <div className="hero-stat-label">Client Retention</div>
+          <div className="hero-net-stat">
+            <div className="hero-net-stat-num">98%</div>
+            <div className="hero-net-stat-label">Client Retention</div>
           </div>
-          <div>
-            <div className="hero-stat-num">
-              <span className="count-up" data-target="5" data-suffix="yr+">5yr+</span>
-            </div>
-            <div className="hero-stat-label">Industry Experience</div>
+          <div className="hero-net-stat">
+            <div className="hero-net-stat-num">5yr+</div>
+            <div className="hero-net-stat-label">Industry Experience</div>
           </div>
-        </div>
+        </motion.div>
 
-        <a href="#about" className="explore-btn">
-          Scroll to explore
-          <span className="explore-arrow">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 22 22"
-              fill="none"
-              className="arrow-svg"
-            >
-              <path d="M11 5V17" stroke="white" strokeWidth="2" strokeLinecap="round" />
-              <path d="M6 12L11 17L16 12" stroke="white" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </span>
-        </a>
+        <motion.a
+          href="#about"
+          custom={4}
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          className="hero-net-explore"
+        >
+          Scroll to Explore
+          <ArrowDown size={16} strokeWidth={2.4} />
+        </motion.a>
       </div>
-
-      {/* ── WebGPU Canvas ── */}
-      <Canvas
-        flat
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-        gl={async (props) => {
-          const renderer = new THREE.WebGPURenderer(props)
-          await renderer.init()
-          return renderer
-        }}
-      >
-        <PostProcessing fullScreenEffect />
-        <Scene />
-      </Canvas>
     </section>
   )
 }

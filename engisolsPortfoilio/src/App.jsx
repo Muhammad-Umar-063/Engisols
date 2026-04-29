@@ -1,82 +1,32 @@
-import { useEffect, useRef, useCallback, useState } from 'react'
+import { lazy, Suspense } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import SeoMeta from './components/SeoMeta'
-import Footer from './components/layout/Footer'
-import Navbar from './components/layout/Navbar'
-import AboutSection from './components/sections/AboutSection'
-import ClientsStrip from './components/sections/ClientsStrip'
-import ContactSection from './components/sections/ContactSection'
-import HeroSection from './components/sections/HeroSection'
-import ReviewsSection from './components/sections/ReviewsSection'
-import ServicesSection from './components/sections/ServicesSection'
-import { useScrollReveal } from './hooks/useScrollReveal'
+import HomePage from './pages/HomePage'
 
-function App() {
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
-  const progressRef = useRef(null)
+// Lazy-load the detail page so its bundle only loads when a user clicks into a case study.
+// Keeps the main site bundle lean and the homepage TTI fast.
+const CaseStudyDetailPage = lazy(() => import('./pages/CaseStudyDetailPage'))
 
-  useScrollReveal()
-
-  useEffect(() => {
-    let ticking = false
-
-    const onScroll = () => {
-      if (ticking) return
-      ticking = true
-      requestAnimationFrame(() => {
-        const scrollTop = window.scrollY
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight
-        const ratio = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0
-
-        if (progressRef.current) {
-          progressRef.current.style.transform = `scaleX(${Math.min(Math.max(ratio, 0), 100) / 100})`
-        }
-        setScrolled(scrollTop > 30)
-        ticking = false
-      })
-    }
-
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  const handleToggleMenu = useCallback(() => {
-    setMobileOpen(prev => !prev)
-  }, [])
-
-  const handleNavigate = useCallback(() => {
-    setMobileOpen(false)
-  }, [])
-
+export default function App() {
   return (
-    <>
-      <SeoMeta />
-      <div id="scroll-progress" ref={progressRef} />
-      <div id="cursor-spotlight" />
-
-      <Navbar
-        scrolled={scrolled}
-        mobileOpen={mobileOpen}
-        onToggle={handleToggleMenu}
-        onNavigate={handleNavigate}
-      />
-
-      <main>
-        <HeroSection />
-        <ClientsStrip />
-        <AboutSection />
-        <ServicesSection />
-        <ReviewsSection />
-        <ContactSection />
-      </main>
-
-      <Footer />
-      <div className="toast" id="toast">
-        ✓ Message sent! We'll be in touch within 24 hours.
-      </div>
-    </>
+    <BrowserRouter>
+      <Suspense fallback={<div className="route-fallback" />}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
+                <SeoMeta />
+                <HomePage />
+              </>
+            }
+          />
+          <Route
+            path="/case-studies/:slug"
+            element={<CaseStudyDetailPage />}
+          />
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
   )
 }
-
-export default App
