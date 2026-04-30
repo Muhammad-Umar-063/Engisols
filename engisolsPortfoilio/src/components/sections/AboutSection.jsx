@@ -91,7 +91,7 @@ export default function AboutSection() {
                     <Icon size={14} />
                   </span>
                   <div>
-                    <h3 className="about-mobile-card-title">{item.title}</h3>
+                    <p className="about-mobile-card-title">{item.title}</p>
                     <p className="about-mobile-card-date">{item.date}</p>
                   </div>
                 </div>

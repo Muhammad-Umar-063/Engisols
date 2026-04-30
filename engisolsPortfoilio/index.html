@@ -4,18 +4,55 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/engisols-mark.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Primary meta — kept in sync with SeoMeta.jsx defaults so non-JS crawlers
+         (Slackbot, LinkedInBot, archive.org) see meaningful tags before JS runs. -->
     <meta
       name="description"
-      content="ENGISOLS builds modern web, mobile, and cloud software solutions with scalable engineering. Explore our case studies and services."
+      content="ENGISOLS builds modern web, mobile, and cloud products for startups and enterprises. Scalable engineering, on-time delivery, transparent pricing."
     />
     <meta name="theme-color" content="#0e0e0e" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="author" content="ENGISOLS" />
     <meta name="format-detection" content="telephone=no" />
 
+    <!-- OG fallback — Helmet will override these at runtime for JS-capable bots,
+         but non-JS crawlers rely on these static values. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ENGISOLS" />
+    <meta property="og:title" content="ENGISOLS | Your Engineering Vanguard" />
+    <meta property="og:description" content="ENGISOLS builds modern web, mobile, and cloud products for startups and enterprises. Scalable engineering, on-time delivery, transparent pricing." />
+    <meta property="og:url" content="https://www.engisols.com/" />
+    <meta property="og:image" content="https://www.engisols.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="ENGISOLS — Your Engineering Vanguard" />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ENGISOLS | Your Engineering Vanguard" />
+    <meta name="twitter:description" content="ENGISOLS builds modern web, mobile, and cloud products for startups and enterprises. Scalable engineering, on-time delivery, transparent pricing." />
+    <meta name="twitter:image" content="https://www.engisols.com/og-image.jpg" />
+    <link rel="canonical" href="https://www.engisols.com/" />
+    <link rel="manifest" href="/site.webmanifest" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
+
+    <!-- Async font loading: preload the stylesheet then promote to a real stylesheet
+         once it arrives so it doesn't block first paint. The <noscript> fallback keeps
+         text readable for crawlers / no-JS clients. -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap"
+      />
+    </noscript>
 
     <title>ENGISOLS | Your Engineering Vanguard</title>
   </head>

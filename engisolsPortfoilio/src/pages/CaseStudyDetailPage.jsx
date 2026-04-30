@@ -107,13 +107,19 @@ export default function CaseStudyDetailPage() {
   return (
     <>
       <SeoMeta
-        title={`${study.title} — ENGISOLS Case Study`}
+        title={`${study.title} Case Study | ENGISOLS Engineering`}
         description={study.tagline}
         path={`/case-studies/${study.slug}`}
         image={study.imgSrc}
         type="article"
         schema={seoSchema}
-        keywords={`${study.title}, ${study.category}, ${study.techStack.join(', ')}, ENGISOLS case study`}
+        keywords={[
+          study.title.toLowerCase(),
+          study.category.toLowerCase(),
+          ...study.techStack.map((t) => t.toLowerCase()),
+          'ENGISOLS case study',
+          'software engineering portfolio',
+        ].join(', ')}
       />
 
       <div id="scroll-progress" ref={progressRef} />
@@ -131,10 +137,12 @@ export default function CaseStudyDetailPage() {
           <div
             className="cs-banner-img"
             ref={bannerImgRef}
+            role="img"
+            aria-label={`${study.title} — ${study.category} project banner`}
             style={{ backgroundImage: `url(${study.imgSrc})` }}
           />
-          <div className="cs-banner-glass" />
-          <div className="cs-banner-vignette" />
+          <div className="cs-banner-glass" aria-hidden="true" />
+          <div className="cs-banner-vignette" aria-hidden="true" />
 
           <Link to="/#case-studies" className="cs-back-link">
             <ArrowLeft size={14} strokeWidth={2.4} />

@@ -1,0 +1,26 @@
+{
+  "name": "ENGISOLS — Web, Mobile & Cloud Development Agency",
+  "short_name": "ENGISOLS",
+  "description": "ENGISOLS builds modern web, mobile, and cloud products for startups and enterprises.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0e0e0e",
+  "background_color": "#0e0e0e",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/engisols-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

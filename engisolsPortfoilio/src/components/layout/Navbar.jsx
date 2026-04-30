@@ -27,11 +27,11 @@ export default function Navbar({ scrolled, mobileOpen, onToggle, onNavigate }) {
         <nav id="navbar" className={scrolled ? 'scrolled' : ''}>
             {isHome ? (
                 <a href="#home" className="nav-logo" onClick={onNavigate} aria-label="ENGISOLS home">
-                    <img src="/engisols-logo-nav.svg" alt="ENGISOLS" width="120" height="28" />
+                    <img src="/engisols-logo-nav.svg" alt="ENGISOLS logo" width="120" height="28" />
                 </a>
             ) : (
                 <Link to="/" className="nav-logo" onClick={onNavigate} aria-label="ENGISOLS home">
-                    <img src="/engisols-logo-nav.svg" alt="ENGISOLS" width="120" height="28" />
+                    <img src="/engisols-logo-nav.svg" alt="ENGISOLS logo" width="120" height="28" />
                 </Link>
             )}
 

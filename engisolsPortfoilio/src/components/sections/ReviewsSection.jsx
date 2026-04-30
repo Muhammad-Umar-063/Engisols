@@ -85,16 +85,17 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 }
 
-function Avatar({ src, initials }) {
+function Avatar({ src, initials, name }) {
   const [errored, setErrored] = useState(false)
   if (!errored) {
     return (
       <img
         src={src}
-        alt={initials}
+        alt={`Avatar of ${name ?? initials}, ENGISOLS client`}
         width="52"
         height="52"
         loading="lazy"
+        decoding="async"
         onError={() => setErrored(true)}
         style={{
           width: '52px', height: '52px', borderRadius: '50%',
@@ -188,7 +189,7 @@ export default function ReviewsSection() {
                 {/* Reviewer row */}
                 <div className="reviews-v2-reviewer-row">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-                    <Avatar src={current.avatar} initials={current.initials} />
+                    <Avatar src={current.avatar} initials={current.initials} name={current.name} />
                     <div>
                       <div className="reviews-v2-name">{current.name}</div>
                       <div className="reviews-v2-role">{current.role}, {current.company}</div>

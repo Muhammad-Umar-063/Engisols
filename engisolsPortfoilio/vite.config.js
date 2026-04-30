@@ -9,10 +9,13 @@ export default defineConfig({
   plugins: [
     react(),
     sitemap({
-      hostname: "https://engisols.com",
-      dynamicRoutes: ["/", ...caseStudyRoutes],
-      generateRobotsTxt: true,
+      hostname: "https://www.engisols.com",
+      dynamicRoutes: [...caseStudyRoutes],
+      // Custom robots.txt lives in public/ — the plugin would otherwise overwrite it.
+      generateRobotsTxt: false,
       readable: true,
+      changefreq: "weekly",
+      priority: 0.8,
     }),
   ],
   build: {

@@ -29,7 +29,7 @@ export default function Footer() {
       <div className="footer-content">
         <div className="footer-top">
           <div className="footer-brand">
-            <img src="/engisols-logo-footer.svg" alt="ENGISOLS" width="120" height="32" />
+            <img src="/engisols-logo-footer.svg" alt="ENGISOLS logo" width="120" height="32" loading="lazy" decoding="async" />
             <p className="footer-desc">
               Your engineering vanguard. We build intelligent digital solutions that power growth, scale ideas, and solve real-world problems.
             </p>

@@ -234,7 +234,8 @@ export default function RadialOrbitalTimeline({ timelineData }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 0 32px rgba(221,62,94,0.18), 0 0 0 8px rgba(221,62,94,0.05)',
         }}>
-          <img src="/engisols-mark.svg" alt="ENGISOLS" width="40" height="40"
+          <img src="/engisols-mark.svg" alt="ENGISOLS brand mark" width="40" height="40"
+            loading="lazy" decoding="async"
             style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
         </div>
       </div>

@@ -47,10 +47,12 @@ export function ExpandingCards({ items, defaultActiveIndex = 0 }) {
           >
             <img
               src={item.imgSrc}
-              alt={item.title}
+              alt={`${item.title} — ENGISOLS ${item.category} case study`}
               className="ec-img"
               loading="lazy"
               decoding="async"
+              width="600"
+              height="400"
             />
             <div className="ec-overlay" />
             <div className="ec-content">
@@ -60,7 +62,7 @@ export function ExpandingCards({ items, defaultActiveIndex = 0 }) {
               <h3 className="ec-title">{item.title}</h3>
               <p className="ec-desc">{item.description}</p>
               <span className="ec-read-more">
-                Read More
+                Read Case Study
                 <ArrowUpRight size={16} strokeWidth={2.2} />
               </span>
             </div>
