@@ -19,7 +19,7 @@ const orbitRings = [
     sizeRem: 16,
     durationS: 14,
     icons: [
-      { Icon: FaReact, color: '#61DAFB' },
+      // { Icon: FaReact, color: '#61DAFB' },
       { Icon: FaNodeJs, color: '#68A063' },
       { Icon: SiNextdotjs, color: '#e0e0e0' },
       { Icon: SiTypescript, color: '#3178C6' },

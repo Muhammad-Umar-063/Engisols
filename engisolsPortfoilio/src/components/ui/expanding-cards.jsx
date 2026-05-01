@@ -38,35 +38,39 @@ export function ExpandingCards({ items, defaultActiveIndex = 0 }) {
           data-active={activeIndex === index}
           onMouseEnter={() => setActiveIndex(index)}
           onFocus={() => setActiveIndex(index)}
+          onClick={() => setActiveIndex(index)}
+          tabIndex={0}
+          role="button"
+          aria-label={`Preview ${item.title} case study`}
         >
-          <Link
-            to={item.href}
-            className="ec-link"
-            aria-label={`Read case study: ${item.title}`}
-            onClick={() => setActiveIndex(index)}
-          >
-            <img
-              src={item.imgSrc}
-              alt={`${item.title} — ENGISOLS ${item.category} case study`}
-              className="ec-img"
-              loading="lazy"
-              decoding="async"
-              width="600"
-              height="400"
-            />
-            <div className="ec-overlay" />
-            <div className="ec-content">
-              <span className="ec-sideways-title">{item.title}</span>
-              <span className="ec-tag">{item.category}</span>
-              <div className="ec-icon">{item.icon}</div>
-              <h3 className="ec-title">{item.title}</h3>
-              <p className="ec-desc">{item.description}</p>
-              <span className="ec-read-more">
-                Read Case Study
-                <ArrowUpRight size={16} strokeWidth={2.2} />
-              </span>
-            </div>
-          </Link>
+          <img
+            src={item.imgSrc}
+            alt={`${item.title} — ENGISOLS ${item.category} case study`}
+            className="ec-img"
+            loading="lazy"
+            decoding="async"
+            width="600"
+            height="400"
+          />
+          <div className="ec-overlay" />
+          <div className="ec-content">
+            <span className="ec-sideways-title">{item.title}</span>
+            <span className="ec-tag">{item.category}</span>
+            <div className="ec-icon">{item.icon}</div>
+            <h3 className="ec-title">{item.title}</h3>
+            <p className="ec-desc">{item.description}</p>
+            <Link
+              to={item.href}
+              className="ec-read-more"
+              aria-label={`Read full ${item.title} case study`}
+              // Stop the card's onClick from also firing — we don't want the
+              // expand-on-tap to interfere with the navigation event.
+              onClick={(e) => e.stopPropagation()}
+            >
+              Read Case Study
+              <ArrowUpRight size={16} strokeWidth={2.2} />
+            </Link>
+          </div>
         </li>
       ))}
     </ul>
