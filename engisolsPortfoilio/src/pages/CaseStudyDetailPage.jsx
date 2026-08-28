@@ -14,6 +14,7 @@ import Footer from '../components/layout/Footer'
 import Navbar from '../components/layout/Navbar'
 import SeoMeta from '../components/SeoMeta'
 import { getCaseStudyBySlug } from '../data/caseStudies'
+import { techIcon } from '../lib/techIcons'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 const iconMap = {
@@ -244,11 +245,15 @@ export default function CaseStudyDetailPage() {
                 Built <span className="accent">With</span>
               </h2>
               <div className="cs-tags">
-                {study.techStack.map((t) => (
-                  <span className="cs-tag" key={t}>
-                    {t}
-                  </span>
-                ))}
+                {study.techStack.map((t) => {
+                  const Icon = techIcon(t)
+                  return (
+                    <span className="cs-tag" key={t}>
+                      {Icon && <Icon className="cs-tag-icon" aria-hidden="true" />}
+                      {t}
+                    </span>
+                  )
+                })}
               </div>
             </article>
           </div>

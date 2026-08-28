@@ -3594,16 +3594,25 @@ section + section {
 .cs-tag {
   display: inline-flex;
   align-items: center;
+  gap: 0.45rem;
   font-family: 'Bricolage Grotesque', sans-serif;
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: #fff;
   background: var(--gradient);
-  padding: 0.42rem 1rem;
+  padding: 0.42rem 0.95rem;
   border-radius: 40px;
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.3s, filter 0.3s;
+}
+
+/* Brand logo inside a tech pill. Inherits the pill's white `color`, so every
+   logo reads as one monochrome set rather than a clash of brand palettes. */
+.cs-tag-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
 .cs-tag:hover {
