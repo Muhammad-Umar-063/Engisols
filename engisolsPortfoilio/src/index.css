@@ -3230,6 +3230,13 @@ section + section {
   will-change: transform;
 }
 
+/* Light-background screenshots start near white, so the shared scrim isn't
+   enough — they need a much harder knock-down to keep the overlaid title
+   readable. Set via `imgTone: 'light'` on the case study. */
+.cs-banner-img--light {
+  filter: blur(9px) brightness(0.28) saturate(1.05);
+}
+
 /* Frosted-glass layer. The scrim is centre-weighted rather than uniform: the
    text sits over the darkest part while the edges stay light enough for the
    screenshot to read. */

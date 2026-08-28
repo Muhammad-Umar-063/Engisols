@@ -11,6 +11,7 @@ import {
   Zap,
   ShieldCheck,
   HeartPulse,
+  BookOpen,
 } from 'lucide-react'
 import Footer from '../components/layout/Footer'
 import Navbar from '../components/layout/Navbar'
@@ -28,6 +29,7 @@ const iconMap = {
   Zap,
   ShieldCheck,
   HeartPulse,
+  BookOpen,
 }
 
 export default function CaseStudyDetailPage() {
@@ -134,7 +136,9 @@ export default function CaseStudyDetailPage() {
         {/* ── Banner — frosted glass over blurred case study image ── */}
         <section className="cs-banner" aria-label={`${study.title} banner`}>
           <div
-            className="cs-banner-img"
+            className={`cs-banner-img${
+              study.imgTone === 'light' ? ' cs-banner-img--light' : ''
+            }`}
             ref={bannerImgRef}
             role="img"
             aria-label={`${study.title} — ${study.category} project banner`}
