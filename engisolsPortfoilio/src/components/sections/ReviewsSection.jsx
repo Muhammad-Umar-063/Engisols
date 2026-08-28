@@ -1,57 +1,59 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useInView, useAnimation } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Quote, Star } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Quote, Star, User } from 'lucide-react'
 
+// `project` is the engagement the review came from; it renders under the
+// reviewer's name. `avatar` is optional — add a real client photo URL to show
+// one; when absent the Avatar component renders the default silhouette.
 const testimonials = [
   {
     id: 1,
-    name: 'A. Raza',
-    role: 'CEO',
-    company: 'FinTech Labs',
-    content: 'ENGISOLS transformed our outdated system into a modern, scalable platform. Their team delivered on time, on budget, and beyond expectations.',
+    name: 'Jonah Sachs',
+    project: 'pastpresent.app',
+    content: 'ENGISOLS is a pleasure to work with. They know their stuff and can complete complex projects. They think hard about solutions and are good communicators.',
     rating: 5,
-    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-    initials: 'AR',
   },
   {
     id: 2,
-    name: 'S. Khan',
-    role: 'Product Manager',
-    company: 'HealthSync',
-    content: 'From design to deployment, they handled everything flawlessly. Communication was clear, and their technical depth is world-class.',
+    name: 'Matt Riley',
+    project: 'ProLyrics.ai',
+    content: 'ENGISOLS was hired to undertake my programming task out of many applicants and delivered flawlessly! Would definitely hire again :)',
     rating: 5,
-    avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-    initials: 'SK',
   },
   {
     id: 3,
-    name: 'M. Niazi',
-    role: 'CTO',
-    company: 'RetailOS',
-    content: 'We needed speed and quality. ENGISOLS gave us both. Their architecture decisions saved us months of rework later.',
+    name: 'Omar Hamza',
+    project: 'Q&A Application',
+    content: 'It was a nice experience working with ENGISOLS. The team is well versed in the technologies and quickly understands the requirements.',
     rating: 5,
-    avatar: 'https://randomuser.me/api/portraits/men/46.jpg',
-    initials: 'MN',
   },
   {
     id: 4,
-    name: 'H. Bilal',
-    role: 'Founder',
-    company: 'MoveFast',
-    content: 'Their mobile team is exceptional. Our app launch saw a 4.9 rating in the first week and zero critical crashes.',
+    name: 'Lemar Simpson',
+    project: 'SaaS Product',
+    content: 'Good to work with the ENGISOLS team.',
     rating: 5,
-    avatar: 'https://randomuser.me/api/portraits/men/54.jpg',
-    initials: 'HB',
   },
   {
     id: 5,
-    name: 'Z. Rahman',
-    role: 'Director',
-    company: 'NovaWare',
-    content: 'Professional, proactive, and deeply technical. Working with ENGISOLS feels like having an in-house elite engineering team.',
+    name: 'Fer Mell',
+    project: 'Database Development',
+    content: 'ENGISOLS is an excellent development team and a great partner. They fixed things swiftly and give great support. I will definitely keep working with them.',
     rating: 5,
-    avatar: 'https://randomuser.me/api/portraits/men/67.jpg',
-    initials: 'ZR',
+  },
+  {
+    id: 6,
+    name: 'Angela Zoe',
+    project: 'Full-Stack AI Platform',
+    content: 'Great job. ENGISOLS delivered the work on time with excellent quality and clear communication.',
+    rating: 5,
+  },
+  {
+    id: 7,
+    name: 'Rachel Wade',
+    project: 'TypeScript Integration',
+    content: 'ENGISOLS resolved the errors promptly, ensuring smooth integration with the Flask endpoint.',
+    rating: 5,
   },
 ]
 
@@ -85,13 +87,13 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 }
 
-function Avatar({ src, initials, name }) {
+function Avatar({ src, name }) {
   const [errored, setErrored] = useState(false)
-  if (!errored) {
+  if (src && !errored) {
     return (
       <img
         src={src}
-        alt={`Avatar of ${name ?? initials}, ENGISOLS client`}
+        alt={`Avatar of ${name}, ENGISOLS client`}
         width="52"
         height="52"
         loading="lazy"
@@ -105,17 +107,22 @@ function Avatar({ src, initials, name }) {
       />
     )
   }
+  // Default avatar — a neutral silhouette, shown when a client photo isn't
+  // available. Deliberately generic: it claims nothing about who the reviewer is.
   return (
-    <div style={{
-      width: '52px', height: '52px', borderRadius: '50%',
-      background: 'rgba(221,62,94,0.15)',
-      border: '2px solid rgba(221,62,94,0.3)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: '0.85rem', fontWeight: 700,
-      color: '#dd3e5e',
-      fontFamily: "'Bricolage Grotesque', sans-serif",
-    }}>
-      {initials}
+    <div
+      role="img"
+      aria-label={`${name}, ENGISOLS client`}
+      style={{
+        width: '52px', height: '52px', borderRadius: '50%',
+        background: 'rgba(221,62,94,0.15)',
+        border: '2px solid rgba(221,62,94,0.3)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: '#dd3e5e',
+        flexShrink: 0,
+      }}
+    >
+      <User size={24} strokeWidth={1.75} aria-hidden="true" />
     </div>
   )
 }
@@ -162,7 +169,7 @@ export default function ReviewsSection() {
             What Our <span className="accent">Clients Say</span>
           </h2>
           <p className="section-desc" style={{ marginTop: '0.5rem' }}>
-            Real feedback from real clients across fintech, health, retail, and more.
+            Real feedback from real clients across AI, SaaS, web, and data projects.
           </p>
         </motion.div>
 
@@ -189,10 +196,10 @@ export default function ReviewsSection() {
                 {/* Reviewer row */}
                 <div className="reviews-v2-reviewer-row">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-                    <Avatar src={current.avatar} initials={current.initials} name={current.name} />
+                    <Avatar src={current.avatar} name={current.name} />
                     <div>
                       <div className="reviews-v2-name">{current.name}</div>
-                      <div className="reviews-v2-role">{current.role}, {current.company}</div>
+                      <div className="reviews-v2-role">{current.project}</div>
                     </div>
                   </div>
                   <div className="reviews-v2-stars">
