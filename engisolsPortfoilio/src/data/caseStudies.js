@@ -289,7 +289,7 @@ export const caseStudies = [
       'A family caregiving command centre — shared CareSpaces, task boards, encrypted document vaults, and health record integration for distributed care teams.',
     tagline:
       'A caregiving coordination platform where scattered family care teams share one source of truth — tasks, calendars, health records, and encrypted documents.',
-    imgSrc: '/alula.png',
+    imgSrc: '/alula.jpeg',
     iconName: 'HeartPulse',
     metrics: [
       { value: '7', label: 'Care Modules Shipped' },
