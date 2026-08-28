@@ -93,7 +93,7 @@ export default function ContactForm({
             name="lastName"
             type="text"
             className="form-input"
-            placeholder="Second Name"
+            placeholder="Last Name"
             value={values.lastName}
             onChange={updateField}
             required

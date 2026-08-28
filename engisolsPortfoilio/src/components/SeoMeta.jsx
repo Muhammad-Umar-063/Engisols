@@ -7,16 +7,6 @@ const DEFAULT_TITLE =
 const DEFAULT_DESCRIPTION =
   'ENGISOLS builds modern web, mobile, and cloud products for startups and enterprises. Scalable engineering, on-time delivery, transparent pricing.'
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`
-const DEFAULT_KEYWORDS = [
-  'web development agency Lahore',
-  'custom software development Pakistan',
-  'React development services Lahore',
-  'MERN stack developers for hire',
-  'build SaaS MVP Pakistan',
-  'mobile app development company Pakistan',
-  'hire Next.js developer',
-  'cloud DevOps services Pakistan',
-].join(', ')
 
 // ─── Brand profile ────────────────────────────────────────────────────────────
 // To enrich Google's Knowledge Graph entry, fill in the following constants
@@ -24,7 +14,7 @@ const DEFAULT_KEYWORDS = [
 // excluded from the JSON-LD output below (better than fake URLs that 404).
 const FOUNDING_YEAR = undefined // e.g. '2023' — set the year ENGISOLS was founded
 const SOCIAL_URLS = [
-  // 'https://www.linkedin.com/company/engisols',   // ← uncomment + fix when account exists
+  'https://www.linkedin.com/company/engisols/',
   // 'https://x.com/engisols',                       // ← uncomment + fix when account exists
   // 'https://github.com/engisols',                  // ← uncomment + fix when account exists
   // 'https://www.facebook.com/engisols',            // ← uncomment + fix when account exists
@@ -42,17 +32,17 @@ const baseSchema = {
   slogan: 'Your Engineering Vanguard',
   description: DEFAULT_DESCRIPTION,
   ...(FOUNDING_YEAR ? { foundingDate: FOUNDING_YEAR } : {}),
-  areaServed: 'Worldwide',
-  address: {
-    '@type': 'PostalAddress',
-    addressLocality: 'Lahore',
-    addressRegion: 'Punjab',
-    addressCountry: 'PK',
-  },
+  areaServed: [
+    { '@type': 'Country', name: 'United States' },
+    { '@type': 'Country', name: 'United Kingdom' },
+    { '@type': 'Country', name: 'Canada' },
+    'Worldwide',
+  ],
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'customer support',
-    email: 'hello@engisols.com',
+    email: 'growth@engisols.com',
+    telephone: '+1-971-365-1608',
     availableLanguage: ['English'],
   },
   ...(SOCIAL_URLS.length > 0 ? { sameAs: SOCIAL_URLS } : {}),
@@ -75,7 +65,6 @@ export default function SeoMeta({
   image = DEFAULT_OG_IMAGE,
   type = 'website',
   schema,
-  keywords = DEFAULT_KEYWORDS,
 }) {
   // Always start with a leading slash so SITE_URL + path can never produce `//`.
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
@@ -88,7 +77,6 @@ export default function SeoMeta({
 
       <title>{title}</title>
       <meta name="description" content={description} />
-      <meta name="keywords" content={keywords} />
       <meta name="author" content="ENGISOLS" />
       <meta name="robots" content="index, follow, max-image-preview:large" />
       <meta name="theme-color" content="#0e0e0e" />

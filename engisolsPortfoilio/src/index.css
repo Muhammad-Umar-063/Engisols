@@ -2341,6 +2341,17 @@ section {
   font-weight: 300;
 }
 
+a.contact-detail-value {
+  display: inline-block;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a.contact-detail-value:hover,
+a.contact-detail-value:focus-visible {
+  color: var(--crimson);
+}
+
 .contact-form-wrapper {
   background: var(--chicago);
   border: 0.5px solid var(--border);

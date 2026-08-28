@@ -33,16 +33,16 @@ cp .env.example .env
 npm run dev
 ```
 
-## EmailJS Variables
+## Contact Form Variables
 
-Required in `.env`:
+The contact and hero forms post to [Web3Forms](https://web3forms.com). Required in `.env`:
 
 ```env
-VITE_EMAILJS_SERVICE_ID=service_iyr2vci
-VITE_EMAILJS_TEMPLATE_ID=template_q76s32a
-VITE_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
-VITE_CONTACT_TO_EMAIL=hello@engisols.com
+VITE_WEB3FORMS_ACCESS_KEY=your_web3forms_access_key
 ```
+
+The inbox submissions are delivered to is configured in the Web3Forms dashboard
+against this access key — it is not set anywhere in this codebase.
 
 ## Build
 

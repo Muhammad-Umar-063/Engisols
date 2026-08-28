@@ -113,13 +113,6 @@ export default function CaseStudyDetailPage() {
         image={study.imgSrc}
         type="article"
         schema={seoSchema}
-        keywords={[
-          study.title.toLowerCase(),
-          study.category.toLowerCase(),
-          ...study.techStack.map((t) => t.toLowerCase()),
-          'ENGISOLS case study',
-          'software engineering portfolio',
-        ].join(', ')}
       />
 
       <div id="scroll-progress" ref={progressRef} />
