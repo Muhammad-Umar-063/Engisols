@@ -3217,36 +3217,45 @@ section + section {
   border-bottom: 0.5px solid rgba(221, 62, 94, 0.25);
 }
 
-/* Blurred image background — heavily blurred + dim so it reads as ambient color */
+/* Project hero image — blurred enough to sit behind text, but still legible as
+   the real product screenshot rather than dissolving into flat ambient colour. */
 .cs-banner-img {
   position: absolute;
   inset: -8%;
   background-size: cover;
   background-position: center;
-  filter: blur(30px) brightness(0.45) saturate(1.15);
+  filter: blur(9px) brightness(0.62) saturate(1.15);
   transform: scale(1.12);
   z-index: 0;
   will-change: transform;
 }
 
-/* Frosted-glass layer — same idea as the footer, with crimson tint */
+/* Frosted-glass layer. The scrim is centre-weighted rather than uniform: the
+   text sits over the darkest part while the edges stay light enough for the
+   screenshot to read. */
 .cs-banner-glass {
   position: absolute;
   inset: 0;
   background:
     radial-gradient(
+      ellipse 62% 58% at 50% 50%,
+      rgba(14, 14, 14, 0.6) 0%,
+      rgba(14, 14, 14, 0.28) 58%,
+      transparent 82%
+    ),
+    radial-gradient(
       ellipse 70% 60% at 50% 50%,
-      rgba(221, 62, 94, 0.18) 0%,
+      rgba(221, 62, 94, 0.16) 0%,
       transparent 70%
     ),
     linear-gradient(
       to bottom,
-      rgba(14, 14, 14, 0.55) 0%,
-      rgba(14, 14, 14, 0.72) 60%,
-      rgba(14, 14, 14, 0.85) 100%
+      rgba(14, 14, 14, 0.32) 0%,
+      rgba(14, 14, 14, 0.44) 60%,
+      rgba(14, 14, 14, 0.74) 100%
     );
-  backdrop-filter: blur(14px) saturate(1.4);
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(4px) saturate(1.3);
+  -webkit-backdrop-filter: blur(4px) saturate(1.3);
   z-index: 1;
 }
 
@@ -3256,8 +3265,8 @@ section + section {
   inset: 0;
   background: radial-gradient(
     ellipse 80% 80% at 50% 50%,
-    transparent 30%,
-    rgba(0, 0, 0, 0.45) 100%
+    transparent 35%,
+    rgba(0, 0, 0, 0.38) 100%
   );
   z-index: 1;
   pointer-events: none;
@@ -3385,7 +3394,7 @@ section + section {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -3440,11 +3449,11 @@ section + section {
 /* The single wrapping container — styled like .about-container */
 .cs-container {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1400px;
   background: var(--surface);
   border: 1px solid rgba(221, 62, 94, 0.25);
   border-radius: 24px;
-  padding: 3.5rem;
+  padding: 3.5rem 4rem;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -3483,18 +3492,23 @@ section + section {
   background-clip: text;
 }
 
+/* Capped at a comfortable measure. The container is wide so the page doesn't
+   read as empty, but running prose the full width would hurt readability. */
 .cs-block-body {
   font-size: 1rem;
   color: var(--text-secondary);
   line-height: 1.8;
   font-weight: 300;
+  max-width: 80ch;
 }
 
+/* Flows into two columns once there's room, so the extra container width
+   carries content instead of stretching each line. */
 .cs-list {
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+  gap: 0.5rem 1.5rem;
   margin: 0;
   padding: 0;
 }
@@ -3526,10 +3540,16 @@ section + section {
 }
 
 .cs-subblocks {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
   gap: 1.2rem;
   margin-top: 0.5rem;
+}
+
+/* An odd final card would otherwise sit alone at half width — let it span so
+   the grid ends on a clean edge. */
+.cs-subblock:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 .cs-subblock {
@@ -3638,7 +3658,7 @@ section + section {
 /* ── CTA ── */
 .cs-cta {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1400px;
   text-align: center;
   padding: 3rem 2rem;
   background: var(--surface);

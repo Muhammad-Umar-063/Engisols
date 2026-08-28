@@ -9,11 +9,14 @@ import {
   BarChart3,
   Brain,
   Zap,
+  ShieldCheck,
+  HeartPulse,
 } from 'lucide-react'
 import Footer from '../components/layout/Footer'
 import Navbar from '../components/layout/Navbar'
 import SeoMeta from '../components/SeoMeta'
 import { getCaseStudyBySlug } from '../data/caseStudies'
+import { toAbsoluteUrl } from '../lib/siteUrl'
 import { techIcon } from '../lib/techIcons'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
@@ -23,6 +26,8 @@ const iconMap = {
   BarChart3,
   Brain,
   Zap,
+  ShieldCheck,
+  HeartPulse,
 }
 
 export default function CaseStudyDetailPage() {
@@ -82,7 +87,7 @@ export default function CaseStudyDetailPage() {
         '@type': 'Article',
         headline: `${study.title} — ENGISOLS Case Study`,
         description: study.tagline,
-        image: study.imgSrc,
+        image: toAbsoluteUrl(study.imgSrc),
         author: { '@type': 'Organization', name: 'ENGISOLS' },
         publisher: {
           '@type': 'Organization',

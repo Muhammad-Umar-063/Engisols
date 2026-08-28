@@ -1,4 +1,4 @@
-import { Monitor, Smartphone, BarChart3, Brain, Zap } from 'lucide-react'
+import { Monitor, Smartphone, BarChart3, Brain, Zap, ShieldCheck, HeartPulse } from 'lucide-react'
 import { ExpandingCards } from '../ui/expanding-cards'
 import { caseStudies } from '../../data/caseStudies'
 
@@ -8,6 +8,8 @@ const iconMap = {
   BarChart3: <BarChart3 size={22} />,
   Brain: <Brain size={22} />,
   Zap: <Zap size={22} />,
+  ShieldCheck: <ShieldCheck size={22} />,
+  HeartPulse: <HeartPulse size={22} />,
 }
 
 const cardItems = caseStudies.map((cs) => ({

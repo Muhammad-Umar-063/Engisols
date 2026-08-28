@@ -1,13 +1,10 @@
 import { Helmet } from 'react-helmet-async'
+import { SITE_URL, DEFAULT_OG_IMAGE, toAbsoluteUrl } from '../lib/siteUrl'
 
-// Canonical site URL — no trailing slash so we don't generate `//` when joining paths.
-const SITE_URL = 'https://www.engisols.com'
 const DEFAULT_TITLE =
   'ENGISOLS | Your Engineering Vanguard'
 const DEFAULT_DESCRIPTION =
   'ENGISOLS builds modern web, mobile, and cloud products for startups and enterprises. Scalable engineering, on-time delivery, transparent pricing.'
-const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`
-
 // ─── Brand profile ────────────────────────────────────────────────────────────
 // To enrich Google's Knowledge Graph entry, fill in the following constants
 // with REAL values when they exist. Empty arrays / undefined values are
@@ -69,6 +66,9 @@ export default function SeoMeta({
   // Always start with a leading slash so SITE_URL + path can never produce `//`.
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   const url = `${SITE_URL}${normalizedPath}`
+  // og:image and twitter:image are only honoured as absolute URLs, so a local
+  // asset path like '/quicksync.jpeg' has to be resolved against the site URL.
+  const absoluteImage = toAbsoluteUrl(image)
   const jsonLd = schema ?? baseSchema
 
   return (
@@ -87,7 +87,7 @@ export default function SeoMeta({
       <meta property="og:url" content={url} />
       <meta property="og:site_name" content="ENGISOLS" />
       <meta property="og:locale" content="en_US" />
-      <meta property="og:image" content={image} />
+      <meta property="og:image" content={absoluteImage} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content="ENGISOLS — Your Engineering Vanguard" />
@@ -96,7 +96,7 @@ export default function SeoMeta({
       {TWITTER_HANDLE && <meta name="twitter:site" content={TWITTER_HANDLE} />}
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={image} />
+      <meta name="twitter:image" content={absoluteImage} />
 
       <link rel="canonical" href={url} />
       <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>

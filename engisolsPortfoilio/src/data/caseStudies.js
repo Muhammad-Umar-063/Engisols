@@ -3,6 +3,144 @@
 
 export const caseStudies = [
   {
+    slug: 'quick-sync-privacy-platform',
+    title: 'Quick Sync',
+    category: 'Web3 Platform',
+    shortDescription:
+      'A privacy-first decentralized collaboration platform — encrypted file sharing, anonymous live Q&A, and a developer framework for building privacy dApps.',
+    tagline:
+      'Building a privacy-first collaboration platform where sessions are ephemeral, encryption is the default, and no account is ever required.',
+    imgSrc: '/quicksync.jpeg',
+    iconName: 'ShieldCheck',
+    metrics: [
+      { value: '3', label: 'dApps in the Suite' },
+      { value: 'Zero', label: 'Accounts Required' },
+      { value: 'E2E', label: 'Encrypted by Default' },
+      { value: 'P2P', label: 'Waku + WebRTC Delivery' },
+    ],
+    overview:
+      'Quick Sync is a decentralized collaboration platform built on the principle that privacy is a right, not a privilege. Rather than bolting encryption onto a conventional SaaS product, the platform treats ephemeral sessions and end-to-end encryption as the default state — users share files, run live Q&A, and collaborate without creating an account, and without the platform ever holding readable data. ENGISOLS worked across the stack: responsive interfaces, secure API routes, database operations, and third-party integrations, contributing to the QS Share and StageX dApps alongside the marketplace and token layer.',
+    challenges: [
+      'Privacy had to be structural, not a setting — the interface needed to work with no account, no persistent storage, and no server-side access to user content.',
+      'Sessions are ephemeral by design, so the UI had to communicate expiring state and key exchange clearly without exposing users to cryptographic complexity.',
+      'Content delivery spans two very different paths — live peer-to-peer transfer and decentralized buckets for offline recipients — behind one consistent interface.',
+      'StageX required real-time anonymous Q&A with voting and moderation, where participation is untraceable but abuse still has to be controllable.',
+      'The marketplace and token layer needed wallet-connected flows to sit alongside the no-account path without fragmenting the product into two separate experiences.',
+    ],
+    solution: [
+      {
+        heading: 'Front End — Next.js + TypeScript',
+        body:
+          'Responsive, animation-led interfaces built in TypeScript, covering the platform surface and both flagship dApps. The design language leans on motion to make invisible cryptographic state legible — session lifecycles, key establishment, and expiry are surfaced as interface feedback rather than technical detail the user has to interpret.',
+      },
+      {
+        heading: 'API Layer — Secure Server Routes',
+        body:
+          'Secure API routes handling the operations that cannot run client-side, deliberately scoped so encrypted payloads pass through without the server holding keys or readable content. External service integrations sit behind this layer rather than being called directly from the client.',
+      },
+      {
+        heading: 'Data — Prisma-Backed Persistence',
+        body:
+          'Database operations through Prisma for the metadata the platform legitimately needs — channel lifecycles, marketplace listings, and dApp records — kept strictly separate from user content, which never lands in a readable form.',
+      },
+      {
+        heading: 'dApps — QS Share and StageX',
+        body:
+          'QS Share delivers ephemeral, end-to-end encrypted file sharing across invitation-only, link-based, and public access modes. StageX brings real-time anonymous Q&A to live sessions and X Spaces, with community voting and moderation tooling that works without identifying participants.',
+      },
+      {
+        heading: 'Monetization — Marketplace + Token',
+        body:
+          'Interface work for the QS Marketplace, where developers list privacy dApps, and the $QS token integration underpinning creator monetization and on-chain revenue sharing.',
+      },
+    ],
+    results: [
+      'Three privacy dApps shipped on a shared framework — QS Share and StageX live, FileXchange in development.',
+      'Full platform functionality reachable with no account and no wallet, keeping the privacy promise intact at the entry point.',
+      'A single interface spanning both peer-to-peer and decentralized-bucket delivery, so users never have to reason about transport.',
+      'Framework surface documented and opened to external developers, with APIs and SDKs supporting third-party privacy apps.',
+    ],
+    techStack: [
+      'Next.js',
+      'React',
+      'TypeScript',
+      'Prisma',
+      'PostgreSQL',
+      'Node.js',
+      'WebRTC',
+      'Web3',
+    ],
+  },
+  {
+    slug: 'alula-care-platform',
+    title: 'Alula',
+    category: 'SaaS Platform',
+    shortDescription:
+      'A family caregiving command centre — shared CareSpaces, task boards, encrypted document vaults, and health record integration for distributed care teams.',
+    tagline:
+      'A caregiving coordination platform where scattered family care teams share one source of truth — tasks, calendars, health records, and encrypted documents.',
+    imgSrc: '/alula.png',
+    iconName: 'HeartPulse',
+    metrics: [
+      { value: '7', label: 'Care Modules Shipped' },
+      { value: 'AES-256', label: 'Document Encryption' },
+      { value: '6', label: 'Secure Vault Categories' },
+      { value: 'MyChart', label: 'Health Records Integration' },
+    ],
+    overview:
+      'Alula is a caregiving coordination platform built for families managing complex care — dementia, Parkinson\'s, long-term illness — where responsibility is split across relatives, professional caregivers, and clinicians who rarely occupy the same room. The product replaces the usual sprawl of group chats, shared drives, and paper folders with a single CareSpace per recipient. ENGISOLS delivered the full web platform: the marketing site, the care dashboards, and the API layer behind them.',
+    challenges: [
+      'Care teams mix family members and professional caregivers with very different permissions over deeply sensitive medical and financial records.',
+      'The interface had to stay legible to non-technical family members under stress, while still exposing tasks, scheduling, documents, and health data.',
+      'Document storage holds passports, wills, bank details, and medical history — encryption and access control were requirements, not features.',
+      'Scheduling spans time zones and recurrence, with attendee management across a care team that changes over time.',
+      'New users arrive mid-crisis, so onboarding had to reach a working CareSpace in a handful of guided steps.',
+    ],
+    solution: [
+      {
+        heading: 'Front End — React + Redux + Tailwind',
+        body:
+          'Figma designs translated into a responsive React application with Redux managing cross-module state — the care recipient context, team membership, and permissions that every screen depends on. Tailwind CSS kept the design system consistent across the marketing site and the dashboards.',
+      },
+      {
+        heading: 'Care Modules',
+        body:
+          'Seven modules on a shared shell: a Bulletin Board activity feed with attachments and reactions, a Tasks Board with ownership and priority states, a calendar with recurrence and attendee management, encrypted Document Storage, a Health Zone, MyChart integration for clinical records, and Team Management.',
+      },
+      {
+        heading: 'Back End — Node.js + Express + MongoDB',
+        body:
+          'REST APIs in Node.js and Express with MongoDB behind them, modelling CareSpaces, care recipients, team membership, and the permission graph connecting them. Document metadata stays separate from document contents.',
+      },
+      {
+        heading: 'Security — JWT + Role-Based Access',
+        body:
+          'JWT authentication with role-based access control distinguishing care recipients from team members and administrators. Documents are held under AES-256 encryption with per-folder permissions, so financial and legal records stay restricted even inside a trusted care team.',
+      },
+      {
+        heading: 'Onboarding & Delivery',
+        body:
+          'A progressive onboarding checklist walks a new user from account creation to a populated CareSpace with invited caregivers. Deployed on AWS, with work across performance, security, and accessibility.',
+      },
+    ],
+    results: [
+      'Full platform delivered end to end — marketing site, care dashboards, and the API layer serving them.',
+      'Seven coordination modules unified in one CareSpace, replacing scattered chats, drives, and paper folders.',
+      'Sensitive records protected by AES-256 encryption with per-folder permissions inside shared care teams.',
+      'Clinical records surfaced alongside family coordination through MyChart integration.',
+    ],
+    techStack: [
+      'React',
+      'Redux',
+      'Tailwind CSS',
+      'Node.js',
+      'Express',
+      'MongoDB',
+      'JWT',
+      'AWS',
+    ],
+  },
+  {
     slug: 'ecommerce-platform',
     title: 'E-Commerce Platform',
     category: 'Web Application',
