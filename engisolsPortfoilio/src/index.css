@@ -3584,41 +3584,55 @@ section + section {
   font-weight: 300;
 }
 
+/* ── Technology stack: bare brand logos, no chrome ── */
 .cs-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-top: 0.4rem;
+  align-items: center;
+  gap: 1.75rem;
+  margin-top: 0.9rem;
 }
 
 .cs-tag {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: #fff;
-  background: var(--gradient);
-  padding: 0.42rem 0.95rem;
-  border-radius: 40px;
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.3s, filter 0.3s;
+  background: none;
+  border: 0;
+  padding: 0;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Brand logo inside a tech pill. Inherits the pill's white `color`, so every
-   logo reads as one monochrome set rather than a clash of brand palettes. */
+/* Each logo carries its own official brand colour, set inline per technology. */
 .cs-tag-icon {
-  width: 15px;
-  height: 15px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
+  display: block;
+}
+
+/* Fallback for technologies with no official logo — keeps the name visible so
+   the stack list stays complete. */
+.cs-tag--text {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
 }
 
 .cs-tag:hover {
-  transform: translateY(-3px) scale(1.03);
-  filter: brightness(1.1);
-  box-shadow: 0 10px 24px rgba(221, 62, 94, 0.4);
+  transform: translateY(-4px) scale(1.08);
+}
+
+@media (max-width: 600px) {
+  .cs-tags {
+    gap: 1.35rem;
+  }
+
+  .cs-tag-icon {
+    width: 28px;
+    height: 28px;
+  }
 }
 
 /* ── CTA ── */

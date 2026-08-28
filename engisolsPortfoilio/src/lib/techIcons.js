@@ -26,55 +26,62 @@ import {
   SiWebassembly,
 } from 'react-icons/si'
 
-// Official brand logos for the technologies listed in `caseStudies.js`.
+// Official brand logos + official brand colors for the technologies listed in
+// `caseStudies.js`.
 //
 // Keys are normalized (lowercase, alphanumerics only) so 'Next.js', 'nextjs'
 // and 'NEXT JS' all resolve to the same entry — see `normalize()` below.
 //
+// A few brands whose primary colour is black or near-black (Next.js, Rust,
+// Kafka, OpenAI) use their official reversed/white mark instead — the version
+// those brand guidelines specify for dark backgrounds. Rendering them in
+// #000 on this site's near-black surface would make them invisible.
+// Elasticsearch uses Elastic's brand teal for the same legibility reason.
+//
 // Plaid and pgvector are absent on purpose: neither has an official logo in
-// the icon set, and inventing one would be worse than showing none. Their
-// pills render as text only, which `techIcon()` handles by returning null.
+// the icon set. `techIcon()` returns null for them and the UI falls back to
+// their name, so the technology isn't silently dropped.
 const ICONS = {
-  apachekafka: SiApachekafka,
-  auth0: SiAuth0,
-  aws: FaAws,
-  awskms: FaAws,
-  datadog: SiDatadog,
-  docker: SiDocker,
-  elasticsearch: SiElasticsearch,
-  fastapi: SiFastapi,
-  firebase: SiFirebase,
-  go: SiGo,
-  golang: SiGo,
-  grafana: SiGrafana,
-  kafka: SiApachekafka,
-  kubernetes: SiKubernetes,
-  nextjs: SiNextdotjs,
-  nodejs: SiNodedotjs,
-  openai: SiOpenai,
-  postgres: SiPostgresql,
-  postgresql: SiPostgresql,
-  python: SiPython,
-  react: SiReact,
-  reactnative: SiReact,
-  redis: SiRedis,
-  rust: SiRust,
-  snowflake: SiSnowflake,
-  stripe: SiStripe,
-  tensorflow: SiTensorflow,
-  tensorflowlite: SiTensorflow,
-  terraform: SiTerraform,
-  timescale: SiTimescale,
-  timescaledb: SiTimescale,
-  wasm: SiWebassembly,
-  webassembly: SiWebassembly,
+  apachekafka: { Icon: SiApachekafka, color: '#FFFFFF' },
+  auth0: { Icon: SiAuth0, color: '#EB5424' },
+  aws: { Icon: FaAws, color: '#FF9900' },
+  awskms: { Icon: FaAws, color: '#FF9900' },
+  datadog: { Icon: SiDatadog, color: '#8A56D6' },
+  docker: { Icon: SiDocker, color: '#2496ED' },
+  elasticsearch: { Icon: SiElasticsearch, color: '#00BFB3' },
+  fastapi: { Icon: SiFastapi, color: '#009688' },
+  firebase: { Icon: SiFirebase, color: '#FFCA28' },
+  go: { Icon: SiGo, color: '#00ADD8' },
+  golang: { Icon: SiGo, color: '#00ADD8' },
+  grafana: { Icon: SiGrafana, color: '#F46800' },
+  kafka: { Icon: SiApachekafka, color: '#FFFFFF' },
+  kubernetes: { Icon: SiKubernetes, color: '#326CE5' },
+  nextjs: { Icon: SiNextdotjs, color: '#FFFFFF' },
+  nodejs: { Icon: SiNodedotjs, color: '#5FA04E' },
+  openai: { Icon: SiOpenai, color: '#FFFFFF' },
+  postgres: { Icon: SiPostgresql, color: '#4169E1' },
+  postgresql: { Icon: SiPostgresql, color: '#4169E1' },
+  python: { Icon: SiPython, color: '#3776AB' },
+  react: { Icon: SiReact, color: '#61DAFB' },
+  reactnative: { Icon: SiReact, color: '#61DAFB' },
+  redis: { Icon: SiRedis, color: '#FF4438' },
+  rust: { Icon: SiRust, color: '#FFFFFF' },
+  snowflake: { Icon: SiSnowflake, color: '#29B5E8' },
+  stripe: { Icon: SiStripe, color: '#635BFF' },
+  tensorflow: { Icon: SiTensorflow, color: '#FF6F00' },
+  tensorflowlite: { Icon: SiTensorflow, color: '#FF6F00' },
+  terraform: { Icon: SiTerraform, color: '#844FBA' },
+  timescale: { Icon: SiTimescale, color: '#FDB515' },
+  timescaledb: { Icon: SiTimescale, color: '#FDB515' },
+  wasm: { Icon: SiWebassembly, color: '#654FF0' },
+  webassembly: { Icon: SiWebassembly, color: '#654FF0' },
 }
 
 const normalize = (name) => name.toLowerCase().replace(/[^a-z0-9]/g, '')
 
 /**
- * Returns the brand logo component for a technology name, or null when the
- * technology has no official logo available.
+ * Returns `{ Icon, color }` for a technology name, or null when the technology
+ * has no official logo available.
  */
 export function techIcon(name) {
   return ICONS[normalize(name)] ?? null

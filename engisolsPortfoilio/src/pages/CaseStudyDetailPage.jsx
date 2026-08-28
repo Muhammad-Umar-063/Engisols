@@ -246,11 +246,25 @@ export default function CaseStudyDetailPage() {
               </h2>
               <div className="cs-tags">
                 {study.techStack.map((t) => {
-                  const Icon = techIcon(t)
+                  const brand = techIcon(t)
+                  // No official logo for this one — fall back to its name so the
+                  // technology isn't dropped from the list entirely.
+                  if (!brand) {
+                    return (
+                      <span className="cs-tag cs-tag--text" key={t}>
+                        {t}
+                      </span>
+                    )
+                  }
+                  const { Icon, color } = brand
                   return (
-                    <span className="cs-tag" key={t}>
-                      {Icon && <Icon className="cs-tag-icon" aria-hidden="true" />}
-                      {t}
+                    <span className="cs-tag" key={t} title={t}>
+                      <Icon
+                        className="cs-tag-icon"
+                        style={{ color }}
+                        role="img"
+                        aria-label={t}
+                      />
                     </span>
                   )
                 })}
