@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   HeartPulse,
   BookOpen,
+  Scale,
 } from 'lucide-react'
 import Footer from '../components/layout/Footer'
 import Navbar from '../components/layout/Navbar'
@@ -30,6 +31,7 @@ const iconMap = {
   ShieldCheck,
   HeartPulse,
   BookOpen,
+  Scale,
 }
 
 export default function CaseStudyDetailPage() {

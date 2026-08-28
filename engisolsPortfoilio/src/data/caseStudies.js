@@ -3,6 +3,76 @@
 
 export const caseStudies = [
   {
+    slug: 'solosuit-legal-ai-platform',
+    title: 'SoloSuit',
+    category: 'Legal Tech',
+    shortDescription:
+      'Legal AI that helps people answer debt lawsuits on their own — guided response flows, generated court documents, attorney review, and settlement tooling.',
+    tagline:
+      'Most people sued over debt never respond, and lose by default. This platform turns a court deadline into a guided flow anyone can complete.',
+    imgSrc: '/solosuit.png',
+    // Light-background screenshot — see `imgTone` handling in the banner.
+    imgTone: 'light',
+    iconName: 'Scale',
+    metrics: [
+      { value: '$2.99B', label: 'Debt Protected on Platform' },
+      { value: '393K', label: 'People Helped' },
+      { value: '50', label: 'US States Covered' },
+      { value: '3', label: 'Products in the Suite' },
+    ],
+    overview:
+      'When someone is sued over a debt, they have 14 to 30 days to file a formal response. Miss it and the court enters a default judgment — the case is lost without ever being argued. Most people miss it, because the alternative is hiring a lawyer they cannot afford or drafting a legal document they do not know how to write. SoloSuit closes that gap with software: a guided flow that compiles a valid response, generates the court documents, routes them to an attorney for review, and handles filing. ENGISOLS worked on the platform as an AI and senior software engineer.',
+    challenges: [
+      'The deadline is unforgiving and short — the flow has to take someone from panic to a filed response inside days, not weeks.',
+      'Users are non-lawyers under stress, often facing their first court document, so every step has to be legible without legal training.',
+      'Procedure and document requirements vary across all 50 states, and a response valid in one may be defective in another.',
+      'AI in a legal context cannot improvise. A hallucinated defence or citation is not a bad answer, it is a filing that fails.',
+      'The product must stay firmly on the correct side of a hard line: it provides legal information and document automation, never legal advice.',
+      'Debt settlement runs a different flow entirely — negotiation with creditors rather than court procedure — inside the same product.',
+    ],
+    solution: [
+      {
+        heading: 'Platform — Ruby on Rails + React',
+        body:
+          'A Rails backend carrying case state, document generation, and the attorney review pipeline, with React front ends for the guided response flow. The step-by-step structure exists to break an intimidating legal document into questions a person can actually answer one at a time.',
+      },
+      {
+        heading: 'Legal AI — ChatGPT API Integration',
+        body:
+          'AI assistance built on the ChatGPT API for legal and financial questions, integrated so it supports users inside the flow rather than sitting off to the side as a chatbot. Retrieval keeps responses anchored to real procedural information instead of generated guesses.',
+      },
+      {
+        heading: 'Agentic Workflows',
+        body:
+          'Agent-driven workflows moving a case through its stages — intake, response compilation, document generation, attorney handoff, and filing — so the user experiences one continuous flow rather than a series of disconnected forms.',
+      },
+      {
+        heading: 'Document Generation',
+        body:
+          'Court-ready documents assembled from user answers against the requirements of the relevant jurisdiction, then routed for attorney review before filing so a human signs off on what reaches the court.',
+      },
+      {
+        heading: 'Settlement Tooling',
+        body:
+          'A parallel path for users who would rather settle than litigate, supporting negotiated payoffs below face value with the fee structure calculated against the settled amount.',
+      },
+    ],
+    results: [
+      'A guided path to a filed lawsuit response for people who would otherwise default by doing nothing.',
+      'Court-ready documents generated from plain-language answers, with attorney review before filing.',
+      'Coverage across all 50 US states, each with its own procedural requirements.',
+      'The platform reports $2.99B in debt protected across 393,000 people helped.',
+      'Legal defence brought within reach of people priced out of hiring counsel.',
+    ],
+    techStack: [
+      'Ruby on Rails',
+      'React',
+      'OpenAI',
+      'RAG',
+      'AI Agents',
+    ],
+  },
+  {
     slug: 'pastpresent-memory-platform',
     title: 'PastPresent',
     category: 'Agentic AI',
