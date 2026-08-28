@@ -60,9 +60,8 @@ export default function Footer() {
           <div>
             <div className="footer-col-title">Contact</div>
             <ul className="footer-links">
-              <li><a href="mailto:hello@engisols.com">hello@engisols.com</a></li>
-              <li><a href="tel:+923000000000">+92 300 000 0000</a></li>
-              <li><a href="https://maps.google.com/?q=Lahore,Pakistan" target="_blank" rel="noopener noreferrer">Lahore, Pakistan</a></li>
+              <li><a href="growth@engisols.com">hello@engisols.com</a></li>
+              <li><a href="1234567890">+92 300 000 0000</a></li>
               <li><SmartHashLink href="#contact">Book a Call</SmartHashLink></li>
               <li><a href="https://linkedin.com/company/engisols" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
             </ul>
