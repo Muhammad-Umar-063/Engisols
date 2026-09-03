@@ -74,6 +74,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       {/* min-h-dvh, not min-h-full: a percentage min-height resolves against
           <html>'s height, which Lenis sets to auto. Viewport units do not care. */}
       <body className="flex min-h-dvh flex-col">
+        {/* Start every full load at the top. The browser's default
+            `scrollRestoration: 'auto'` re-applies the previous scroll position
+            on reload and on revisits, which on this single tall page of pinned
+            scenes lands the visitor at the footer reveal instead of the hero.
+            Set inline here so it runs before the browser's restoration step — a
+            useEffect corrects the position only after a visible jump. The site
+            CSP allows this (`script-src 'unsafe-inline'`). The matching client
+            reset that also re-syncs Lenis lives in SmoothScroll. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "if('scrollRestoration' in history)history.scrollRestoration='manual'",
+          }}
+        />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-60 focus:rounded-sm focus:bg-cherry focus:px-4 focus:py-2 focus:text-vanilla"

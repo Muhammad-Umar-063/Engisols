@@ -53,6 +53,29 @@ export function SmoothScroll() {
   const { reduced, mounted } = useMotionPrefs()
   const lenisRef = useRef<Lenis | null>(null)
 
+  /**
+   * Every full load, and every bfcache restore, starts at the top.
+   *
+   * `history.scrollRestoration` is set to 'manual' inline in <body> so the
+   * browser stops re-applying the previous scroll position on reload — on this
+   * single tall page of pinned scenes that used to drop visitors at the footer
+   * reveal instead of the hero. This is the matching reset: it pins the native
+   * scroll AND the Lenis instance (which caches its own position, so a native
+   * reset alone leaves the two desynced) back to 0 on mount, and again on
+   * `pageshow`, which is where back/forward bfcache replays the old position.
+   * Runs regardless of reduced motion — the Lenis call is simply a no-op when
+   * no instance exists.
+   */
+  useEffect(() => {
+    const toTop = () => {
+      window.scrollTo(0, 0)
+      lenisRef.current?.scrollTo(0, { immediate: true, force: true })
+    }
+    toTop()
+    window.addEventListener('pageshow', toTop)
+    return () => window.removeEventListener('pageshow', toTop)
+  }, [])
+
   useEffect(() => {
     if (!mounted || reduced) return
 
