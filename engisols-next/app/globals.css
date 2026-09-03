@@ -1,0 +1,320 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Design tokens — build spec section 4.
+
+   Five-value warm palette. Read the three hard rules before using these:
+
+   1. This is a THREE-tier palette, not five. vanilla/oat are 1.27 apart and
+      oat/greige are 1.62 apart — neither pair is a contrast device. Oat is a
+      quiet variation on vanilla for alternating sections. Nothing structural
+      may depend on a reader perceiving the difference.
+   2. Cherry has exactly two jobs: full-bleed section panels, and filled CTAs.
+      Never body text, never a small icon, never an inline highlight. It sits
+      2.02 against bordeaux — indistinguishable at text size.
+   3. Links carry a permanent underline. No red in this family clears AA on
+      vanilla while also separating from bordeaux body text, so colour alone
+      can never be the signal (also WCAG 1.4.1).
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Palette */
+  --color-vanilla: #f0e7db; /* primary light ground */
+  --color-oat: #dccdbb; /* secondary light ground — quiet variation only */
+  --color-greige: #b3a091; /* mid ground, rules, borders — never text on vanilla */
+  --color-cherry: #8e2430; /* full-bleed panels + filled CTAs only */
+  --color-bordeaux: #2a1418; /* hero, footer, body type on light grounds */
+
+  /* The single sanctioned non-palette colour: form validation success. Used
+     nowhere else — red is the brand colour, so red cannot signal failure. */
+  --color-valid: #2f6b4f;
+
+  /* Type — Engisols brand faces, both grotesques.
+     The spec's locked rule is "grotesque only, no serif anywhere". Bricolage
+     Grotesque satisfies it, so the counterweight that stops this warm palette
+     reading as a beauty brand is intact. NO SERIF FALLBACK, ever. */
+  --font-display: var(--font-display-brand), system-ui, sans-serif;
+  --font-body: var(--font-body-brand), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Spacing scale — 8 / 16 / 24 / 40 / 64 / 96 / 160. Nothing between. */
+  --spacing-step-1: 0.5rem; /* 8   */
+  --spacing-step-2: 1rem; /* 16  */
+  --spacing-step-3: 1.5rem; /* 24  */
+  --spacing-step-4: 2.5rem; /* 40  */
+  --spacing-step-5: 4rem; /* 64  */
+  --spacing-step-6: 6rem; /* 96  — section padding, mobile */
+  --spacing-step-7: 10rem; /* 160 — section padding, desktop */
+
+  /* Layout */
+  --container-shell: 1280px;
+
+  /* Motion — mirrors lib/motion.ts. Keep the two in sync. */
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-micro: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Trust-strip marquee. CSS rather than a Motion scene because this sits in the
+   hero critical path, where spec section 12 forbids an animation library.
+   Transform-only, so it stays off the main thread. */
+/* ── Above-the-fold animations — CSS only (animation spec 1.5) ──────────────
+   Anything visible on first paint animates with CSS keyframes, not Motion:
+   no flash, and no animation library in the LCP path. */
+
+/* Hero headline word stagger (spec 3.2). Word level, never character level.
+   Runs exactly once, on load. If CSS fails the text is unstyled and visible;
+   if JS fails it is unaffected. Do not use Motion for this. */
+.hero-h1 .w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.hero-h1 .w > span {
+  display: inline-block;
+  animation: word-up 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i) * 40ms);
+}
+
+@keyframes word-up {
+  from {
+    transform: translateY(105%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Capacity line dot (spec 3.3): 2s pulse, scale 1→1.4, opacity 1→0.4. */
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.4);
+  }
+}
+
+.capacity-dot {
+  animation: dot-pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Ticker (spec 4.1): the logo set is duplicated inside ONE track, which
+   translates -50% on an infinite LINEAR loop — any curve makes the seam
+   visibly stutter. Edges fade with a mask. */
+.ticker {
+  overflow: hidden;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 80px,
+    black calc(100% - 80px),
+    transparent 100%
+  );
+}
+
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker 40s linear infinite;
+}
+
+@keyframes ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+/* Custom cursor (spec 2.3): applied by JS only once our cursor is actually
+   tracking, so a JS failure keeps the native one. Scoped by selector rather
+   than a blanket `* { cursor: none }` so the places where the native cursor
+   carries real information keep it. */
+.cursor-hidden,
+.cursor-hidden * {
+  cursor: none;
+}
+
+/* Text entry needs a caret, resize handles need to show the axis, and a
+   disabled control needs to say so. These override the rule above. */
+.cursor-hidden :is(input, textarea, [contenteditable='true']) {
+  cursor: text;
+}
+
+.cursor-hidden :is([disabled], [aria-disabled='true']) {
+  cursor: not-allowed;
+}
+
+/* Keyboard users get the native cursor back the moment focus moves by key,
+   because a hidden pointer plus a focus ring is a confusing pair of signals. */
+.cursor-hidden:has(:focus-visible) * {
+  cursor: auto;
+}
+
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .cursor-hidden,
+  .cursor-hidden * {
+    cursor: auto;
+  }
+}
+
+/* Footer reveal (spec 13) now lives in components/motion/FooterReveal.tsx.
+   The CSS-only version that was here pinned the footer with `position: fixed`
+   inside a hardcoded --footer-h: 640px well. The footer measures 817px, so its
+   last 177px sat behind an inner scrollbar, and the whole effect was switched
+   off below 768px because fixed elements fight the mobile URL bar. The Motion
+   version pins with `position: sticky` and measures the footer, so neither
+   compromise is needed.
+
+   IMPORTANT: do not add an overflow rule to html or body. Any value other than
+   `visible` makes that element a scroll container, and the sticky footer then
+   pins to it instead of the viewport — the reveal stops working, silently.
+   Components that need clipping apply it to their own wrapper. */
+
+/* Page transitions (spec 2.5). CSS only, no JavaScript router. Chromium 126+
+   and Safari 18.2+; Firefox navigates normally, no fallback needed. */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: vt-out 180ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+::view-transition-new(root) {
+  animation: vt-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes vt-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--color-vanilla);
+    color: var(--color-bordeaux);
+    font-family: var(--font-body);
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Display type: grotesque, weight 500–600, tight tracking. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 550;
+    letter-spacing: -0.02em;
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+
+  /* Rule 3: colour is never the sole link signal. */
+  a {
+    text-underline-offset: 0.22em;
+    text-decoration-thickness: from-font;
+  }
+
+  /* Focus: cherry on light grounds, vanilla on dark. Never removed. */
+  :focus-visible {
+    outline: 2px solid var(--color-cherry);
+    outline-offset: 3px;
+  }
+
+  .on-dark :focus-visible {
+    outline-color: var(--color-vanilla);
+  }
+
+  ::selection {
+    background: var(--color-cherry);
+    color: var(--color-vanilla);
+  }
+}
+
+@layer components {
+  /* Max content width. Section grounds stay full-bleed; only the inner column
+     is constrained, so colour cuts between sections run edge to edge. */
+  .shell {
+    width: 100%;
+    max-width: var(--container-shell);
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+
+  @media (width >= 48rem) {
+    .shell {
+      padding-inline: 2.5rem;
+    }
+  }
+
+  /* Section padding: 96 mobile, 160 desktop. Hard cuts between grounds — no
+     gradients, no soft transitions. */
+  .band {
+    padding-block: var(--spacing-step-6);
+  }
+
+  @media (width >= 64rem) {
+    .band {
+      padding-block: var(--spacing-step-7);
+    }
+  }
+
+  /* Body copy never exceeds 68 characters. */
+  .measure {
+    max-width: 68ch;
+  }
+}
+
+/* Rule 4: reduced motion is a real branch, not a disable. Scroll scenes
+   collapse to their final position; custom cursors switch off entirely
+   (handled in the cursor component, which checks the same query). */
+@media (prefers-reduced-motion: reduce) {
+  /* CSS-driven scenes stop; Motion scenes branch via useMotionPrefs. */
+  .hero-h1 .w > span,
+  .capacity-dot {
+    animation: none;
+  }
+
+  .ticker-track {
+    animation: none;
+  }
+
+  /* Hero scroll zoom (spec 3.1): the scene keeps its opacity fade but loses the
+     zoom, so the scroll runway that gave the zoom room is dead scroll. */
+  .zoom-hero-runway {
+    display: none;
+  }
+
+  .ticker {
+    overflow-x: auto;
+    mask-image: none;
+  }
+
+  /* Footer reveal: the pin is inert under reduced motion — it is a consequence
+     of scrolling, not an animation — so it stays. The fade, scale and blur on
+     top of it are branched off in FooterReveal.tsx. */
+
+  @view-transition {
+    navigation: none;
+  }
+}
