@@ -87,7 +87,19 @@ export function ScopeEstimator() {
   const firstFieldRef = useRef<HTMLFieldSetElement>(null)
 
   // Focus management per 12.1: in on expand, back on collapse.
+  //
+  // Skip the mount run. `open` is false on first render, so without this guard
+  // the effect takes the collapse branch on mount and focuses the trigger
+  // button — and `focus()` scrolls its target into view. This section sits near
+  // the foot of the page, so on every load the browser jumped the whole page
+  // down to it before settling. Focus must only move in response to a real
+  // expand/collapse the user drove, never on the initial render.
+  const focusInitialized = useRef(false)
   useEffect(() => {
+    if (!focusInitialized.current) {
+      focusInitialized.current = true
+      return
+    }
     if (open) {
       firstFieldRef.current?.querySelector('input')?.focus()
     } else {
