@@ -18,6 +18,17 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     return [
+      // Apex to www. This lived in the old engisolsPortfoilio/vercel.json, and
+      // Vercel reads vercel.json from the project ROOT — the moment the root
+      // moves to engisols-next that file stops applying. Without this,
+      // engisols.com serves the site instead of redirecting and Google sees
+      // every page on two hostnames. Kept in code so it cannot be lost again.
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'engisols.com' }],
+        destination: 'https://www.engisols.com/:path*',
+        permanent: true,
+      },
       // The old site's case studies moved to /work.
       ...caseStudies.map((study) => ({
         source: `/case-studies/${study.slug}`,
