@@ -1,22 +1,24 @@
 import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import { HeroHeadline } from '@/components/sections/HeroHeadline'
-import { Magnetic } from '@/components/motion/Magnetic'
 import { Reveal } from '@/components/motion/Reveal'
 import { LpHeader } from '@/components/campaign/LpHeader'
 import { AuditPanel } from '@/components/campaign/AuditPanel'
 import { BookButton, BookingProvider } from '@/components/campaign/Booking'
 import { CheckCards, PointRow } from '@/components/campaign/CheckCards'
+import { ToolStrip } from '@/components/campaign/ToolStrip'
 import { WorkGrid } from '@/components/campaign/WorkGrid'
-import { Card, Eyebrow, LpSection, TickItem } from '@/components/campaign/ui'
+import { Card, Eyebrow, LpSection, Tick, TickItem } from '@/components/campaign/ui'
 import { Logo } from '@/components/layout/Logo'
 import { SITE } from '@/lib/site'
 import {
   lpChecks,
   lpFamiliar,
+  lpFaq,
   lpFinal,
   lpFooter,
   lpHero,
+  lpReport,
   lpSteps,
   lpTools,
   lpWork,
@@ -40,10 +42,12 @@ import {
  * the layout that renders the site's header and footer: there is nothing to
  * hide with CSS because nothing is rendered.
  *
- * ONE GAP IN THE COMP. Its nav lists "What You Get" and "FAQ" and it draws
- * neither section. Rather than invent two sections of copy, those two items
- * point at the nearest thing that exists. Send the artboards and they become
- * real sections; otherwise the two items should come out of the nav.
+ * TWO SECTIONS THE COMP DID NOT DRAW. Its nav lists "What You Get" and "FAQ"
+ * and it drew neither, so both items used to resolve to the nearest section
+ * that existed — which teaches a reader the nav is decorative. Both are written
+ * now: the report section from the deliverable step 03 already describes, the
+ * FAQ from the fears the quotes section opens with, answered at the point a
+ * reader has finished deciding whether to book.
  *
  * Server component apart from the interactive parts. Every word is in the first
  * HTML response, which for a page this expensive to get a visitor onto is not a
@@ -78,7 +82,7 @@ export default function AiAppAuditPage() {
 
       {/* 1 Hero */}
       <section id="top" className="bg-vanilla">
-        <div className="shell grid gap-step-5 pb-step-6 pt-[calc(var(--spacing-step-6)+3.5rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start lg:pb-step-7 lg:pt-[calc(var(--spacing-step-7)+1rem)]">
+        <div className="shell grid gap-step-5 pb-step-6 pt-[calc(var(--spacing-step-6)+3.5rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start lg:pt-[calc(var(--spacing-step-6)+4rem)]">
           <div>
             <div className="lp-in" style={{ '--i': 0 } as CSSProperties}>
               <Eyebrow>{lpHero.eyebrow}</Eyebrow>
@@ -128,12 +132,7 @@ export default function AiAppAuditPage() {
               className="lp-in mt-step-4 flex flex-wrap items-center gap-step-3"
               style={{ '--i': 11 } as CSSProperties}
             >
-              {/* Magnetic: a 24px invisible field around the CTA so the pull
-                  catches before the pointer arrives. -m-6 cancels that padding
-                  so the row sits exactly where it did. */}
-              <Magnetic className="-m-6" snap={false}>
-                <BookButton label={lpHero.primary} />
-              </Magnetic>
+              <BookButton label={lpHero.primary} />
               <a
                 href="#checks"
                 data-cursor="link"
@@ -162,28 +161,20 @@ export default function AiAppAuditPage() {
       {/* 2 Tool strip */}
       <section className="border-y border-greige/40 bg-vanilla">
         <div className="shell flex flex-col gap-step-3 py-step-3 lg:flex-row lg:items-center lg:gap-step-4">
-          <p className="max-w-[24ch] shrink-0 font-mono text-[0.65rem] leading-relaxed tracking-[0.08em] text-bordeaux/70">
-            {lpTools.line}
-          </p>
-          {/* Scrolls rather than wraps on a phone: seven chips in one row is the
-              comp's arrangement, and stacking them would double the strip. */}
-          <ul className="-mx-step-3 flex min-w-0 flex-1 gap-step-2 overflow-x-auto px-step-3 lg:mx-0 lg:justify-between lg:overflow-visible lg:px-0">
-            {lpTools.tools.map((tool, i) => (
-              <li key={tool} className="shrink-0">
-                <Reveal y={8} delay={i * 0.05}>
-                  <span className="lp-card block rounded-full border border-greige/50 px-step-3 py-1.5 font-display text-sm whitespace-nowrap hover:border-greige">
-                    {tool}
-                  </span>
-                </Reveal>
-              </li>
-            ))}
-          </ul>
+          <Reveal y={8} className="shrink-0">
+            <p className="max-w-[24ch] font-mono text-[0.65rem] leading-relaxed tracking-[0.08em] text-bordeaux/70">
+              {lpTools.line}
+            </p>
+          </Reveal>
+          <Reveal y={8} delay={0.06} className="min-w-0 flex-1">
+            <ToolStrip />
+          </Reveal>
         </div>
       </section>
 
       {/* 3 Sound familiar */}
       <LpSection id="familiar" ground="oat">
-        <div className="grid gap-step-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+        <div className="grid gap-step-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-center">
           <Reveal y={16}>
             <Eyebrow>{lpFamiliar.eyebrow}</Eyebrow>
             <h2 className="mt-step-3 text-[clamp(1.75rem,3vw,2.5rem)]">{lpFamiliar.heading}</h2>
@@ -213,19 +204,19 @@ export default function AiAppAuditPage() {
             {/* The comp's blue panel. Cherry here — a full-bleed panel is one of
                 the two jobs that colour has. */}
             <Reveal y={16} delay={0.1} className="flex">
-            <div className="flex flex-1 flex-col rounded-2xl bg-cherry p-step-3 text-vanilla on-dark">
-              <p className="font-display text-lg leading-snug">{lpFamiliar.panel.heading}</p>
-              <ul className="mt-step-3 space-y-1.5 text-sm">
-                {lpFamiliar.panel.points.map((point) => (
-                  <TickItem key={point} className="text-vanilla/90">
-                    {point}
-                  </TickItem>
-                ))}
-              </ul>
-              <div className="mt-step-4">
-                <BookButton label={lpFamiliar.panel.cta} variant="inverse" />
+              <div className="flex flex-1 flex-col rounded-2xl bg-cherry p-step-3 text-vanilla on-dark">
+                <p className="font-display text-lg leading-snug">{lpFamiliar.panel.heading}</p>
+                <ul className="mt-step-3 space-y-1.5 text-sm">
+                  {lpFamiliar.panel.points.map((point) => (
+                    <TickItem key={point} className="text-vanilla/90">
+                      {point}
+                    </TickItem>
+                  ))}
+                </ul>
+                <div className="mt-step-4">
+                  <BookButton label={lpFamiliar.panel.cta} variant="inverse" />
+                </div>
               </div>
-            </div>
             </Reveal>
           </div>
         </div>
@@ -233,7 +224,7 @@ export default function AiAppAuditPage() {
 
       {/* 4 The five checks */}
       <LpSection id="checks">
-        <div className="grid gap-step-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-end">
+        <div className="grid gap-step-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-baseline">
           <Reveal y={16}>
             <Eyebrow>{lpChecks.eyebrow}</Eyebrow>
             <h2 className="mt-step-3 text-[clamp(1.75rem,3vw,2.5rem)]">{lpChecks.heading}</h2>
@@ -257,33 +248,54 @@ export default function AiAppAuditPage() {
 
       {/* 6 How it works */}
       <LpSection id="how">
-        <div className="grid gap-step-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+        <div className="grid gap-step-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-center">
           <Reveal y={16}>
             <Eyebrow>{lpSteps.eyebrow}</Eyebrow>
             <h2 className="mt-step-3 text-[clamp(1.75rem,3vw,2.5rem)]">{lpSteps.heading}</h2>
           </Reveal>
-          {/* The comp puts an arrow between the cards. It is decorative and
-              hidden from assistive tech; the numbering already carries order. */}
-          <ol className="grid items-stretch gap-step-2 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
+          {/* The arrow between cards is the comp's, drawn rather than typed: a
+              mono "→" rendered at 14px next to a 200px card is a character, not
+              a connector, and it read as a stray glyph. This is a real line
+              with a head, in cherry, at the height of the card numbers. It is
+              decorative and hidden from assistive tech — the numbering already
+              carries the order. */}
+          <ol className="grid items-stretch gap-step-2 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:gap-step-1">
             {lpSteps.steps.map((step, i) => (
               <li key={step.n} className="contents">
                 <Reveal y={16} delay={i * 0.12} className="h-full">
-                <Card className="h-full">
-                  <span className="grid size-8 place-items-center rounded-full bg-oat/70 font-mono text-xs">
-                    {step.n}
-                  </span>
-                  <h3 className="mt-step-3 text-base font-medium">{step.title}</h3>
-                  <p className="mt-step-1 text-sm text-bordeaux/75">{step.body}</p>
-                  <p className="mt-step-3 border-t border-greige/40 pt-step-2 font-mono text-xs text-bordeaux/60">
-                    {step.meta}
-                  </p>
-                </Card>
+                  <Card className="flex h-full flex-col">
+                    <div className="flex items-center justify-between gap-step-2">
+                      <span className="grid size-8 place-items-center rounded-full bg-oat/70 font-mono text-xs">
+                        {step.n}
+                      </span>
+                      <span className="font-mono text-[0.65rem] tracking-tight text-bordeaux/50">
+                        {step.time}
+                      </span>
+                    </div>
+                    <h3 className="mt-step-3 text-lg font-medium">{step.title}</h3>
+                    <p className="mt-step-2 text-sm leading-relaxed text-bordeaux/75">
+                      {step.body}
+                    </p>
+                    <p className="mt-auto flex items-center gap-step-1 border-t border-greige/40 pt-step-2 font-mono text-xs text-bordeaux/60">
+                      <Tick className="size-3.5 opacity-70" />
+                      {step.meta}
+                    </p>
+                  </Card>
                 </Reveal>
                 {i < lpSteps.steps.length - 1 ? (
                   <Reveal y={8} delay={i * 0.12 + 0.08} className="hidden self-center md:block">
-                    <span aria-hidden className="font-mono text-bordeaux/40">
-                      →
-                    </span>
+                    <svg
+                      aria-hidden
+                      viewBox="0 0 40 12"
+                      className="h-3 w-10 text-cherry"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M1 6h34m-6-5 6 5-6 5" />
+                    </svg>
                   </Reveal>
                 ) : null}
               </li>
@@ -292,9 +304,35 @@ export default function AiAppAuditPage() {
         </div>
       </LpSection>
 
-      {/* 7 Closing band */}
+      {/* 7 What you get */}
+      <LpSection id="report" ground="oat">
+        <Reveal y={16}>
+          <Eyebrow>{lpReport.eyebrow}</Eyebrow>
+          <h2 className="mt-step-3 text-[clamp(1.75rem,3vw,2.5rem)]">{lpReport.heading}</h2>
+          <p className="measure mt-step-2 text-bordeaux/75">{lpReport.lead}</p>
+        </Reveal>
+        <ul className="mt-step-5 grid gap-step-2 md:grid-cols-2 xl:grid-cols-4">
+          {lpReport.items.map((item, i) => (
+            <li key={item.title}>
+              <Reveal y={16} delay={i * 0.05} className="h-full">
+                <Card className="h-full">
+                  <span className="font-mono text-xs text-bordeaux/45">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <h3 className="mt-step-2 text-base font-medium">{item.title}</h3>
+                  <p className="mt-step-2 text-sm leading-relaxed text-bordeaux/75">
+                    {item.body}
+                  </p>
+                </Card>
+              </Reveal>
+            </li>
+          ))}
+        </ul>
+      </LpSection>
+
+      {/* 8 Closing band */}
       <section className="bg-cherry text-vanilla on-dark" data-ground="dark">
-        <div className="shell grid gap-step-4 py-step-6 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center lg:gap-step-5 lg:py-step-7">
+        <div className="shell grid gap-step-4 py-step-6 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center lg:gap-step-5">
           <Reveal y={16}>
             <h2 className="text-[clamp(1.75rem,3vw,2.5rem)]">{lpFinal.heading}</h2>
             <p className="measure mt-step-3 text-vanilla/85">{lpFinal.body}</p>
@@ -309,18 +347,62 @@ export default function AiAppAuditPage() {
             </ul>
           </Reveal>
           <Reveal y={8} delay={0.16}>
-            <Magnetic className="-m-6" snap={false}>
-              <BookButton label={lpFinal.cta} variant="inverse" />
-            </Magnetic>
+            <BookButton label={lpFinal.cta} variant="inverse" />
           </Reveal>
         </div>
       </section>
 
-      {/* 8 Footer */}
+      {/* 9 FAQ — after the ask, not before it.
+          The objection-handling reads better once the offer has been made:
+          a reader who is already sold scrolls past, and one who hesitated at
+          the button finds their exact hesitation answered directly beneath
+          it rather than having had it raised before they wanted it. */}
+      <LpSection id="faq">
+        <div className="grid gap-step-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start">
+          <Reveal y={16}>
+            <Eyebrow>{lpFaq.eyebrow}</Eyebrow>
+            <h2 className="mt-step-3 text-[clamp(1.75rem,3vw,2.5rem)]">{lpFaq.heading}</h2>
+          </Reveal>
+
+          <div>
+            {lpFaq.items.map((item, i) => (
+              <Reveal key={item.q} y={8} delay={i * 0.04}>
+                {/* `details`, not a JS accordion: it opens without JavaScript,
+                    browser find-in-page can reach the closed answers, and the
+                    open state survives a reload. The arrow is the only thing
+                    that animates. */}
+                <details className="group border-t border-greige/50 py-step-3 last:border-b">
+                  <summary
+                    data-cursor="link"
+                    className="flex cursor-pointer list-none items-start justify-between gap-step-3 font-display text-lg"
+                  >
+                    {item.q}
+                    <span
+                      aria-hidden
+                      className="mt-1 shrink-0 text-cherry transition-transform duration-200 group-open:rotate-45"
+                      style={{ transitionTimingFunction: 'var(--ease-micro)' }}
+                    >
+                      +
+                    </span>
+                  </summary>
+                  <p className="measure mt-step-2 text-bordeaux/80">{item.a}</p>
+                </details>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </LpSection>
+
+      {/* 10 Footer */}
       <footer className="bg-vanilla">
-        <div className="shell flex flex-col gap-step-3 border-t border-greige/40 py-step-4 md:flex-row md:items-center md:justify-between">
+        <Reveal
+          y={8}
+          className="shell flex flex-col gap-step-3 border-t border-greige/40 py-step-4 md:flex-row md:items-center md:justify-between"
+        >
           <Logo idPrefix="lp-foot" title="Engisols" className="h-5 w-auto shrink-0" />
-          <p className="font-mono text-xs text-bordeaux/60">{lpFooter.services.join('  ·  ')}</p>
+          <p className="font-mono text-xs text-bordeaux/60">
+            {lpFooter.services.join('  ·  ')}
+          </p>
           <div className="flex flex-wrap items-center gap-step-3 font-mono text-xs">
             <a href={`mailto:${SITE.email}`} className="underline underline-offset-4">
               {SITE.email}
@@ -332,7 +414,7 @@ export default function AiAppAuditPage() {
             ))}
             <span className="text-bordeaux/55">{lpFooter.copyright}</span>
           </div>
-        </div>
+        </Reveal>
       </footer>
     </BookingProvider>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { AnimatePresence, m, useInView } from 'motion/react'
+import { m, useInView } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useMotionPrefs } from '@/hooks/useMotionPrefs'
 import { scrollToTarget } from '@/components/motion/SmoothScroll'
@@ -34,6 +34,14 @@ import { lpAudit } from '@/content/campaign'
  *
  * Reduced motion renders the finished frame with no sequencing, no sweep and no
  * breathing.
+ *
+ * The priorities card is ALWAYS in the DOM, faded rather than mounted. It used
+ * to arrive through `AnimatePresence`, which meant the hero column was 8px
+ * shorter until the sequence finished and everything below the hero stepped
+ * down when it landed — measured: the section under it moved from 935 to 943.
+ * A card that appears two seconds after load must not be allowed to move the
+ * page; reserving its space costs nothing and is the whole fix. `inert` keeps
+ * the button inside it out of the tab order for the seconds it is invisible.
  */
 
 const ICONS: Record<string, string> = {
@@ -138,59 +146,54 @@ export function AuditPanel() {
           have landed so the two read as one sequence. In flow with a negative
           margin rather than absolutely positioned: absolute placement covered
           the last rows at desktop widths. */}
-      <AnimatePresence>
-        {complete ? (
-          <m.div
-            key="priorities"
-            initial={reduced || !mounted ? false : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: DUR.standard, ease: EASE.enter }}
-            className="relative z-10 mx-step-3 -mt-step-3 rounded-2xl border border-greige/40 bg-vanilla p-step-3 shadow-[0_24px_60px_-40px_rgba(42,20,24,0.5)] sm:mx-0 sm:ml-auto sm:mr-[-1.25rem] sm:w-[19rem]"
-          >
-            <p className="font-mono text-[0.6rem] tracking-[0.1em] text-bordeaux/65">
-              {lpAudit.prioritiesTitle}
-            </p>
-            <ul className="mt-step-2 space-y-step-1">
-              {lpAudit.priorities.map((p, i) => (
-                <m.li
-                  key={p.label}
-                  initial={reduced || !mounted ? false : { opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{
-                    duration: DUR.standard,
-                    ease: EASE.enter,
-                    delay: reduced ? 0 : 0.12 + i * STAGGER * 2,
-                  }}
-                  className="flex items-center gap-step-2 text-sm"
-                >
-                  <span className="font-mono text-xs text-bordeaux/45">{p.rank}</span>
-                  <span className="flex-1">{p.label}</span>
-                  <span
-                    className={`rounded-full px-step-1 py-0.5 font-mono text-[0.6rem] tracking-tight ${
-                      p.severity === 'High'
-                        ? 'bg-cherry text-vanilla'
-                        : 'bg-greige/35 text-bordeaux/75'
-                    }`}
-                  >
-                    {p.severity}
-                  </span>
-                </m.li>
-              ))}
-            </ul>
-            {/* The comp's "View full report →". There is no report to open and
-                nowhere off this page to send anyone, so it goes to the section
-                that describes the deliverable. */}
-            <button
-              type="button"
-              onClick={() => scrollToTarget('#how')}
-              className="mt-step-2 inline-flex items-center gap-1.5 font-mono text-xs text-bordeaux underline decoration-bordeaux/40 underline-offset-4 transition-colors hover:decoration-bordeaux"
+      <m.div
+        inert={!complete}
+        aria-hidden={!complete}
+        initial={false}
+        animate={complete ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+        transition={{ duration: reduced ? 0 : DUR.standard, ease: EASE.enter }}
+        className="relative z-10 mx-step-3 -mt-step-3 rounded-2xl border border-greige/40 bg-vanilla p-step-3 shadow-[0_24px_60px_-40px_rgba(42,20,24,0.5)] sm:mx-0 sm:ml-auto sm:mr-[-1.25rem] sm:w-[19rem]"
+      >
+        <p className="font-mono text-[0.6rem] tracking-[0.1em] text-bordeaux/65">
+          {lpAudit.prioritiesTitle}
+        </p>
+        <ul className="mt-step-2 space-y-step-1">
+          {lpAudit.priorities.map((p, i) => (
+            <m.li
+              key={p.label}
+              initial={false}
+              animate={complete ? { opacity: 1, x: 0 } : { opacity: 0, x: -6 }}
+              transition={{
+                duration: reduced ? 0 : DUR.standard,
+                ease: EASE.enter,
+                delay: reduced || !complete ? 0 : 0.12 + i * STAGGER * 2,
+              }}
+              className="flex items-center gap-step-2 text-sm"
             >
-              {lpAudit.report}
-              <span aria-hidden>→</span>
-            </button>
-          </m.div>
-        ) : null}
-      </AnimatePresence>
+              <span className="font-mono text-xs text-bordeaux/45">{p.rank}</span>
+              <span className="flex-1">{p.label}</span>
+              <span
+                className={`rounded-full px-step-1 py-0.5 font-mono text-[0.6rem] tracking-tight ${
+                  p.severity === 'High' ? 'bg-cherry text-vanilla' : 'bg-greige/35 text-bordeaux/75'
+                }`}
+              >
+                {p.severity}
+              </span>
+            </m.li>
+          ))}
+        </ul>
+        {/* The comp's "View full report →". There is no report to open and
+            nowhere off this page to send anyone, so it goes to the section that
+            describes the deliverable. */}
+        <button
+          type="button"
+          onClick={() => scrollToTarget('#how')}
+          className="mt-step-2 inline-flex items-center gap-1.5 font-mono text-xs text-bordeaux underline decoration-bordeaux/40 underline-offset-4 transition-colors hover:decoration-bordeaux"
+        >
+          {lpAudit.report}
+          <span aria-hidden>→</span>
+        </button>
+      </m.div>
     </div>
   )
 }

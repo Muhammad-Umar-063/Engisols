@@ -3,6 +3,7 @@
 import { m } from 'motion/react'
 import type { CSSProperties } from 'react'
 import { useMotionPrefs } from '@/hooks/useMotionPrefs'
+import { useReveal } from '@/components/motion/Reveal'
 import { DUR, EASE } from '@/lib/motion'
 import { lpChecks } from '@/content/campaign'
 import { useBooking } from '@/components/campaign/Booking'
@@ -13,10 +14,22 @@ import { Tick, TickItem } from '@/components/campaign/ui'
  * four-item tick list, and "Learn more →". The fifth card is the filled one.
  *
  * "Learn more" is the one link in the comp with nowhere to go that does not
- * leave for the site. It scrolls to the booking section instead of navigating,
- * and it keeps the comp's label and arrow. The alternative — inventing a page
- * of detail per card — would have added five screens of copy that are not in
- * the design.
+ * leave for the site. It opens the booking dialog instead of navigating, and it
+ * keeps the comp's label and arrow.
+ *
+ * It sits at the FOOT of every card, pinned there by `mt-auto` inside the flex
+ * column, so the five links land on one line across the grid instead of at
+ * five different heights.
+ *
+ * No rule above it. There was one, and the cursor pill — which is taller than
+ * the text it wraps — sat straight across it, so the line appeared to run
+ * through the middle of the shape. Two horizontal edges within 10px of each
+ * other, one of them moving, is a mess at any weight. The lists are equal
+ * length now, which is what was actually holding the row together.
+ *
+ * `data-cursor="link"` gives it the same pill the hero's "SEE THE CHECKS WE
+ * RUN" wears. It is the same kind of thing — a run of text with no shape of its
+ * own — so it behaves the same way.
  */
 
 const ICONS = [
@@ -28,89 +41,106 @@ const ICONS = [
 ]
 
 export function CheckCards() {
-  const { mounted, reduced } = useMotionPrefs()
+  const { reduced } = useMotionPrefs()
   // The provider lives in the page; a server component cannot hand a click
   // handler to a client one, so the button reaches for it directly.
   const onMore = useBooking()
 
   return (
     <ul className="mt-step-5 grid gap-step-2 md:grid-cols-2 xl:grid-cols-5">
-      {lpChecks.items.map((item, i) => {
-        const feature = i === lpChecks.items.length - 1
-
-        return (
-          <m.li
-            key={item.id}
-            initial={reduced || !mounted ? false : { opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-10%' }}
-            transition={{ duration: DUR.standard, ease: EASE.enter, delay: i * 0.05 }}
-            // Same rule as the CTA: the filled card is a dark surface inside a
-            // light section, so it declares its own ground or the cursor
-            // vanishes over it.
-            data-ground={feature ? 'dark' : undefined}
-            className={`flex flex-col rounded-2xl border p-step-3 ${
-              feature
-                ? 'border-cherry bg-cherry text-vanilla on-dark'
-                : 'border-greige/40 bg-vanilla'
-            }`}
-          >
-            <span
-              className={`grid size-9 place-items-center rounded-full ${
-                feature ? 'bg-vanilla/15' : 'bg-oat/70'
-              }`}
-              aria-hidden
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="size-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d={ICONS[i]} />
-              </svg>
-            </span>
-
-            <p
-              className={`mt-step-3 font-mono text-xs ${feature ? 'text-vanilla/70' : 'text-bordeaux/50'}`}
-            >
-              {item.n}
-            </p>
-            <h3 className="mt-1 font-mono text-[0.8rem] font-medium tracking-[0.06em]">
-              {item.name}
-            </h3>
-            <p
-              className={`mt-step-2 text-sm ${feature ? 'text-vanilla/85' : 'text-bordeaux/75'}`}
-            >
-              {item.question}
-            </p>
-
-            <ul className="mt-step-3 space-y-1.5 text-sm">
-              {item.points.map((point) => (
-                <TickItem
-                  key={point}
-                  className={feature ? 'text-vanilla/90' : 'text-bordeaux/80'}
-                >
-                  {point}
-                </TickItem>
-              ))}
-            </ul>
-
-            <button
-              type="button"
-              onClick={onMore}
-              className="mt-step-4 inline-flex items-center gap-1.5 self-start font-mono text-xs underline decoration-current/40 underline-offset-4 transition-colors hover:decoration-current"
-            >
-              {lpChecks.more}
-              <span aria-hidden>→</span>
-            </button>
-          </m.li>
-        )
-      })}
+      {lpChecks.items.map((item, i) => (
+        <CheckCard key={item.id} item={item} index={i} onMore={onMore} reduced={reduced} />
+      ))}
     </ul>
+  )
+}
+
+function CheckCard({
+  item,
+  index: i,
+  onMore,
+  reduced,
+}: {
+  item: (typeof lpChecks.items)[number]
+  index: number
+  onMore: () => void
+  reduced: boolean
+}) {
+  const feature = i === lpChecks.items.length - 1
+  const { ref, hidden } = useReveal<HTMLLIElement>()
+
+  return (
+    <>
+      <m.li
+        ref={ref}
+        initial={false}
+        animate={hidden ? { opacity: 0, y: 16 } : { opacity: 1, y: 0 }}
+        transition={
+          hidden
+            ? { duration: 0 }
+            : { duration: DUR.standard, ease: EASE.enter, delay: reduced ? 0 : i * 0.05 }
+        }
+        // Same rule as the CTA: the filled card is a dark surface inside a
+        // light section, so it declares its own ground or the cursor
+        // vanishes over it.
+        data-ground={feature ? 'dark' : undefined}
+        whileHover={reduced ? undefined : { scale: 1.02 }}
+        className={`flex flex-col rounded-2xl border p-step-3 ${
+          feature
+            ? 'border-cherry bg-cherry text-vanilla on-dark'
+            : 'border-greige/40 bg-vanilla'
+        }`}
+      >
+        <span
+          className={`grid size-9 place-items-center rounded-full ${
+            feature ? 'bg-vanilla/15' : 'bg-oat/70'
+          }`}
+          aria-hidden
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="size-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d={ICONS[i]} />
+          </svg>
+        </span>
+
+        <p
+          className={`mt-step-3 font-mono text-xs ${feature ? 'text-vanilla/70' : 'text-bordeaux/50'}`}
+        >
+          {item.n}
+        </p>
+        <h3 className="mt-1 font-mono text-[0.8rem] font-medium tracking-[0.06em]">
+          {item.name}
+        </h3>
+        <p className={`mt-step-2 text-sm ${feature ? 'text-vanilla/85' : 'text-bordeaux/75'}`}>
+          {item.question}
+        </p>
+
+        <ul className="mt-step-3 mb-step-4 space-y-1.5 text-sm">
+          {item.points.map((point) => (
+            <TickItem key={point} className={feature ? 'text-vanilla/90' : 'text-bordeaux/80'}>
+              {point}
+            </TickItem>
+          ))}
+        </ul>
+
+        <button
+          type="button"
+          onClick={onMore}
+          data-cursor="link"
+          className="mt-auto inline-flex items-center gap-1.5 self-start pt-step-2 font-mono text-xs underline decoration-current/40 underline-offset-4 transition-colors hover:decoration-current"
+        >
+          {lpChecks.more}
+          <span aria-hidden>→</span>
+        </button>
+      </m.li>
+    </>
   )
 }
 

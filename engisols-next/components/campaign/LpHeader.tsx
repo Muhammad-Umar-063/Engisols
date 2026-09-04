@@ -103,11 +103,20 @@ export function LpHeader() {
               href={item.href}
               onClick={go(item.href)}
               aria-current={active === item.href ? 'true' : undefined}
-              className="relative px-step-1 py-1 text-sm no-underline transition-opacity duration-200"
-              style={{
-                opacity: active === item.href ? 1 : 0.6,
-                transitionTimingFunction: 'var(--ease-micro)',
-              }}
+              // Inactive items sit at 60% and go to full on hover. At a flat
+              // 60% with no hover response the whole row read as disabled —
+              // nothing told a reader the items were live until they clicked
+              // one. `data-cursor="link"` gives them the pill the page's other
+              // in-page links wear, which is the second half of the same signal.
+              //
+              // The opacity is a CLASS, not the inline style it used to be: an
+              // inline `style` beats `hover:` every time, so the hover state was
+              // written and then silently overridden.
+              data-cursor="link"
+              className={`relative px-step-1 py-1 text-sm no-underline transition-opacity duration-200 ${
+                active === item.href ? 'opacity-100' : 'opacity-60 hover:opacity-100'
+              }`}
+              style={{ transitionTimingFunction: 'var(--ease-micro)' }}
             >
               {item.label}
               {active === item.href ? (

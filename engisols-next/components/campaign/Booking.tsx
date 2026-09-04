@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { Magnetic } from '@/components/motion/Magnetic'
 import { SheetModal } from '@/components/motion/SheetModal'
 import { DotsMorphButton } from '@/components/motion/DotsMorphButton'
 import { useToast } from '@/components/motion/Toast'
@@ -50,7 +51,16 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   )
 }
 
-/** The CTA. `variant` matches the three treatments the comp draws. */
+/**
+ * The CTA. `variant` matches the three treatments the comp draws.
+ *
+ * The magnetic field is INSIDE the component, not at the call sites. The button
+ * appears four times — header, hero, the clarity panel, the closing band — and
+ * a pull that only some of them have reads as a bug rather than as emphasis.
+ * `-m-6` cancels the field's own padding so the surrounding layout does not
+ * move; `snap={false}` keeps the cursor a dot on it, because a button already
+ * shows its own shape and covering it hides the label.
+ */
 export function BookButton({
   label,
   variant = 'primary',
@@ -72,9 +82,10 @@ export function BookButton({
   const size = variant === 'compact' ? 'px-step-3 py-2 text-xs' : 'px-step-4 py-step-2 text-sm'
 
   return (
-    <button
-      type="button"
-      onClick={open}
+    <Magnetic className="-m-6" snap={false}>
+      <button
+        type="button"
+        onClick={open}
       // The cursor takes its fill from the nearest `[data-ground]`, and a
       // button is a surface of its own: a cherry fill sitting on a light page
       // is dark ground for the few pixels it covers, and without this the
@@ -89,9 +100,10 @@ export function BookButton({
       className={`inline-flex items-center gap-2 rounded-full font-mono font-medium tracking-tight whitespace-nowrap transition-opacity hover:opacity-90 ${style} ${size} ${className}`}
       style={{ transitionTimingFunction: 'var(--ease-micro)' }}
     >
-      {label}
-      <span aria-hidden>→</span>
-    </button>
+        {label}
+        <span aria-hidden>→</span>
+      </button>
+    </Magnetic>
   )
 }
 

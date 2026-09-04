@@ -352,8 +352,8 @@
   pointer-events: none;
 }
 
-/* Cards. 2px is the whole move: enough to answer the pointer, not enough to
-   shift the grid a reader is scanning. */
+/* Cards. A 2px lift and 1% of scale is the whole move: enough to answer the
+   pointer, not enough to shift a grid a reader is scanning across. */
 .lp-card {
   transition:
     transform 160ms var(--ease-micro),
@@ -361,7 +361,7 @@
 }
 
 .lp-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.01);
 }
 
 /* Rule 4: reduced motion is a real branch, not a disable. Scroll scenes

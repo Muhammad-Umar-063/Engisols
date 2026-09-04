@@ -84,8 +84,15 @@ export function TickItem({
 }
 
 /**
- * A section. Full-bleed ground, centred column, and the site's own vertical
- * rhythm — the landing page is a different design, not a different grid.
+ * A section. Full-bleed ground, centred column.
+ *
+ * Padding is 96px at every width, where the site uses 96 mobile and 160
+ * desktop. The site's rhythm is built for reading — long pages a visitor
+ * arrived at deliberately and will scroll patiently. This page is bought
+ * traffic with one job, and at 160 the desktop layout put roughly 130px of
+ * empty ground under every section that has a short left column, which on a
+ * six-section page is most of a screen of nothing. Tightening it took ~700px
+ * out of the page without moving a single element relative to its own section.
  */
 export function LpSection({
   id,
@@ -113,7 +120,7 @@ export function LpSection({
     >
       {/* scroll-mt clears the floating header, which overlays the page rather
           than pushing it down — without it an anchor lands under the bar. */}
-      <div className="shell scroll-mt-28 py-step-6 lg:py-step-7">{children}</div>
+      <div className="shell scroll-mt-28 py-step-6">{children}</div>
     </section>
   )
 }

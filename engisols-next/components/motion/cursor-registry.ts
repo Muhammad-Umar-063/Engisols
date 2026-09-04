@@ -85,15 +85,19 @@ const DECLARATIVE: Record<string, { padding: { x: number; y: number }; shape: Cu
    * The pill is deliberately loose. At the original 14/4 it hugged the text
    * closely enough to read as a highlight rather than as a button, which is the
    * opposite of the point — the shape exists to say "this is pressable", and a
-   * button's padding is what says it. 22/10 clears the descenders and gives the
-   * label room on both sides.
+   * button's padding is what says it.
    *
-   * The vertical figure is the one to be careful with: the radius is h/2, so
-   * every pixel here also rounds the ends. Past roughly 14 the pill stops
-   * looking like a button and starts looking like a lozenge floating over the
-   * text.
+   * 22/16 is sized against the real thing it sits beside. On the landing page
+   * hero the pill lands next to a filled CTA roughly 48px tall, and a 36px pill
+   * next to it read as a smaller, lesser control rather than as the same
+   * gesture applied to a link. At 16 the two are within a few pixels of each
+   * other and the pair reads as one row.
+   *
+   * The vertical figure is the one to watch: the radius is h/2, so every pixel
+   * here also rounds the ends. It is now a full capsule, which is the intended
+   * look — going further only makes it taller, not rounder.
    */
-  link: { padding: { x: 22, y: 10 }, shape: 'pill' },
+  link: { padding: { x: 22, y: 16 }, shape: 'pill' },
   target: { padding: { x: 6, y: 6 }, shape: 'auto' },
 }
 
