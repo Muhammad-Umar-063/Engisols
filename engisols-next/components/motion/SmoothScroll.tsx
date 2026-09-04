@@ -2,6 +2,7 @@
 
 import Lenis from 'lenis'
 import { useAnimationFrame } from 'motion/react'
+import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { useMotionPrefs } from '@/hooks/useMotionPrefs'
 import { smoothScroll } from '@/lib/motion'
@@ -49,9 +50,33 @@ export function unlockPageScroll() {
   instance?.start()
 }
 
+/**
+ * Scroll to an in-page target, smoothly, through whatever is driving the page.
+ *
+ * In-page anchors are the campaign landing page's entire navigation, and they
+ * cannot be left to the browser here. Lenis is configured `anchors: false` — a
+ * deliberate choice for the site, where the only anchor is the skip link and
+ * gliding a keyboard user 4000px is the opposite of a shortcut — so a bare
+ * `href="#checks"` jumps instantly. Native `scrollIntoView({ behavior:
+ * 'smooth' })` is worse: it and Lenis would both be animating the same scroll
+ * position, and the page stutters between them.
+ *
+ * So: hand it to Lenis when Lenis is running, and fall back to the browser's
+ * own smooth scroll when it is not — which is the reduced-motion case, where
+ * the browser will honour the preference and not animate at all.
+ */
+export function scrollToTarget(selector: string, offset = -96) {
+  if (instance) {
+    instance.scrollTo(selector, { offset })
+    return
+  }
+  document.querySelector(selector)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 export function SmoothScroll() {
   const { reduced, mounted } = useMotionPrefs()
   const lenisRef = useRef<Lenis | null>(null)
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!mounted || reduced) return
@@ -88,6 +113,45 @@ export function SmoothScroll() {
   useAnimationFrame((time) => {
     lenisRef.current?.raf(time)
   })
+
+  /**
+   * Land at the top of the page on a route change.
+   *
+   * The App Router already scrolls to the top on a client navigation, and with
+   * this component unmounted — reduced motion — that is exactly what happens.
+   * With Lenis running it does not: Lenis keeps its own `animatedScroll` and
+   * writes it to the document on the next frame, so a navigation from 2500px
+   * down lands 2500px down the new page. The router's scroll reset is not
+   * fighting a CSS rule, it is being overwritten a frame later.
+   *
+   * `immediate` resets Lenis's internal position rather than animating to it,
+   * which is what makes this a fix and not a second glide. `force` because a
+   * navigation can start from a state where scrolling is locked — a link
+   * inside an open sheet — and a stopped Lenis ignores an unforced scrollTo.
+   *
+   * Not on first mount: `lenisRef.current` is still null on the first pass
+   * (the instance is created only once `mounted` flips), so a reload's
+   * restored scroll position is left where the browser put it.
+   *
+   * A hash is the router's business, not this component's — `anchors: false`
+   * above means Lenis is deliberately not in the anchor path, and jumping to
+   * the top would undo the jump to the target.
+   *
+   * Back and forward are unaffected, which is worth stating because the naive
+   * reading of this effect says they should break — popstate changes the
+   * pathname too, so this runs there as well. Measured over repeated
+   * navigations: forward links land at 0, and back and forward return to the
+   * exact offset the reader left (1995 -> 0 -> back to 1995, forward to 895).
+   * Next restores the remembered position after this effect has run, and Lenis
+   * picks that up as an external scroll rather than overriding it. That
+   * ordering is the router's, not something this file controls — if a Next
+   * upgrade ever inverts it, the symptom is back/forward landing at the top,
+   * and the fix is to skip this reset on popstate.
+   */
+  useEffect(() => {
+    if (window.location.hash) return
+    lenisRef.current?.scrollTo(0, { immediate: true, force: true })
+  }, [pathname])
 
   return null
 }

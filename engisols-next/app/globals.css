@@ -292,14 +292,105 @@
   }
 }
 
+/* ── Campaign landing page (/ai-app-audit) ──────────────────────────────────
+   Above-the-fold motion is CSS, never Motion (spec 1.5). The landing page's
+   whole hero is above the fold, so its entrance lives here: a Motion entrance
+   would paint the final state, then hide it to animate, and the flash lands on
+   the first thing bought traffic sees.
+
+   One keyframe, one delay variable. Elements carry `--i` and rise in sequence;
+   nothing needs to know about anything else's timing, and the order is legible
+   in the markup rather than in a stagger config. */
+@keyframes lp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lp-in {
+  animation: lp-rise 520ms var(--ease-enter) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+/* The audit panel's status chips while the review is running. Opacity only —
+   the chips carry the finding counts, and a chip that moves is a chip a reader
+   has to re-find. */
+@keyframes lp-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.lp-breathe {
+  animation: lp-breathe 1.8s var(--ease-micro) infinite;
+}
+
+/* The scan sweep down the audit panel, once, while the rows arrive. A gradient
+   band rather than a line: a hard edge reads as a rendering artefact, a soft
+   one reads as a pass over the code. `pointer-events: none` because it covers
+   the whole panel. */
+@keyframes lp-scan {
+  from {
+    transform: translateY(-60%);
+  }
+  to {
+    transform: translateY(560%);
+  }
+}
+
+.lp-scan {
+  animation: lp-scan 2.4s var(--ease-micro) both;
+  pointer-events: none;
+}
+
+/* Cards. 2px is the whole move: enough to answer the pointer, not enough to
+   shift the grid a reader is scanning. */
+.lp-card {
+  transition:
+    transform 160ms var(--ease-micro),
+    border-color 160ms var(--ease-micro);
+}
+
+.lp-card:hover {
+  transform: translateY(-2px);
+}
+
 /* Rule 4: reduced motion is a real branch, not a disable. Scroll scenes
    collapse to their final position; custom cursors switch off entirely
    (handled in the cursor component, which checks the same query). */
 @media (prefers-reduced-motion: reduce) {
   /* CSS-driven scenes stop; Motion scenes branch via useMotionPrefs. */
   .hero-h1 .w > span,
-  .capacity-dot {
+  .capacity-dot,
+  .lp-breathe,
+  .lp-scan {
     animation: none;
+  }
+
+  /* The landing page's hero entrance: no rise, no delay, no staggered wait for
+     content that is already on screen. `both` on the animation means the
+     element would otherwise hold the from-state forever. */
+  .lp-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .lp-scan {
+    display: none;
+  }
+
+  .lp-card:hover {
+    transform: none;
   }
 
   .ticker-track {

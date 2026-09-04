@@ -81,7 +81,19 @@ function toPadding(padding: number | { x: number; y: number }) {
  * registers properly.
  */
 const DECLARATIVE: Record<string, { padding: { x: number; y: number }; shape: CursorShape }> = {
-  link: { padding: { x: 14, y: 4 }, shape: 'pill' },
+  /**
+   * The pill is deliberately loose. At the original 14/4 it hugged the text
+   * closely enough to read as a highlight rather than as a button, which is the
+   * opposite of the point — the shape exists to say "this is pressable", and a
+   * button's padding is what says it. 22/10 clears the descenders and gives the
+   * label room on both sides.
+   *
+   * The vertical figure is the one to be careful with: the radius is h/2, so
+   * every pixel here also rounds the ends. Past roughly 14 the pill stops
+   * looking like a button and starts looking like a lozenge floating over the
+   * text.
+   */
+  link: { padding: { x: 22, y: 10 }, shape: 'pill' },
   target: { padding: { x: 6, y: 6 }, shape: 'auto' },
 }
 

@@ -1,16 +1,8 @@
 import type { Metadata } from 'next'
 import { Bricolage_Grotesque, DM_Sans, Geist_Mono } from 'next/font/google'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
 import { MotionProvider } from '@/components/motion/MotionProvider'
 import { SmoothScroll } from '@/components/motion/SmoothScroll'
-import {
-  FooterReveal,
-  FooterRevealContent,
-  FooterRevealFooter,
-} from '@/components/motion/FooterReveal'
 import { ToastProvider } from '@/components/motion/Toast'
-import { Cursor } from '@/components/motion/Cursor'
 import { SITE } from '@/lib/site'
 import './globals.css'
 // Lenis ships five rules its instance depends on — most importantly
@@ -80,28 +72,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
+        {/* Only what BOTH the site and the campaign landing page need. The
+            header, the revealed footer and the cursor moved to `SiteChrome`,
+            because the landing page must not render a single link back into
+            the site — see components/layout/SiteChrome.tsx.
+
+            The skip link stays here: every layout below provides `#main`. */}
         <MotionProvider>
           <SmoothScroll />
-          <ToastProvider>
-            <Header />
-            {/* Footer reveal (animation spec 13): the page is an opaque sheet
-                that scrolls off a sticky footer pinned behind it. The pin is
-                CSS; Motion only fades, scales and sharpens what it uncovers.
-                Nothing between here and <body> may clip overflow — that would
-                turn the clipping element into the sticky footer's scroll
-                container and the reveal would silently never happen. */}
-            <FooterReveal className="flex-1">
-              <FooterRevealContent>
-                <main id="main">{children}</main>
-              </FooterRevealContent>
-              <FooterRevealFooter>
-                <div className="on-dark" data-ground="dark">
-                  <Footer />
-                </div>
-              </FooterRevealFooter>
-            </FooterReveal>
-            <Cursor />
-          </ToastProvider>
+          <ToastProvider>{children}</ToastProvider>
         </MotionProvider>
       </body>
     </html>
