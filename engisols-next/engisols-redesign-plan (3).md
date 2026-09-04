@@ -53,7 +53,7 @@ Sampled from the reference image, then corrected for production (the photo carri
 --oat        #DCCDBB   secondary light ground      (sampled #d7c6b5)
 --greige     #B3A091   mid ground, borders, rules  (sampled #b09d8f)
 --cherry     #8E2430   brand red, full-bleed panels, CTAs, links (sampled #471d1f)
---bordeaux   #2A1418   hero, footer, body type on light (sampled #32191d)
+--bordeaux   #43212A   hero, footer, body type on light (sampled #32191d, shipped darker at #2A1418 and later lifted)
 ```
 
 **Cherry Velvet was pushed significantly brighter than sampled.** At `#471d1f` it sits 1.13 against Bordeaux Noir, meaning the two darks were the same colour to the eye. At `#8E2430` it separates enough to hold its own job.
@@ -62,28 +62,28 @@ Sampled from the reference image, then corrected for production (the photo carri
 
 | Pair | Ratio | Verdict |
 |---|---|---|
-| bordeaux on vanilla (body text) | 14.16 | Pass |
-| bordeaux on oat | 11.14 | Pass |
-| bordeaux on greige | 6.89 | Pass |
+| bordeaux on vanilla (body text) | 11.52 | Pass |
+| bordeaux on oat | 9.06 | Pass |
+| bordeaux on greige | 5.61 | Pass |
 | cherry on vanilla (links) | 7.02 | Pass |
 | cherry on oat | 5.52 | Pass |
 | cherry on greige | 3.42 | Large text only |
-| vanilla on bordeaux (dark hero) | 14.16 | Pass |
-| oat on bordeaux | 11.14 | Pass |
-| greige on bordeaux (muted) | 6.89 | Pass |
+| vanilla on bordeaux (dark hero) | 11.52 | Pass |
+| oat on bordeaux | 9.06 | Pass |
+| greige on bordeaux (muted) | 5.61 | Pass |
 | vanilla on cherry | 7.02 | Pass |
 | vanilla vs oat | 1.27 | **Barely separable** |
 | oat vs greige | 1.62 | **Barely separable** |
 | greige on vanilla | 2.05 | **Surface only, never text** |
-| cherry vs bordeaux | 2.02 | **Not separable at text size** |
+| cherry vs bordeaux | 1.64 | **Not separable at text size** |
 
 ### The three structural facts this palette forces
 
-**1. It is a three-tier palette, not a five-colour one.** Vanilla and Oat are 1.27 apart, Cherry and Bordeaux are 2.02 apart. The real tiers are light, mid, and dark. Treat Oat as a *quiet variation* on Vanilla for alternating sections, never as a contrast device. Nothing structural should depend on a reader noticing the difference.
+**1. It is a three-tier palette, not a five-colour one.** Vanilla and Oat are 1.27 apart, Cherry and Bordeaux are 1.64 apart. The real tiers are light, mid, and dark. Treat Oat as a *quiet variation* on Vanilla for alternating sections, never as a contrast device. Nothing structural should depend on a reader noticing the difference.
 
 **2. Cherry and Bordeaux are indistinguishable at text size but distinguishable at full-bleed scale.** Across a whole screen the hue difference reads clearly; at 16px it does not. So Cherry gets exactly two jobs: full-bleed panels (section 7) and filled CTAs. Bordeaux gets the hero, the footer, and all body type on light grounds.
 
-**3. Links cannot be signalled by colour alone.** No red in this family clears both AA on Vanilla and clear separation from Bordeaux body text. Best available trade is `#8E2430` at 7.02 on Vanilla but only 2.02 against Bordeaux. **Every inline link therefore carries a persistent underline or bottom rule.** This is also the correct accessibility behaviour under WCAG 1.4.1, so the constraint and the standard agree.
+**3. Links cannot be signalled by colour alone.** No red in this family clears both AA on Vanilla and clear separation from Bordeaux body text. Best available trade is `#8E2430` at 7.02 on Vanilla but only 1.64 against Bordeaux. **Every inline link therefore carries a persistent underline or bottom rule.** This is also the correct accessibility behaviour under WCAG 1.4.1, so the constraint and the standard agree.
 
 ### Section rhythm
 

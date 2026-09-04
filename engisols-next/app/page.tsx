@@ -21,9 +21,11 @@ import { services } from '@/content/services'
  * the editorial marquee built earlier lives on /services for exactly this
  * reason, since it would have been a thirteenth section here.
  *
- * Three dark bands only, per build spec section 7: the hero block (1 and 2),
- * the capability grid on cherry (7), and how we work (8). A fourth would mean
- * one of those comes out.
+ * Two dark bands now, per build spec section 7: the capability grid on cherry
+ * (7) and how we work (8). The hero block gave up the third when it moved to
+ * oat, so there is one dark band spare — but spending it directly above or
+ * below either of those two would merge them into one dark run, which is what
+ * the cap exists to prevent.
  *
  * Server component. Every word is in the first HTML response.
  */
@@ -35,11 +37,14 @@ export const metadata = {
 export default function Home() {
   return (
     <>
-      {/* 1 Hero + 2 TrustStrip — one continuous dark block, hairline between. */}
+      {/* 1 Hero + 2 TrustStrip — one continuous oat block, hairline between. */}
       <Hero />
 
-      {/* 3 The stall. The hard cut out of the dark block is the biggest
-          contrast moment on the page and it lands here on purpose. */}
+      {/* 3 The stall. This used to be the hard cut out of the dark hero and the
+          biggest contrast moment on the page. With the hero on oat it is a
+          1.27 step — no seam at all — so the section now has to open on its
+          heading alone. Moving this band to greige is what would buy the cut
+          back; the hero cannot do it from its side. */}
       <Band ground="vanilla">
         <Reveal>
           <h2 className="measure text-[clamp(1.75rem,3.5vw,3rem)]">{stall.heading}</h2>

@@ -8,13 +8,28 @@ import { ParticleField } from '@/components/motion/ParticleField'
 import { hero, heroStats, trustMarkers } from '@/content/demo'
 
 /**
- * Hero + trust strip — build spec sections 1 and 2, one continuous dark block
- * split by a hairline greige rule.
+ * Hero + trust strip — build spec sections 1 and 2, one continuous block split
+ * by a hairline rule.
+ *
+ * The block is OAT, not the bordeaux the build spec originally called for, and
+ * the particle network that used to be light on dark is now bordeaux ink on
+ * top of it. Two consequences worth knowing before editing anything here:
+ *
+ *  - Every value in this file that was tuned for a dark ground was retuned.
+ *    Greige is 1.62 from oat and vanilla is 1.27 from it — neither is a text
+ *    colour on this ground, so the muted tones are all bordeaux at reduced
+ *    alpha instead.
+ *  - The hard cut this block used to make into section 3 is gone. Oat against
+ *    vanilla is 1.27, which the palette rules call "not a contrast device", so
+ *    the hero and the stall now read as one continuous light expanse. If that
+ *    seam is wanted back, section 3 has to move to greige or darker; it cannot
+ *    come from anything on this side.
  *
  * Layout carried from the previous site: left-aligned column, badge with
- * pulsing dot, oversized headline, subtitle, CTA pair, stats row. Palette
- * translation note: the old crimson accent line cannot exist here — cherry is
- * 2.02 against bordeaux — so the headline is single-tone vanilla.
+ * pulsing dot, oversized headline, subtitle, CTA pair, stats row. The headline
+ * stays single-tone: cherry is the only accent in the palette and it is 5.52
+ * on oat, which reads, but rule 2 gives it panels and CTAs only — a coloured
+ * word in a headline is also a banned typographic pattern (build spec 4).
  *
  * Animation spec compliance:
  *  - Headline is CSS-only word stagger (3.2) — it is the LCP text and must not
@@ -28,11 +43,11 @@ import { hero, heroStats, trustMarkers } from '@/content/demo'
  */
 export function Hero() {
   return (
-    <section className="on-dark relative bg-bordeaux text-vanilla" data-ground="dark">
+    <section className="relative bg-oat text-bordeaux" data-ground="light">
       <ZoomHeroScene backdrop={<ParticleField />}>
         <div className="shell band pt-[calc(var(--spacing-step-6)+4rem)] lg:pt-[calc(var(--spacing-step-7)+2rem)]">
           {/* Availability badge. {{TODO: CAPACITY}} — currently demo copy. */}
-          <p className="inline-flex items-center gap-step-1 rounded-full border border-greige/40 bg-vanilla/5 px-step-3 py-1.5 font-mono text-xs tracking-tight text-greige backdrop-blur-sm">
+          <p className="inline-flex items-center gap-step-1 rounded-full border border-bordeaux/25 bg-vanilla/50 px-step-3 py-1.5 font-mono text-xs tracking-tight text-bordeaux/75 backdrop-blur-sm">
             <span className="capacity-dot size-1.5 shrink-0 rounded-full bg-cherry" />
             {hero.capacity}
           </p>
@@ -43,7 +58,7 @@ export function Hero() {
           />
 
           <Reveal y={8} delay={0.12}>
-            <p className="measure mt-step-3 text-lg text-oat">{hero.sub}</p>
+            <p className="measure mt-step-3 text-lg text-bordeaux/80">{hero.sub}</p>
           </Reveal>
 
           <Reveal y={8} delay={0.18}>
@@ -71,7 +86,7 @@ export function Hero() {
               <Link
                 href={hero.secondaryCta.href}
                 data-cursor="link"
-                className="px-step-1 py-step-2 text-vanilla underline decoration-greige underline-offset-4 transition-colors hover:decoration-vanilla"
+                className="px-step-1 py-step-2 text-bordeaux underline decoration-bordeaux/40 underline-offset-4 transition-colors hover:decoration-bordeaux"
               >
                 {hero.secondaryCta.label}
               </Link>
@@ -80,7 +95,7 @@ export function Hero() {
 
           {/* Stats row above a hairline — carried from the previous design. */}
           <Reveal y={8} delay={0.24}>
-            <dl className="mt-step-6 grid max-w-3xl gap-step-4 border-t border-greige/25 pt-step-3 sm:grid-cols-3">
+            <dl className="mt-step-6 grid max-w-3xl gap-step-4 border-t border-bordeaux/20 pt-step-3 sm:grid-cols-3">
               {heroStats.map((stat) => (
                 <div key={stat.label}>
                   <dt className="sr-only">{stat.label}</dt>
@@ -88,7 +103,7 @@ export function Hero() {
                     <span className="block font-display text-[clamp(1.75rem,3vw,2.5rem)] font-medium tabular-nums">
                       {stat.value}
                     </span>
-                    <span className="mt-1 block text-sm text-greige">{stat.label}</span>
+                    <span className="mt-1 block text-sm text-bordeaux/70">{stat.label}</span>
                     {stat.invented ? (
                       <span className="mt-1 block font-mono text-[0.65rem] text-cherry">
                         demo figure
@@ -102,11 +117,11 @@ export function Hero() {
         </div>
       </ZoomHeroScene>
 
-      {/* Trust strip: same dark block, hairline divider, CSS marquee. */}
-      <div className="relative border-t border-greige/25 py-step-3">
+      {/* Trust strip: same block, hairline divider, CSS marquee. */}
+      <div className="relative border-t border-bordeaux/20 py-step-3">
         <Ticker>
           {trustMarkers.map((marker) => (
-            <span key={marker} className="font-mono text-sm whitespace-nowrap text-greige">
+            <span key={marker} className="font-mono text-sm whitespace-nowrap text-bordeaux/70">
               {marker}
             </span>
           ))}

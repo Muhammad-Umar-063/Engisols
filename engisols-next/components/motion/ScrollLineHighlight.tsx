@@ -18,7 +18,7 @@ import { useMotionPrefs } from '@/hooks/useMotionPrefs'
  * boxes and rises them out of a clip, where this brightens whole lines broken
  * by hand in the content file (see below for why).
  *
- * Opacity ONLY, on bordeaux text: cherry and bordeaux are 2.02 apart, so a
+ * Opacity ONLY, on bordeaux text: cherry and bordeaux are 1.64 apart, so a
  * colour tween between them would not read.
  *
  * Lines are broken manually in the content file and passed as children —

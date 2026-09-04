@@ -6,11 +6,27 @@ import { useReducedMotion } from 'motion/react'
 /**
  * Interactive particle network — ported from the previous site's hero.
  *
- * Palette translation: the original drew crimson particles and crimson lines.
- * Cherry cannot do that job here — it sits 2.02 against bordeaux and would be
- * invisible as hairlines. Greige is the token whose stated job is "rules and
- * borders" (6.89 on bordeaux), so lines are greige and particles are vanilla,
- * brightening to vanilla on pointer proximity.
+ * Palette translation, second pass. The field is INVERTED: the hero ground is
+ * oat and the network is bordeaux drawn on top of it, where it used to be a
+ * light network on a dark ground. The pair is the same one either way —
+ * bordeaux against oat is 9.06 — so nothing was lost in the swap; what changed
+ * is which of the two is the ink.
+ *
+ * Only the alpha travels with the pointer now, not the colour. The old version
+ * had a second colour to move to (greige lines brightening to vanilla) and
+ * this one does not: the palette's other dark is cherry, which rule 2 bars
+ * from hairlines, and greige is 1.62 from oat — invisible on this ground. So
+ * proximity deepens the same bordeaux from 0.35 to 0.85. One colour, two
+ * weights.
+ *
+ * Line weight is the one thing that does not carry across the inversion. Dark
+ * ink on a light ground reads heavier than light ink on a dark one at equal
+ * width — the same asymmetry optical sizes exist for — so the number that was
+ * right for the old scheme is too heavy for this one. 2, down from the 3 that
+ * suited the light-on-dark version: at 3 the dense clusters, where six or
+ * seven lines meet inside a few pixels, filled in as solid patches and started
+ * competing with the headline. 2 keeps the extra weight everywhere the network
+ * is sparse, which is most of it.
  *
  * Performance notes — the original had two problems at scale:
  *  - The connect pass is O(n²). At the old cap of 140 particles that is ~9,700
@@ -24,9 +40,12 @@ import { useReducedMotion } from 'motion/react'
  * Reduced motion switches it off entirely rather than slowing it down.
  */
 
-const PARTICLE = 'rgba(240, 231, 219, 0.7)' // vanilla
-const LINE_BASE = '179, 160, 145' // greige
-const LINE_NEAR = '240, 231, 219' // vanilla
+const PARTICLE = 'rgba(67, 33, 42, 0.75)' // bordeaux
+const LINE_INK = '67, 33, 42' // bordeaux
+/** Distance-fade alpha: at rest, and while the pair is within pointer range. */
+const LINE_ALPHA = { base: 0.35, near: 0.85 }
+/** CSS pixels. The context is already scaled by dpr, so this is device-independent. */
+const LINE_WIDTH = 1.5
 
 type P = { x: number; y: number; dx: number; dy: number; r: number }
 
@@ -110,6 +129,11 @@ export function ParticleField() {
       }
 
       // Connect pass. Squared distances throughout — no sqrt in the inner loop.
+      // Line width is set once per frame, not per pair: it is a constant, and
+      // the pair loop runs thousands of times a frame. Assigning it here rather
+      // than at setup is deliberate — writing `canvas.width` in `resize` resets
+      // the whole 2D context state, and this survives that.
+      ctx.lineWidth = LINE_WIDTH
       const maxSq = 20000
       const mouseSq = mouse.radius * mouse.radius
       for (let a = 0; a < particles.length; a++) {
@@ -121,10 +145,9 @@ export function ParticleField() {
           const distSq = (pa.x - pb.x) ** 2 + (pa.y - pb.y) ** 2
           if (distSq >= maxSq) continue
           const opacity = 1 - distSq / maxSq
-          ctx.strokeStyle = nearPointer
-            ? `rgba(${LINE_NEAR}, ${opacity * 0.9})`
-            : `rgba(${LINE_BASE}, ${opacity * 0.4})`
-          ctx.lineWidth = 1
+          ctx.strokeStyle = `rgba(${LINE_INK}, ${
+            opacity * (nearPointer ? LINE_ALPHA.near : LINE_ALPHA.base)
+          })`
           ctx.beginPath()
           ctx.moveTo(pa.x, pa.y)
           ctx.lineTo(pb.x, pb.y)

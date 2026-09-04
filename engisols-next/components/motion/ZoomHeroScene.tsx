@@ -31,7 +31,7 @@ import { offset, spring } from '@/lib/motion'
  *
  * What is NOT carried over: the example's full-bleed image and its darkening
  * scrim. The backdrop stays whatever this site passes in (the particle field),
- * and the ground stays flat bordeaux.
+ * and the ground stays flat oat.
  *
  * Why the copy is not pinned. The example pins one screenful of copy — an
  * eyebrow and a headline. This hero runs badge → headline → subtitle → CTA pair

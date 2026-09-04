@@ -24,18 +24,24 @@
  * hue to within rounding. Only chroma differs — the bright end runs about 1.5x
  * cherry's saturation. Harmony was never the problem.
  *
- * Legibility was. The original dark stop scores 1.69:1 on bordeaux — below even
- * cherry's 2.02 — so on the dark header and in the footer the left end of the E
+ * Legibility was. The original dark stop scores 1.37:1 on bordeaux — below even
+ * cherry's 1.64 — so on the dark header and in the footer the left end of the E
  * bar and part of the O glyph sank into the ground and the bar appeared to fade
  * out. That is a context the logo was never designed for: the old site put it on
  * dark only, and this header also appears on vanilla.
  *
- * #9B3340 lifts that end to 2.43:1, a 44% improvement, while keeping a 0.061
+ * #9B3340 lifts that end to 1.97:1, a 44% improvement, while keeping a 0.061
  * lightness gap to the bright stop so the gradient still reads as a ramp rather
- * than a flat bar. Anything lighter — #A63A46 at 2.74, #B4444F at 3.20 — closes
+ * than a flat bar. Anything lighter — #A63A46 at 2.23, #B4444F at 2.60 — closes
  * that gap and flattens the gradient, which is why the contrast was not pushed
  * to the 3:1 non-text threshold. Logos are exempt from that threshold anyway;
  * this is a visual fix, not a compliance one.
+ *
+ * Those ratios are lower than they were: lifting bordeaux to #43212a took every
+ * one of them down by about 19%, and the ordering — original stop below cherry,
+ * #9B3340 clearly above it — is unchanged. Rechecked on the lighter ground at
+ * 3x on both the header and the footer; the bar still reads end to end, so the
+ * stop stays where it is rather than chasing the old number.
  *
  * app/icon.svg is the untouched original brand file. It sits on a browser tab,
  * almost always light, where the dark stop was never a problem.

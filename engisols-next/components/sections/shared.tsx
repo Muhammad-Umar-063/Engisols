@@ -27,12 +27,18 @@ import { team, trustMarkers } from '@/content/demo'
  *
  * Deliberately plain: one line that says what the page is for. The homepage
  * hero is the only one carrying a montage and a capacity line.
+ *
+ * Ground is OAT, following the homepage hero off bordeaux. It is a default, not
+ * a constant — a page whose first band would also be oat should pass something
+ * else rather than let the two run together, since oat against oat is no seam
+ * at all and oat against vanilla is 1.27, which the palette rules call "not a
+ * contrast device".
  */
 export function PageHero({
   eyebrow,
   title,
   lead,
-  ground = 'bordeaux',
+  ground = 'oat',
   children,
 }: {
   eyebrow?: string

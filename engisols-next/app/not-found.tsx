@@ -6,7 +6,7 @@ import { HEADER_LINKS } from '@/lib/site'
 
 export default function NotFound() {
   return (
-    <Band ground="bordeaux" className="pt-[calc(var(--spacing-step-6)+3rem)]">
+    <Band ground="oat" className="pt-[calc(var(--spacing-step-6)+3rem)]">
       <p className="font-mono text-xs tracking-tight text-current/60">404</p>
       <h1 className="mt-step-3 max-w-[18ch] text-[clamp(2.25rem,5vw,4rem)]">
         That page does not exist.

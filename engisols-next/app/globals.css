@@ -5,13 +5,20 @@
 
    Five-value warm palette. Read the three hard rules before using these:
 
+   Bordeaux was lifted from #2a1418 to #43212a — a 12% to 20% jump in HSL
+   lightness at the same hue. At the old value the dark ground read as black
+   with a warm cast rather than as a colour, which wasted the one place the
+   palette is seen at full-bleed scale. Every ratio below moved with it and the
+   table in the build spec was remeasured, not estimated.
+
    1. This is a THREE-tier palette, not five. vanilla/oat are 1.27 apart and
       oat/greige are 1.62 apart — neither pair is a contrast device. Oat is a
       quiet variation on vanilla for alternating sections. Nothing structural
       may depend on a reader perceiving the difference.
    2. Cherry has exactly two jobs: full-bleed section panels, and filled CTAs.
       Never body text, never a small icon, never an inline highlight. It sits
-      2.02 against bordeaux — indistinguishable at text size.
+      1.64 against bordeaux — indistinguishable at text size, and legible on a
+      cherry fill only because the vanilla label on it is 7.02.
    3. Links carry a permanent underline. No red in this family clears AA on
       vanilla while also separating from bordeaux body text, so colour alone
       can never be the signal (also WCAG 1.4.1).
@@ -23,7 +30,7 @@
   --color-oat: #dccdbb; /* secondary light ground — quiet variation only */
   --color-greige: #b3a091; /* mid ground, rules, borders — never text on vanilla */
   --color-cherry: #8e2430; /* full-bleed panels + filled CTAs only */
-  --color-bordeaux: #2a1418; /* hero, footer, body type on light grounds */
+  --color-bordeaux: #43212a; /* hero, footer, body type on light grounds */
 
   /* The single sanctioned non-palette colour: form validation success. Used
      nowhere else — red is the brand colour, so red cannot signal failure. */

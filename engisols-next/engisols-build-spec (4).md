@@ -31,7 +31,7 @@ Rebuild engisols.com, the site for Engisols, a three-person senior engineering p
 | Styling | Tailwind, tokens defined in section 4 |
 | Content | MDX or Sanity for case studies and blog |
 | Palette | Warm five-value scheme, section 4 |
-| Hero | Dark. Bordeaux Noir ground. |
+| Hero | Light. Alpine Oat ground, bordeaux particle network over it. Superseded the original dark hero. |
 | Display type | Grotesque only. No serif anywhere. |
 | Links | Always underlined. Colour alone is never the signal. |
 | Motion budget | 8 scroll-linked scenes on the homepage, hard cap |
@@ -69,35 +69,37 @@ Rebuild engisols.com, the site for Engisols, a three-person senior engineering p
   --oat:      #DCCDBB;  /* secondary light ground */
   --greige:   #B3A091;  /* mid ground, rules, borders */
   --cherry:   #8E2430;  /* brand red: full-bleed panels, CTAs, links */
-  --bordeaux: #2A1418;  /* hero, footer, body type on light grounds */
+  --bordeaux: #43212A;  /* hero, footer, body type on light grounds */
 }
 ```
 
 Derived from a reference palette (Vanilla Silk, Alpine Oat, Warm Greige, Cherry Velvet, Bordeaux Noir). Cherry was brightened from the sampled `#471d1f` because at that value it was optically identical to Bordeaux.
 
+Bordeaux was later lifted from `#2A1418` to `#43212A` — the same hue, HSL lightness 12% to 20% — for the same class of reason. At the sampled value the dark ground read as black with a warm cast, so the one place the palette is seen at full-bleed scale showed no colour at all. Every ratio in the table below was remeasured against the new value.
+
 ### Measured contrast
 
 | Pair | Ratio | Use |
 |---|---|---|
-| bordeaux on vanilla | 14.16 | Body text, default |
-| bordeaux on oat | 11.14 | Body text |
-| bordeaux on greige | 6.89 | Body text |
+| bordeaux on vanilla | 11.52 | Body text, default |
+| bordeaux on oat | 9.06 | Body text |
+| bordeaux on greige | 5.61 | Body text |
 | cherry on vanilla | 7.02 | Links, CTAs |
 | cherry on oat | 5.52 | Links |
 | cherry on greige | 3.42 | Large text only, never body |
-| vanilla on bordeaux | 14.16 | Text on dark grounds |
-| oat on bordeaux | 11.14 | Secondary text on dark |
-| greige on bordeaux | 6.89 | Muted text on dark |
+| vanilla on bordeaux | 11.52 | Text on dark grounds |
+| oat on bordeaux | 9.06 | Secondary text on dark |
+| greige on bordeaux | 5.61 | Muted text on dark |
 | vanilla on cherry | 7.02 | Text on cherry panels |
 | vanilla vs oat | 1.27 | Not a contrast device |
 | oat vs greige | 1.62 | Not a contrast device |
 | greige on vanilla | 2.05 | Surface and borders only, never text |
-| cherry vs bordeaux | 2.02 | Not separable at text size |
+| cherry vs bordeaux | 1.64 | Not separable at text size |
 
 ### Three hard colour rules
 
 1. **This is a three-tier palette: light, mid, dark.** Vanilla and Oat are 1.27 apart. Treat Oat as a quiet variation for alternating sections. Nothing structural may depend on a reader perceiving that difference.
-2. **Cherry has exactly two jobs:** full-bleed section panels and filled CTA buttons. It is never body text, never a small icon, never an inline highlight. It is indistinguishable from Bordeaux at text size and distinguishable only at full-bleed scale.
+2. **Cherry has exactly two jobs:** full-bleed section panels and filled CTA buttons. It is never body text, never a small icon, never an inline highlight. It is indistinguishable from Bordeaux at text size and distinguishable only at full-bleed scale. Lifting Bordeaux closed the gap from 2.02 to 1.64, which tightens this rule rather than loosening it: a filled cherry CTA on a bordeaux ground is identified by its vanilla label at 7.02, not by its own edge.
 3. **Links carry a permanent underline or bottom rule.** No red in this family clears AA on Vanilla while also separating from Bordeaux body text. This also satisfies WCAG 1.4.1.
 
 ### Typography
@@ -251,7 +253,7 @@ Sections 1 and 2 share one continuous dark block, separated by a hairline `--gre
 
 ### Section detail
 
-**1. Hero.** Dark ground. Display headline at the top of the type scale, Split Text word-level stagger, 40ms, runs exactly once. Background is a montage of real shipped product UIs, scroll-zoom scaling and fading. No stock 3D renders. Two CTAs: paid diagnostic primary (filled cherry), "See the work" secondary (underlined). Optional capacity line in mono: `{{TODO: CAPACITY}}`.
+**1. Hero.** Oat ground, with the particle network inverted to bordeaux ink over it. (Originally specified dark; changed after build.) Display headline at the top of the type scale, Split Text word-level stagger, 40ms, runs exactly once. Background is a montage of real shipped product UIs, scroll-zoom scaling and fading. No stock 3D renders. Two CTAs: paid diagnostic primary (filled cherry), "See the work" secondary (underlined). Optional capacity line in mono: `{{TODO: CAPACITY}}`.
 
 **2. Trust strip.** Continuous with the hero. Client logos, markets served, AWS Solutions Architect certification. `{{TODO: LOGOS}}`.
 

@@ -35,9 +35,10 @@ import { EASE, STAGGER } from '@/lib/motion'
  * rather than closing and reopening. Columns stagger in; a shared-layout
  * indicator slides between rows.
  *
- * Ground handling: text swaps between vanilla and bordeaux as the header
- * crosses out of the dark hero block, driven by an IntersectionObserver on the
- * hero's sentinel — never a scroll-position constant.
+ * Ground handling: the header carries the hero's own oat while it is over the
+ * hero and vanilla past it, driven by an IntersectionObserver on the hero's
+ * sentinel — never a scroll-position constant. The mega menu overrides both
+ * with bordeaux.
  */
 
 function MegaPanel({ href }: { href: string }) {
@@ -113,7 +114,7 @@ function MegaPanel({ href }: { href: string }) {
 export function Header() {
   const [hidden, setHidden] = useState(false)
   const [openMenu, setOpenMenu] = useState<string | null>(null)
-  const [overDark, setOverDark] = useState(true)
+  const [overHero, setOverHero] = useState(true)
   const { reduced } = useMotionPrefs()
   const { scrollY } = useScroll()
 
@@ -132,12 +133,12 @@ export function Header() {
     else if (latest < prev) setHidden(false)
   })
 
-  // Ground swap: observe the dark hero block's end, not a pixel constant.
+  // Ground swap: observe the hero block's end, not a pixel constant.
   useEffect(() => {
     const sentinel = document.querySelector('[data-hero-end]')
     if (!sentinel) return
     const observer = new IntersectionObserver(
-      ([entry]) => setOverDark(entry.boundingClientRect.top > 0 || entry.isIntersecting),
+      ([entry]) => setOverHero(entry.boundingClientRect.top > 0 || entry.isIntersecting),
       { rootMargin: '-64px 0px 0px 0px', threshold: 0 },
     )
     observer.observe(sentinel)
@@ -164,16 +165,22 @@ export function Header() {
   }, [])
 
   const menuIsOpen = openMenu !== null
-  // Over the hero the header is transparent-on-dark; past it, solid dark stays
-  // legible over light grounds. The mega menu always forces the dark ground.
-  const darkGround = overDark || menuIsOpen
+  // Three grounds, not two. Over the hero the header takes the hero's own oat,
+  // so the bar disappears into that block the way it used to disappear into the
+  // dark one; past the hero it is vanilla; and an open mega menu forces
+  // bordeaux, because the panel hanging off it is bordeaux and a light bar on
+  // top of a dark panel reads as a seam rather than as a header.
+  const ground = menuIsOpen ? 'bordeaux' : overHero ? 'oat' : 'vanilla'
+  // `on-dark` only when the header actually IS dark. It switches focus rings to
+  // vanilla, which on the two light grounds would be a ring you cannot see.
+  const onDark = ground === 'bordeaux'
 
   return (
     <m.header
-      className="on-dark fixed inset-x-0 top-0 z-50 transition-colors duration-200"
+      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-200 ${onDark ? 'on-dark' : ''}`}
       style={{
-        background: darkGround ? 'var(--color-bordeaux)' : 'var(--color-vanilla)',
-        color: darkGround ? 'var(--color-vanilla)' : 'var(--color-bordeaux)',
+        background: `var(--color-${ground})`,
+        color: onDark ? 'var(--color-vanilla)' : 'var(--color-bordeaux)',
         transitionTimingFunction: 'var(--ease-micro)',
       }}
       initial={false}

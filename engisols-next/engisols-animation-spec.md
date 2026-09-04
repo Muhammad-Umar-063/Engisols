@@ -246,7 +246,7 @@ Ground `--bordeaux`. Above the fold.
 **Structure.**
 
 ```
-<section ref={heroRef} data-ground="dark">   height: 100svh
+<section ref={heroRef} data-ground="light">  height: 100svh
   <div>  absolute inset-0, overflow hidden
     <motion.div>  the montage image, scale/blur/opacity
   </div>
@@ -380,7 +380,7 @@ const opacity = useTransform(scrollYProgress, [start, end], [0.18, 1])
 
 Because hooks cannot run in a loop, render each line as its own `<Line index={i} total={n} progress={scrollYProgress} />` component that calls `useTransform` once.
 
-**Colour.** Lines animate opacity only, on `--bordeaux` text. Do not animate colour between two hexes, since Cherry and Bordeaux are 2.02 apart and the change will not read.
+**Colour.** Lines animate opacity only, on `--bordeaux` text. Do not animate colour between two hexes, since Cherry and Bordeaux are 1.64 apart and the change will not read.
 
 **Reduced motion.** All lines render at opacity 1. No scrub.
 

@@ -29,6 +29,11 @@ type Zone = `${MarginValue} ${MarginValue} ${MarginValue} ${MarginValue}`
  * decided by geometry, so it never round-trips through React state on a scroll
  * frame. Each row owns its own observer because hooks cannot run in a loop.
  *
+ * The highlight is opacity, never colour: cherry is 1.64 against bordeaux, so
+ * a colour tween between the two would not read at any size. The cherry rule
+ * down the active row is a block, not type, which is the one scale at which
+ * that separation is visible.
+ *
  * Not `ScrollLineHighlight`, despite the name: that one is scrubbed to scroll
  * progress and brightens hand-broken lines of a paragraph in sequence. This is
  * a discrete active/inactive state on structured rows, and only one row holds
