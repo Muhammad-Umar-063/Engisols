@@ -622,23 +622,27 @@ Ground `--vanilla`.
 
 ### 10.1 Scroll highlight
 
-**Behaviour.** A sticky step nav on the left. The active step highlights as its content passes the middle of the viewport.
+**Behaviour.** The commitments are one contiguous list. Each rests at 30% opacity and brightens to full as it crosses a narrow band through the middle of the viewport, so exactly one is at full strength at a time. A rotated label sticks alongside on the same line as that band — it is what tells the reader the band is a fixed line on screen rather than rows lighting up at random.
 
-**Implementation.** Use `useInView` per step with a symmetric margin that creates a narrow band across the viewport centre:
+Replaced the sticky step nav that held this slot. Same detection, same indicator; the nav column became the rotated label and the highlight moved from a nav item onto the commitment itself.
+
+**Implementation.** Use `useInView` per row with a symmetric margin that collapses the observer root to a band across the viewport centre:
 
 ```tsx
-const inView = useInView(stepRef, { margin: '-45% 0px -45% 0px' })
+const inView = useInView(rowRef, { margin: '-48% 0px -48% 0px' })
 ```
 
-When true, set the active index. This fires a handful of times per scroll, so React state is fine here. Do not use a scrubbed motion value.
+Geometry decides the active row, so it never round-trips through React state on a scroll frame. Do not use a scrubbed motion value.
 
-**Nav indicator.** `layoutId` on a small bar next to the active label, `EASE.spring`. Inactive labels at 40% opacity, active at 100%, 200ms `EASE.micro`.
+**Contiguity.** Row spacing is padding, never margin. With gaps between rows the band lands in a gap, nothing is active for a beat, and it reads as a flicker. Widen the band and two rows light at once; collapse it to zero height and the observer stops firing altogether.
+
+**Indicator.** `layoutId` on a small bar down the left edge of the active row, `EASE.spring`. Inactive rows at 30% opacity, active at 100%, `DUR.standard` on `EASE.enter`.
 
 **Content.** Six steps covering timezone overlap hours, who the client talks to, IP assignment, NDA, repo access from day one, and what happens if communication stalls.
 
-**Mobile.** No sticky nav. Steps render as a plain vertical list, each wrapped in `Reveal`.
+**Mobile.** No rotated label. Rows still highlight — the centre band is a viewport measurement and works at any width.
 
-**Reduced motion.** Highlight changes with no indicator slide.
+**Server render and reduced motion.** Every row ships at full opacity and stays there: the dimming exists only once JS is running (spec 1.4), and rows brightening and dimming as the page scrolls is exactly the motion the preference asks us to drop. The indicator still marks the centred row, it just does not slide.
 
 ---
 

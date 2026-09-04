@@ -8,7 +8,7 @@ import { Counter } from '@/components/motion/Counter'
 import { CollisionGrid } from '@/components/motion/CollisionGrid'
 import { ScrollLineHighlight } from '@/components/motion/ScrollLineHighlight'
 import { SmoothTabs } from '@/components/motion/SmoothTabs'
-import { StickyStepNav } from '@/components/motion/StickyStepNav'
+import { ScrollHighlight } from '@/components/motion/ScrollHighlight'
 import { caseStudies } from '@/content/case-studies'
 import { pricing, proof, process, stall } from '@/content/demo'
 import { services } from '@/content/services'
@@ -167,7 +167,7 @@ export default function Home() {
           lead="This is the section that answers the question nobody asks on the call."
         />
         <div className="mt-step-5">
-          <StickyStepNav steps={process} />
+          <ScrollHighlight heading="Commitments" items={process} />
         </div>
         <Link
           href="/process"
