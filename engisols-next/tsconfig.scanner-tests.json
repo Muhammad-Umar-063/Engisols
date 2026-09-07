@@ -13,9 +13,12 @@
   },
   "include": [
     "app/api/scan/route.ts",
+    "app/api/scans/route.ts",
     "scripts/scanner-regression-policy.ts",
+    "src/production-check/**/*.ts",
     "src/scanner/**/*.ts",
-    "tests/scanner/**/*.ts"
+    "tests/scanner/**/*.ts",
+    "tests/production-check/**/*.ts"
   ],
   "exclude": ["node_modules", ".next", ".scanner-test-dist"]
 }

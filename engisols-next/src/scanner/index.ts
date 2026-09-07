@@ -2,6 +2,7 @@ export { ScannerError, toPublicScanError } from './errors'
 export { DEFAULT_SCAN_LIMITS } from './limits'
 export { scanPublicUrl } from './scan'
 export { buildScanAssessment } from './assessment'
+export { detectFindingTechnologies } from './technology'
 export {
   FINDING_CATEGORIES,
   FINDING_CLASSIFICATION_RANK,
@@ -11,6 +12,7 @@ export type {
   CoverageConfidence,
   FindingCategory,
   FindingClassification,
+  DetectedTechnology,
   FindingGroupId,
   ProductionProofCheck,
   ProductionProofStatus,
@@ -23,4 +25,8 @@ export type {
   ScanFindingGroup,
   ScanRecommendation,
   ScanResult,
+  ScanPhase,
+  ScanProgressEvent,
+  ScanProgressEventType,
+  ScanProgressObserver,
 } from './types'

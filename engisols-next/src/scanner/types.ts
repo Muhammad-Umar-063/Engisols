@@ -21,6 +21,50 @@ export type ScanSourceKind = 'headers' | 'html' | 'javascript'
 
 export type CheckStatus = 'finding' | 'passed' | 'partial' | 'not_run'
 
+export const SCAN_PHASES = [
+  'validating',
+  'fetching',
+  'headers',
+  'discovering_assets',
+  'analyzing_assets',
+  'classifying',
+  'building_report',
+  'complete',
+] as const
+
+export type ScanPhase = (typeof SCAN_PHASES)[number]
+
+export type ScanProgressEventType =
+  | 'phase'
+  | 'observation'
+  | 'technology'
+  | 'summary'
+  | 'complete'
+  | 'partial'
+  | 'error'
+
+export interface ScanProgressEvent {
+  type: ScanProgressEventType
+  phase?: ScanPhase
+  progress?: number
+  message: string
+  detail?: string
+  timestamp: string
+  metadata?: {
+    processed?: number
+    total?: number
+    technology?: string
+    classification?: 'expected' | 'review' | 'fix_now'
+  }
+}
+
+export type ScanProgressObserver = (event: ScanProgressEvent) => void
+
+export interface DetectedTechnology {
+  name: string
+  confidence: 'confirmed' | 'likely' | 'possible'
+}
+
 export interface ScanFinding {
   id: string
   ruleId: string

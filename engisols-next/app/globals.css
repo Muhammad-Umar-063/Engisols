@@ -259,6 +259,11 @@
 }
 
 @layer components {
+  .production-check-wrap {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   /* Max content width. Section grounds stay full-bleed; only the inner column
      is constrained, so colour cuts between sections run edge to edge. */
   .shell {

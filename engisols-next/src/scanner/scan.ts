@@ -18,12 +18,16 @@ import { sanitizePublicUrl } from './redaction'
 import { discoverPublicMetadata } from './public-metadata'
 import { evaluateRules, type RuleSource } from './rules'
 import { scoreFindings } from './scoring'
+import { detectFindingTechnologies } from './technology'
 import {
   FINDING_CATEGORIES,
   type FindingCategory,
   type ScanCheck,
   type ScanCoverage,
   type ScanLimits,
+  type ScanPhase,
+  type ScanProgressEvent,
+  type ScanProgressObserver,
   type ScanResult,
 } from './types'
 import {
@@ -38,6 +42,7 @@ export interface ScanDependencies {
   now?: () => number
   deadlineNow?: () => number
   limits?: Partial<ScanLimits>
+  onProgress?: ScanProgressObserver
 }
 
 interface ScriptCandidate {
@@ -84,12 +89,40 @@ async function scanPublicUrlInternal(
   const limitsReached = new Set<string>()
   let isPartial = false
   let terminalLimit: ScanResourceLimitReason | undefined
+  let lastProgress = 0
+  const emit = (
+    event: Omit<ScanProgressEvent, 'timestamp'>,
+  ): void => {
+    const progress =
+      typeof event.progress === 'number'
+        ? Math.max(lastProgress, Math.min(100, Math.round(event.progress)))
+        : undefined
+    if (progress !== undefined) lastProgress = progress
+    try {
+      dependencies.onProgress?.({
+        ...event,
+        ...(progress !== undefined ? { progress } : {}),
+        timestamp: new Date().toISOString(),
+      })
+    } catch {
+      // Progress is observational. A UI/storage observer must never make the
+      // security scan fail or alter its deterministic result.
+    }
+  }
+  const phase = (
+    value: ScanPhase,
+    progress: number,
+    message: string,
+    detail?: string,
+  ): void => emit({ type: 'phase', phase: value, progress, message, detail })
   const markTerminalLimit = (reason: ScanResourceLimitReason): void => {
     terminalLimit ??= reason
     limitsReached.add(reason)
     isPartial = true
   }
 
+  phase('validating', 2, 'Validating the public URL')
+  phase('fetching', 10, 'Reaching the public application')
   const main = await fetchPublicResource(input, {
     kind: 'html',
     limits,
@@ -104,6 +137,7 @@ async function scanPublicUrlInternal(
   if (!isUsableHtml(main.status, main.headers)) {
     throw new ScannerError('target_unavailable')
   }
+  phase('headers', 20, 'Checking response security headers')
 
   const allowedOrigin = main.finalUrl.origin
   const sources: RuleSource[] = [
@@ -147,6 +181,11 @@ async function scanPublicUrlInternal(
     limits,
     limitsReached,
     skipped,
+  )
+  phase(
+    'discovering_assets',
+    30,
+    `Discovered ${discoveredScripts.size} browser bundle${discoveredScripts.size === 1 ? '' : 's'}`,
   )
   if (deadlineNow() >= deadlineAt) {
     markTerminalLimit('total_timeout')
@@ -288,6 +327,7 @@ async function scanPublicUrlInternal(
     increment(skipped, 'route_limit', discoveredRoutes.size - routes.length)
   }
 
+  phase('analyzing_assets', 35, 'Inspecting browser-side application code')
   while (scriptQueue.length > 0 && !terminalLimit) {
     if (scriptsAttempted >= limits.maxJavaScriptAssets) {
       isPartial = true
@@ -370,6 +410,17 @@ async function scanPublicUrlInternal(
         limitsReached,
         skipped,
       )
+      const total = Math.min(
+        limits.maxJavaScriptAssets,
+        Math.max(scriptsAttempted, discoveredScripts.size),
+      )
+      emit({
+        type: 'observation',
+        phase: 'analyzing_assets',
+        progress: 35 + (40 * scriptsAttempted) / Math.max(1, total),
+        message: `Inspected ${scriptsAttempted} of ${total} discovered browser bundles`,
+        metadata: { processed: scriptsAttempted, total },
+      })
       if (
         candidate.depth >= limits.maxJavaScriptDepth &&
         discovery.scriptUrls.length > 0
@@ -410,6 +461,7 @@ async function scanPublicUrlInternal(
     isPartial = true
   }
 
+  phase('classifying', 78, 'Classifying observations conservatively')
   const ruleEvaluation = evaluateRules({
     sources,
     headers: main.headers,
@@ -421,6 +473,7 @@ async function scanPublicUrlInternal(
     markTerminalLimit('total_timeout')
   }
   const findings = ruleEvaluation.findings
+  emitDetectedTechnologies(ruleEvaluation.scoredFindings, emit)
   if (ruleEvaluation.truncated) {
     isPartial = true
     limitsReached.add('finding_limit')
@@ -469,7 +522,8 @@ async function scanPublicUrlInternal(
   }
 
   const score = scoreFindings(ruleEvaluation.scoredFindings)
-  return {
+  phase('building_report', 92, 'Preparing the prioritized report')
+  const result: ScanResult = {
     schemaVersion: 'scanner-v1',
     status,
     target: {
@@ -507,6 +561,46 @@ async function scanPublicUrlInternal(
       'Runtime-generated chunks and cross-origin scripts may not be included in scan coverage.',
     ],
     durationMs: Math.max(0, now() - startedAt),
+  }
+  phase('complete', 100, 'Scan complete')
+  emit({
+    type: status === 'partial' ? 'partial' : 'complete',
+    progress: 100,
+    message:
+      status === 'partial'
+        ? 'The available public evidence is ready in a partial report.'
+        : 'The public-surface report is ready.',
+    metadata: {
+      processed: result.summary.total,
+      total: result.summary.total,
+    },
+  })
+  return result
+}
+
+function emitDetectedTechnologies(
+  findings: readonly { ruleId: string; classification: string }[],
+  emit: (event: Omit<ScanProgressEvent, 'timestamp'>) => void,
+): void {
+  for (const { name: technology } of detectFindingTechnologies(findings)) {
+    emit({
+      type: 'technology',
+      phase: 'classifying',
+      message: `${technology} detected`,
+      metadata: { technology },
+    })
+  }
+
+  const byDesign = findings.find(
+    ({ classification }) => classification === 'by_design',
+  )
+  if (byDesign) {
+    emit({
+      type: 'observation',
+      phase: 'classifying',
+      message: 'Public client configuration was recognized as expected.',
+      metadata: { classification: 'expected' },
+    })
   }
 }
 

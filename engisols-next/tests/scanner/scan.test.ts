@@ -4,6 +4,7 @@ import test from 'node:test'
 import { ScannerError } from '../../src/scanner/errors'
 import type { RequestOnce } from '../../src/scanner/public-fetch'
 import { scanPublicUrl } from '../../src/scanner/scan'
+import type { ScanProgressEvent } from '../../src/scanner/types'
 import {
   openAiSecretKey,
   stripeSecretKey,
@@ -104,6 +105,64 @@ test('assembles a stable report across linked routes and lazy bundles', async ()
     true,
   )
   assert.equal(JSON.stringify(result).includes(stripeSecretKey), false)
+})
+
+test('emits real, monotonic progress through scanner phases and bundle counts', async () => {
+  const events: ScanProgressEvent[] = []
+  const requestOnce: RequestOnce = async ({ target }) => {
+    if (target.url.pathname === '/') {
+      return response(
+        200,
+        '<script src="/entry.js"></script>',
+        secureHeaders,
+      )
+    }
+    if (target.url.pathname === '/entry.js') {
+      return response(200, "import('./lazy.js')", {
+        'content-type': 'application/javascript',
+      })
+    }
+    if (target.url.pathname === '/lazy.js') {
+      return response(200, 'window.__APP__ = true', {
+        'content-type': 'application/javascript',
+      })
+    }
+    return response(404, 'not found', { 'content-type': 'text/plain' })
+  }
+
+  await scanPublicUrl('https://app.example/', {
+    resolveHost,
+    requestOnce,
+    onProgress: (event) => events.push(event),
+  })
+
+  const phases = events.flatMap((event) =>
+    event.type === 'phase' && event.phase ? [event.phase] : [],
+  )
+  assert.deepEqual(phases, [
+    'validating',
+    'fetching',
+    'headers',
+    'discovering_assets',
+    'analyzing_assets',
+    'classifying',
+    'building_report',
+    'complete',
+  ])
+  const progress = events.flatMap((event) =>
+    typeof event.progress === 'number' ? [event.progress] : [],
+  )
+  assert.deepEqual(progress, [...progress].sort((left, right) => left - right))
+  assert.equal(progress.at(-1), 100)
+  assert.equal(
+    events.some(
+      (event) =>
+        event.phase === 'analyzing_assets' &&
+        event.metadata?.processed === 2 &&
+        event.metadata.total === 2,
+    ),
+    true,
+  )
 })
 
 test('returns a partial report when a child asset fails', async () => {

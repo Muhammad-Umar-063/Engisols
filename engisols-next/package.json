@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test:scanner:build": "rm -rf .scanner-test-dist && tsc -p tsconfig.scanner-tests.json",
     "test:scanner": "npm run test:scanner:build && node --test .scanner-test-dist/tests/scanner/*.test.js",
+    "test:production-check": "npm run test:scanner:build && node --test .scanner-test-dist/tests/production-check/*.test.js",
     "test:scanner:regression": "npm run test:scanner:build && node scripts/scanner-regression.mjs"
   },
   "dependencies": {
