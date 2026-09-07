@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "noEmit": false,
+    "incremental": false,
+    "isolatedModules": false,
+    "outDir": ".scanner-test-dist",
+    "rootDir": ".",
+    "types": ["node"]
+  },
+  "include": [
+    "app/api/scan/route.ts",
+    "scripts/scanner-regression-policy.ts",
+    "src/scanner/**/*.ts",
+    "tests/scanner/**/*.ts"
+  ],
+  "exclude": ["node_modules", ".next", ".scanner-test-dist"]
+}

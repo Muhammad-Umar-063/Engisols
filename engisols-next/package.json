@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:scanner:build": "rm -rf .scanner-test-dist && tsc -p tsconfig.scanner-tests.json",
+    "test:scanner": "npm run test:scanner:build && node --test .scanner-test-dist/tests/scanner/*.test.js",
+    "test:scanner:regression": "npm run test:scanner:build && node scripts/scanner-regression.mjs"
   },
   "dependencies": {
     "lenis": "^1.3.26",
