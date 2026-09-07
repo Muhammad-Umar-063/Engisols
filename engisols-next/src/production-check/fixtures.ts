@@ -3,6 +3,8 @@ import { SCAN_RECORD_LIFETIME_MS } from './config'
 import type { PersistedScan } from './types'
 
 export const DEMO_SCAN_IDS = {
+  early: 'rpt_DemoEarlyScanState000001',
+  mid: 'rpt_DemoMidScanState00000001',
   healthy: 'rpt_DemoHealthyReport0000001',
   review: 'rpt_DemoReviewReport00000001',
   critical: 'rpt_DemoCriticalReport000001',
@@ -15,6 +17,54 @@ export function getDevelopmentFixture(publicId: string): PersistedScan | null {
   const kind = Object.entries(DEMO_SCAN_IDS).find(([, id]) => id === publicId)?.[0]
   if (!kind) return null
   const now = new Date('2026-09-07T10:00:00.000Z')
+  if (kind === 'early' || kind === 'mid') {
+    const midScan = kind === 'mid'
+    return {
+      ...baseRecord(publicId, 'running'),
+      createdAt: now.toISOString(),
+      expiresAt: new Date(now.getTime() + SCAN_RECORD_LIFETIME_MS).toISOString(),
+      progress: {
+        phase: midScan ? 'analyzing_assets' : 'fetching',
+        progress: midScan ? 58 : 12,
+        message: midScan ? 'Inspecting browser-side code' : 'Reaching the public app',
+        events: midScan
+          ? [
+              {
+                type: 'phase',
+                phase: 'fetching',
+                progress: 10,
+                message: 'The public website responded',
+                timestamp: '2026-09-07T10:00:01.000Z',
+              },
+              {
+                type: 'technology',
+                phase: 'analyzing_assets',
+                progress: 48,
+                message: 'Supabase was detected in public browser code',
+                timestamp: '2026-09-07T10:00:04.000Z',
+                metadata: { technology: 'Supabase' },
+              },
+              {
+                type: 'observation',
+                phase: 'analyzing_assets',
+                progress: 58,
+                message: 'Checking public configuration and data-access signals',
+                timestamp: '2026-09-07T10:00:05.000Z',
+              },
+            ]
+          : [
+              {
+                type: 'phase',
+                phase: 'fetching',
+                progress: 12,
+                message: 'Resolving and requesting the public website',
+                timestamp: '2026-09-07T10:00:01.000Z',
+              },
+            ],
+      },
+      answers: midScan ? { builder: 'lovable' } : {},
+    }
+  }
   if (kind === 'failed') {
     return baseRecord(publicId, 'failed', undefined, {
       code: 'target_unavailable',

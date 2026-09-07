@@ -1,6 +1,7 @@
 ---
 version: alpha
 colors:
+  primary: "#8e2430"
   vanilla: "#f0e7db"
   oat: "#dccdbb"
   greige: "#b3a091"
@@ -26,22 +27,28 @@ spacing:
   step6: "6rem"
   step7: "10rem"
 components:
-  band:
-    maxWidth: "1280px"
-    rule: "Full-bleed color ground with a centered content shell"
-  button:
-    radius: "9999px"
-    rule: "Filled cherry on light grounds; filled vanilla on dark grounds"
+  campaignCard:
+    backgroundColor: "#f0e7db"
+    textColor: "#43212a"
+    rounded: "1rem"
+    padding: "1.5rem"
+  primaryAction:
+    backgroundColor: "#8e2430"
+    textColor: "#f0e7db"
+    rounded: "9999px"
+    height: "3rem"
   findingCard:
-    radius: "0.125rem"
-    rule: "Flat bordered surface; hierarchy comes from label, type, and spacing"
+    backgroundColor: "#f0e7db"
+    textColor: "#43212a"
+    rounded: "1rem"
+    padding: "1.5rem"
 ---
 
 # Engisols Design System
 
 ## Overview
 
-Engisols should feel like a senior engineering notebook made public: warm, exact, candid, and calm. The production-check routes are product surfaces inside the existing brand, not a neon cybersecurity dashboard. Their memorable signature is an evidence ledger—mono labels and hard horizontal rules—inside the site's editorial full-bleed bands.
+Engisols should feel like a senior engineering notebook made public: warm, exact, candid, and calm. `/production-check` belongs to the same paid-campaign family as `/ai-app-audit`: a floating pill masthead, oversized grotesque headlines, rounded editorial panels, tool-logo strip, full-width ground changes, mono evidence labels, and restrained motion. It must never read like a neon cybersecurity dashboard.
 
 This is a hybrid site. Marketing routes can be expressive; product routes prioritize task clarity, honest system state, and mobile readability. Avoid generic SaaS dashboards, fear-based red alerts, glossy gradients, glassmorphism, radar charts, and fake terminal logs.
 
@@ -55,7 +62,7 @@ Bricolage Grotesque carries display hierarchy, DM Sans carries prose and control
 
 ## Layout
 
-Pages use full-width `Band` grounds and the 1280px `.shell`. Product content is mobile-first at 375–430px, normally one column, then expands to restrained two-column compositions on desktop. The established 8/16/24/40/64/96/160 rhythm is canonical. Reports favor a readable document column over a dense dashboard.
+Pages use full-width campaign grounds and the 1280px `.shell`. The landing hero repeats the actual `/ai-app-audit` structure: message and proof on the left, the primary interactive object on the right. Product content is mobile-first at 375–430px, normally one column, then expands to restrained two-column compositions on desktop. The established 8/16/24/40/64/96 rhythm is canonical for campaign pages. Reports favor an editorial document flow over a dense dashboard.
 
 ## Elevation & Depth
 
@@ -63,12 +70,13 @@ Static surfaces stay flat. Use borders, ground changes, and spacing for hierarch
 
 ## Shapes
 
-Site product cards use the site's small radius. The isolated paid-campaign surface uses 1rem cards as a documented campaign exception. Primary and compact action buttons use the existing pill form. Status labels are compact but must not look like interactive controls.
+Site product cards use the site's small radius. Both `/ai-app-audit` and `/production-check` use the paid-campaign exception: 1rem cards, 0.75rem inner panels, and pill actions. Primary and compact action buttons use the existing pill form. Status labels are compact but must not look like interactive controls.
 
 ## Components
 
-- Progress: determinate, text-readable without motion, and backed by real scanner events.
-- Findings: grouped FIX NOW, REVIEW, EXPECTED; founder explanation first; native disclosure for technical evidence.
+- Campaign primitives: reuse `HeroHeadline`, `Eyebrow`, `LpSection`, `Card`, `ToolStrip`, the `.shell`, and existing campaign motion classes before creating equivalents.
+- Progress: a rounded campaign panel with the current action first, large determinate progress, stage sequence, one educational observation, then optional questions.
+- Findings: rounded editorial report panels grouped FIX NOW, REVIEW, EXPECTED; classification and title dominate, founder explanation follows, native disclosure holds technical evidence.
 - Forms: visible labels, owned validation, `noValidate`, clear errors, and duplicate-submit protection.
 - Feedback: reuse the global toast for copy actions; persistent errors remain inline.
 - Motion: short state transitions only and always safe under `prefers-reduced-motion`.

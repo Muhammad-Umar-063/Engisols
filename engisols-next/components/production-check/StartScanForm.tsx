@@ -55,12 +55,20 @@ export function StartScanForm() {
   }
 
   return (
-    <form className="max-w-3xl" onSubmit={submit} noValidate>
-      <label htmlFor="production-check-url" className="font-mono text-xs text-current/70">
-        Public website URL
+    <form
+      className="rounded-2xl border border-greige/50 bg-vanilla p-step-3 shadow-[0_24px_70px_-48px_rgba(42,20,24,0.75)] sm:p-step-4"
+      onSubmit={submit}
+      noValidate
+    >
+      <div className="flex items-center justify-between gap-step-2 border-b border-greige/50 pb-step-2">
+        <p className="font-display text-lg">Free production check</p>
+        <span className="whitespace-nowrap rounded-full bg-oat px-step-2 py-1 font-mono text-[0.65rem] tracking-[0.08em]">ABOUT 12 SEC</span>
+      </div>
+      <label htmlFor="production-check-url" className="mt-step-4 block font-mono text-xs tracking-[0.08em] text-bordeaux/75">
+        PASTE LIVE APP URL
       </label>
-      <div className="mt-step-1 flex flex-col gap-step-2 sm:flex-row">
-        <div className="relative min-w-0 flex-1">
+      <div className="mt-step-2 space-y-step-2">
+        <div className="relative min-w-0">
           <input
             ref={inputRef}
             id="production-check-url"
@@ -73,8 +81,8 @@ export function StartScanForm() {
             onChange={(event) => setUrl(event.target.value)}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? 'production-check-url-error' : 'production-check-url-help'}
-            placeholder="yourapp.com"
-            className="h-14 w-full rounded-sm border border-bordeaux/35 bg-transparent px-step-2 pr-12 text-base outline-none placeholder:text-bordeaux/40 focus:border-bordeaux"
+            placeholder="https://yourapp.com"
+            className="h-16 w-full rounded-xl border-2 border-bordeaux/55 bg-oat/20 px-step-3 pr-14 text-lg outline-none placeholder:text-bordeaux/45 focus:border-cherry"
           />
           {url ? (
             <button
@@ -85,7 +93,7 @@ export function StartScanForm() {
                 setError('')
                 inputRef.current?.focus()
               }}
-              className="absolute inset-y-0 right-0 w-12 text-xl text-bordeaux/55 hover:text-bordeaux"
+              className="absolute inset-y-0 right-0 grid min-h-11 w-14 place-items-center text-xl text-bordeaux/60 hover:text-bordeaux"
             >
               ×
             </button>
@@ -94,9 +102,10 @@ export function StartScanForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="h-14 shrink-0 rounded-full bg-cherry px-step-4 font-medium text-vanilla transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-55"
+          aria-busy={submitting}
+          className="flex h-16 w-full items-center justify-center rounded-full bg-cherry px-step-4 font-mono text-sm font-medium tracking-tight text-vanilla transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-55"
         >
-          {submitting ? 'Starting check…' : 'Check production readiness'}
+          {submitting ? 'STARTING CHECK…' : <>CHECK MY APP <span aria-hidden className="ml-2">→</span></>}
         </button>
       </div>
       {error ? (
@@ -104,8 +113,8 @@ export function StartScanForm() {
           {error}
         </p>
       ) : (
-        <p id="production-check-url-help" className="mt-step-2 text-sm text-current/65">
-          Passive public-surface scan. No account, repository, or GitHub access required.
+        <p id="production-check-url-help" className="mt-step-3 text-center font-mono text-[0.65rem] leading-relaxed tracking-[0.06em] text-bordeaux/70">
+          FREE · NO GITHUB · NO LOGIN · PASSIVE PUBLIC-SURFACE CHECK
         </p>
       )}
     </form>
