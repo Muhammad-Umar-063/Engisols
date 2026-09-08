@@ -71,7 +71,7 @@ export default function AiAppAuditPage() {
 
       {/* 1 Hero */}
       <section id="top" className="bg-vanilla">
-        <div className="shell grid gap-step-4 pb-step-5 pt-[calc(var(--spacing-step-4)+4.5rem)] sm:pt-[calc(var(--spacing-step-5)+4rem)] lg:grid-cols-[minmax(0,1fr)_minmax(24rem,0.78fr)] lg:items-center lg:gap-step-5 lg:pb-step-6">
+        <div className="shell grid gap-step-3 pb-step-5 pt-[calc(var(--spacing-step-2)+4rem)] sm:gap-step-4 sm:pt-[calc(var(--spacing-step-5)+4rem)] lg:grid-cols-[minmax(0,1fr)_minmax(24rem,0.78fr)] lg:items-center lg:gap-step-5 lg:pb-step-6">
           <div>
             <div className="lp-in" style={{ '--i': 0 } as CSSProperties}>
               <Eyebrow>{lpHero.eyebrow}</Eyebrow>

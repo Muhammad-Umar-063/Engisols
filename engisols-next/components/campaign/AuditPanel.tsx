@@ -1,56 +1,101 @@
 'use client'
 
+import { AnimatePresence, m } from 'motion/react'
 import { useState } from 'react'
 import { scrollToTarget } from '@/components/motion/SmoothScroll'
+import { useMotionPrefs } from '@/hooks/useMotionPrefs'
+import { DUR, EASE } from '@/lib/motion'
 import { lpChecks } from '@/content/campaign'
-import { TickItem } from '@/components/campaign/ui'
 
 const ICONS = [
   'M9 6 4.5 10.5 9 15M15 6l4.5 4.5L15 15',
-  'M12 4.5 6 7v4.2c0 3.3 2.4 6.2 6 7.3 3.6-1.1 6-4 6-7.3V7l-6-2.5Z',
+  'M12 4.5 6 7v4.2c0 3.3 2.4 6 7.3 3.6-1.1 6-4 6-7.3V7l-6-2.5Z',
   'M13 4.5 6.5 13H11l-.5 6.5L17.5 11H13l.5-6.5Z',
   'M5 19V9m4.7 10V5m4.6 14v-7m4.7 7V8',
   'M12 4.5 13.6 9.4 18.5 11l-4.9 1.6L12 17.5l-1.6-4.9L5.5 11l4.9-1.6L12 4.5Z',
 ]
 
-const TAB_LABELS = ['CODE', 'SECURITY', 'RELIABILITY', 'SCALE', 'AI LAYER']
+const TAB_LABELS = ['CODE', 'SEC', 'RELY', 'SCALE', 'AI']
+
+const SAMPLE_OUTPUT: Record<string, { impact: string; decision: string }> = {
+  'code-quality': {
+    impact: 'Changes stay predictable',
+    decision: 'Refactor map',
+  },
+  security: {
+    impact: 'Access stays bounded',
+    decision: 'Boundary review',
+  },
+  reliability: {
+    impact: 'Failures recover safely',
+    decision: 'Failure-path plan',
+  },
+  architecture: {
+    impact: 'Growth stays affordable',
+    decision: 'Scale budget',
+  },
+  'ai-layer': {
+    impact: 'Outputs stay controlled',
+    decision: 'Eval and guardrail plan',
+  },
+}
 
 /**
- * An honest, interactive preview of the audit deliverable. It never implies a
- * visitor's repository is being scanned: the controls simply let them explore
- * the five review areas and see the level of specificity a real report uses.
+ * An honest interactive model of the audit deliverable. The brief scan trace
+ * resets when a visitor changes lenses, but every label makes clear that this
+ * is a sample—not a scan of their application.
  */
 export function AuditPanel() {
   const [selectedId, setSelectedId] = useState('security')
+  const { reduced } = useMotionPrefs()
   const selectedIndex = Math.max(
     0,
     lpChecks.items.findIndex((item) => item.id === selectedId),
   )
   const selected = lpChecks.items[selectedIndex]
+  const sample = SAMPLE_OUTPUT[selected.id]
 
   return (
     <section
       aria-labelledby="sample-audit-title"
-      className="min-w-0 overflow-hidden rounded-2xl border border-greige/55 bg-vanilla shadow-[0_24px_60px_-40px_rgba(23,23,23,0.55)]"
+      className="lp-audit-console relative min-w-0 overflow-hidden rounded-2xl border border-greige/60 bg-vanilla shadow-[0_28px_70px_-44px_rgba(23,23,23,0.7)]"
     >
-      <div className="flex items-start justify-between gap-step-2 border-b border-greige/45 px-step-3 py-step-2">
+      <span key={selected.id} aria-hidden className="lp-console-trace absolute inset-x-0 top-0 z-20 h-px bg-cherry/70" />
+
+      <div className="relative z-10 flex items-start justify-between gap-step-2 border-b border-greige/45 bg-vanilla/95 px-step-2 py-step-2 sm:px-step-3">
         <div>
-          <p className="font-mono text-[0.65rem] font-semibold tracking-[0.1em] text-cherry">
-            INTERACTIVE PREVIEW
+          <p className="font-mono text-[0.62rem] font-semibold tracking-[0.12em] text-cherry">
+            SAMPLE AUDIT / 05 LENSES
           </p>
           <h2 id="sample-audit-title" className="mt-1 text-lg font-semibold">
-            Sample audit report
+            Production review console
           </h2>
         </div>
-        <span className="shrink-0 rounded-full border border-greige/55 px-step-2 py-1 font-mono text-[0.6rem] tracking-[0.06em] text-bordeaux/65">
-          NOT A LIVE SCAN
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-greige/55 px-3 py-1 font-mono text-[0.56rem] font-semibold tracking-[0.06em] text-bordeaux/65 sm:px-step-2 sm:text-[0.6rem]">
+          <span className="lp-console-dot size-1.5 rounded-full bg-cherry" aria-hidden />
+          SAMPLE MODE
         </span>
       </div>
 
+      <dl className="relative z-10 grid grid-cols-3 divide-x divide-greige/40 border-b border-greige/45 bg-oat/35 px-step-1 py-step-1.5 font-mono text-[0.56rem] tracking-[0.06em] sm:px-step-2 sm:text-[0.62rem]">
+        <div className="px-step-1">
+          <dt className="text-bordeaux/45">ACCESS</dt>
+          <dd className="mt-0.5 font-semibold text-bordeaux/75">READ ONLY</dd>
+        </div>
+        <div className="px-step-1">
+          <dt className="text-bordeaux/45">OUTPUT</dt>
+          <dd className="mt-0.5 font-semibold text-bordeaux/75">RANKED PLAN</dd>
+        </div>
+        <div className="px-step-1">
+          <dt className="text-bordeaux/45">REVIEW</dt>
+          <dd className="mt-0.5 font-semibold text-bordeaux/75">ENGINEER LED</dd>
+        </div>
+      </dl>
+
       <div
         role="group"
-        aria-label="Choose a sample audit area"
-        className="flex snap-x gap-step-1 overflow-x-auto border-b border-greige/45 px-step-2 py-step-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        aria-label="Choose a sample audit lens"
+        className="relative z-10 grid grid-cols-5 border-b border-greige/45 bg-vanilla"
       >
         {lpChecks.items.map((item, index) => {
           const active = item.id === selected.id
@@ -62,57 +107,80 @@ export function AuditPanel() {
               aria-pressed={active}
               aria-controls="sample-audit-panel"
               onClick={() => setSelectedId(item.id)}
-              className={`min-h-11 shrink-0 snap-start rounded-full px-step-2 font-mono text-[0.68rem] font-semibold tracking-[0.04em] transition-colors ${
-                active
-                  ? 'bg-bordeaux text-vanilla'
-                  : 'border border-greige/50 text-bordeaux/70 hover:border-bordeaux/50'
+              className={`relative min-h-14 min-w-0 border-l border-greige/35 px-0.5 py-1 text-center first:border-l-0 sm:px-step-1 ${
+                active ? 'bg-bordeaux text-vanilla' : 'text-bordeaux/65 hover:bg-oat/40'
               }`}
             >
-              {TAB_LABELS[index]}
+              <span className={`block font-mono text-[0.5rem] tabular-nums ${active ? 'text-vanilla/55' : 'text-bordeaux/35'}`}>
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <span className="mt-1 block truncate font-mono text-[0.58rem] font-semibold tracking-[0.04em] sm:text-[0.65rem]">
+                {TAB_LABELS[index]}
+              </span>
             </button>
           )
         })}
       </div>
 
-      <div id="sample-audit-panel" aria-live="polite" className="p-step-3">
-        <div className="flex items-center gap-step-2">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-oat/70" aria-hidden>
-            <svg
-              viewBox="0 0 24 24"
-              className="size-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d={ICONS[selectedIndex]} />
-            </svg>
-          </span>
-          <p className="font-mono text-[0.65rem] font-semibold tracking-[0.08em] text-bordeaux/55">
-            REVIEW AREA {selected.n}
-          </p>
-        </div>
+      <div id="sample-audit-panel" aria-live="polite" className="lp-console-grid relative min-h-[22rem] p-step-2 sm:min-h-[21rem] sm:p-step-3">
+        <AnimatePresence mode="wait" initial={false}>
+          <m.div
+            key={selected.id}
+            initial={reduced ? false : { opacity: 0, y: 10, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6, filter: 'blur(3px)' }}
+            transition={{ duration: reduced ? 0 : DUR.standard, ease: EASE.enter }}
+          >
+            <div className="flex items-center gap-step-2">
+              <span className="grid size-9 shrink-0 place-items-center rounded-full border border-greige/50 bg-vanilla" aria-hidden>
+                <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={ICONS[selectedIndex]} />
+                </svg>
+              </span>
+              <div>
+                <p className="font-mono text-[0.58rem] font-semibold tracking-[0.1em] text-cherry">
+                  LENS {selected.n} / {selected.name}
+                </p>
+                <p className="mt-0.5 font-mono text-[0.58rem] text-bordeaux/45">3 SIGNALS MAPPED</p>
+              </div>
+            </div>
 
-        <p className="mt-step-2 max-w-[30ch] font-display text-xl font-semibold leading-tight">
-          {selected.question}
-        </p>
-        <ul className="mt-step-3 grid gap-step-1 text-sm text-bordeaux/80 sm:grid-cols-2">
-          {selected.points.slice(0, 4).map((point) => (
-            <TickItem key={point}>{point}</TickItem>
-          ))}
-        </ul>
+            <p className="mt-step-2 max-w-[31ch] font-display text-[1.18rem] font-semibold leading-tight sm:text-xl">
+              {selected.question}
+            </p>
 
-        <div className="mt-step-3 flex flex-col gap-step-2 border-t border-greige/40 pt-step-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-[38ch] text-xs leading-relaxed text-bordeaux/60">
-            A real audit ties each finding to your code, its impact, and the next action.
+            <div className="mt-step-2 grid grid-cols-2 gap-3">
+              {selected.points.slice(0, 4).map((point, index) => (
+                <div key={point} className="flex min-h-12 items-center gap-step-1 rounded-lg border border-greige/45 bg-vanilla/90 px-3 py-step-1 text-xs">
+                  <span className="font-mono text-[0.55rem] text-cherry">0{index + 1}</span>
+                  <span className="leading-tight text-bordeaux/75">{point}</span>
+                </div>
+              ))}
+            </div>
+
+            <dl className="mt-step-2 grid grid-cols-2 divide-x divide-greige/45 border-y border-greige/50 bg-vanilla/80 py-step-2">
+              <div className="pr-step-2">
+                <dt className="font-mono text-[0.56rem] font-semibold tracking-[0.08em] text-bordeaux/45">WHY IT MATTERS</dt>
+                <dd className="mt-1 text-xs font-medium leading-snug">{sample.impact}</dd>
+              </div>
+              <div className="pl-step-2">
+                <dt className="font-mono text-[0.56rem] font-semibold tracking-[0.08em] text-bordeaux/45">REPORT DECISION</dt>
+                <dd className="mt-1 text-xs font-medium leading-snug">{sample.decision}</dd>
+              </div>
+            </dl>
+          </m.div>
+        </AnimatePresence>
+
+        <div className="mt-step-2 flex items-center justify-between gap-step-2">
+          <p className="max-w-[25ch] text-[0.68rem] leading-relaxed text-bordeaux/55">
+            Your report connects evidence, consequence, and action.
           </p>
           <button
             type="button"
             onClick={() => scrollToTarget('#report')}
-            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 self-start font-mono text-xs font-semibold underline decoration-bordeaux/40 underline-offset-4 transition-colors hover:decoration-bordeaux"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1 font-mono text-[0.65rem] font-semibold underline decoration-bordeaux/40 underline-offset-4 transition-colors hover:decoration-bordeaux"
           >
-            SEE THE DELIVERABLE
+            SEE OUTPUT
             <span aria-hidden>↓</span>
           </button>
         </div>

@@ -378,6 +378,54 @@ html:has(:is(.engisols-campaign-brand, .production-check-brand)) [data-toast-sta
   animation-delay: calc(var(--i, 0) * 70ms);
 }
 
+/* Audit preview signature: a restrained engineering grid and a single trace
+   pass whenever the visitor changes review lenses. The movement represents
+   navigating the sample, not a claim that their application is being scanned. */
+.lp-console-grid {
+  background-color: color-mix(in srgb, var(--color-vanilla) 94%, transparent);
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-greige) 18%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-greige) 18%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@keyframes lp-console-trace {
+  0% {
+    opacity: 0;
+    transform: translateY(5rem);
+  }
+  12% {
+    opacity: 0.7;
+  }
+  75% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(34rem);
+  }
+}
+
+.lp-console-trace {
+  animation: lp-console-trace 780ms var(--ease-enter) both;
+  box-shadow: 0 7px 18px color-mix(in srgb, var(--color-cherry) 22%, transparent);
+  pointer-events: none;
+}
+
+@keyframes lp-console-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.lp-console-dot {
+  animation: lp-console-pulse 1.8s var(--ease-micro) infinite;
+}
+
 /* Cards. A 2px lift and 1% of scale is the whole move: enough to answer the
    pointer, not enough to shift a grid a reader is scanning across. */
 .lp-card {
@@ -396,7 +444,9 @@ html:has(:is(.engisols-campaign-brand, .production-check-brand)) [data-toast-sta
 @media (prefers-reduced-motion: reduce) {
   /* CSS-driven scenes stop; Motion scenes branch via useMotionPrefs. */
   .hero-h1 .w > span,
-  .capacity-dot {
+  .capacity-dot,
+  .lp-console-dot,
+  .lp-console-trace {
     animation: none;
   }
 

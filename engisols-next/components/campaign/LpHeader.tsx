@@ -96,6 +96,10 @@ export function LpHeader() {
           <span className="sr-only">AI app audit</span>
         </p>
 
+        <span className="font-mono text-[0.58rem] font-semibold tracking-[0.1em] text-bordeaux/55 sm:hidden">
+          AI APP AUDIT
+        </span>
+
         <nav aria-label="On this page" className="hidden items-center gap-step-2 lg:flex">
           {lpNav.map((item) => (
             <a
