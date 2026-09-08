@@ -381,11 +381,30 @@ html:has(:is(.engisols-campaign-brand, .production-check-brand)) [data-toast-sta
 /* Audit preview signature: a restrained engineering grid and a single trace
    pass whenever the visitor changes review lenses. The movement represents
    navigating the sample, not a claim that their application is being scanned. */
+.lp-audit-console {
+  background:
+    radial-gradient(circle at 82% -8%, rgb(255 255 255 / 0.17), transparent 34%),
+    radial-gradient(
+      circle at 4% 105%,
+      color-mix(in srgb, var(--color-cherry) 52%, transparent),
+      transparent 42%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--color-bordeaux) 72%, var(--color-cherry)),
+      color-mix(in srgb, var(--color-cherry) 58%, var(--color-bordeaux)) 52%,
+      color-mix(in srgb, var(--color-bordeaux) 78%, var(--color-cherry))
+    );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    inset 0 -1px 0 rgb(0 0 0 / 0.18);
+  backdrop-filter: blur(18px) saturate(1.12);
+}
+
 .lp-console-grid {
-  background-color: color-mix(in srgb, var(--color-vanilla) 94%, transparent);
   background-image:
-    linear-gradient(to right, color-mix(in srgb, var(--color-greige) 18%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--color-greige) 18%, transparent) 1px, transparent 1px);
+    linear-gradient(to right, rgb(255 255 255 / 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.07) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
@@ -407,8 +426,8 @@ html:has(:is(.engisols-campaign-brand, .production-check-brand)) [data-toast-sta
 }
 
 .lp-console-trace {
-  animation: lp-console-trace 780ms var(--ease-enter) both;
-  box-shadow: 0 7px 18px color-mix(in srgb, var(--color-cherry) 22%, transparent);
+  animation: lp-console-trace 2100ms var(--ease-enter) both;
+  box-shadow: 0 8px 22px rgb(255 255 255 / 0.18);
   pointer-events: none;
 }
 
@@ -423,7 +442,7 @@ html:has(:is(.engisols-campaign-brand, .production-check-brand)) [data-toast-sta
 }
 
 .lp-console-dot {
-  animation: lp-console-pulse 1.8s var(--ease-micro) infinite;
+  animation: lp-console-pulse 2.4s var(--ease-micro) infinite;
 }
 
 /* Cards. A 2px lift and 1% of scale is the whole move: enough to answer the

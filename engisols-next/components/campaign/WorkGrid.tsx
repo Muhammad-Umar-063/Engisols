@@ -2,13 +2,15 @@
 
 import Image from 'next/image'
 import { m } from 'motion/react'
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode, type UIEvent } from 'react'
 import { useMotionPrefs } from '@/hooks/useMotionPrefs'
 import { useReveal } from '@/components/motion/Reveal'
 import { DUR, EASE } from '@/lib/motion'
 import { SheetModal } from '@/components/motion/SheetModal'
 import { lpWork } from '@/content/campaign'
 import { Card, TickItem } from '@/components/campaign/ui'
+
+const DISPLAY_ORDER = [4, 1, 0, 3, 2, 5]
 
 /**
  * One card. Split out so each owns its own reveal gate — a hook cannot run in a
@@ -35,7 +37,7 @@ function WorkCard({
           ? { duration: 0 }
           : { duration: DUR.standard, ease: EASE.enter, delay: reduced ? 0 : (i % 3) * 0.05 }
       }
-      className="min-w-[82vw] shrink-0 snap-center md:min-w-0"
+      className="min-w-[76vw] max-w-[20rem] shrink-0 snap-start md:max-w-none md:min-w-0"
     >
       {children}
     </m.li>
@@ -60,19 +62,75 @@ function WorkCard({
  */
 export function WorkGrid() {
   const [open, setOpen] = useState<number | null>(null)
+  const [activeProject, setActiveProject] = useState(0)
+  const railRef = useRef<HTMLUListElement>(null)
   const { reduced } = useMotionPrefs()
   const project = open === null ? null : lpWork.projects[open]
-  // Put the two projects with verified public outcomes first. On a phone these
-  // are the cards visible before the visitor chooses to keep swiping.
-  const displayOrder = [4, 1, 0, 3, 2, 5]
+
+  function scrollToProject(index: number) {
+    const bounded = Math.max(0, Math.min(DISPLAY_ORDER.length - 1, index))
+    const rail = railRef.current
+    const card = rail?.children.item(bounded) as HTMLElement | null
+    if (!rail || !card) return
+    const first = rail.firstElementChild as HTMLElement | null
+    rail.scrollTo({
+      left: card.offsetLeft - (first?.offsetLeft ?? 0),
+      behavior: reduced ? 'auto' : 'smooth',
+    })
+    setActiveProject(bounded)
+  }
+
+  function updateProjectPosition(event: UIEvent<HTMLUListElement>) {
+    const rail = event.currentTarget
+    const first = rail.firstElementChild as HTMLElement | null
+    if (!first) return
+    const gap = Number.parseFloat(getComputedStyle(rail).columnGap) || 0
+    setActiveProject(
+      Math.min(
+        DISPLAY_ORDER.length - 1,
+        Math.round(rail.scrollLeft / (first.offsetWidth + gap)),
+      ),
+    )
+  }
 
   return (
     <>
-      <p className="mt-step-3 font-mono text-[0.65rem] font-semibold tracking-[0.08em] text-bordeaux/55 md:hidden">
-        SWIPE THROUGH SELECTED WORK →
-      </p>
-      <ul className="-mx-step-2 mt-step-2 flex snap-x snap-mandatory gap-step-2 overflow-x-auto px-step-2 pb-step-2 [scrollbar-width:none] md:mx-0 md:mt-step-4 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 xl:grid-cols-3 [&::-webkit-scrollbar]:hidden">
-        {displayOrder.map((projectIndex, displayIndex) => {
+      <div className="mt-step-3 flex items-center justify-between gap-step-2 md:hidden">
+        <p className="font-mono text-[0.65rem] font-semibold tracking-[0.08em] text-bordeaux/60">
+          PROJECT <span className="text-bordeaux tabular-nums">{String(activeProject + 1).padStart(2, '0')}</span> / {String(DISPLAY_ORDER.length).padStart(2, '0')}
+        </p>
+        <div className="flex items-center gap-step-1">
+          <button
+            type="button"
+            aria-label="Previous project"
+            disabled={activeProject === 0}
+            onClick={() => scrollToProject(activeProject - 1)}
+            className="grid size-11 place-items-center rounded-full border border-greige/60 transition-colors hover:border-bordeaux disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <svg viewBox="0 0 20 20" aria-hidden className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m12.5 4.5-5 5.5 5 5.5M8 10h8" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            aria-label="Next project"
+            disabled={activeProject === DISPLAY_ORDER.length - 1}
+            onClick={() => scrollToProject(activeProject + 1)}
+            className="grid size-11 place-items-center rounded-full border border-bordeaux bg-bordeaux text-vanilla transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <svg viewBox="0 0 20 20" aria-hidden className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m7.5 4.5 5 5.5-5 5.5M12 10H4" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <ul
+        ref={railRef}
+        onScroll={updateProjectPosition}
+        aria-label="Selected client projects"
+        className="-mx-step-2 mt-step-2 flex snap-x snap-mandatory gap-step-2 overflow-x-auto px-step-2 pb-step-2 pr-step-5 [scrollbar-width:none] md:mx-0 md:mt-step-4 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 xl:grid-cols-3 [&::-webkit-scrollbar]:hidden"
+      >
+        {DISPLAY_ORDER.map((projectIndex, displayIndex) => {
           const item = lpWork.projects[projectIndex]
           return (
             <WorkCard key={item.name} index={displayIndex} reduced={reduced}>
