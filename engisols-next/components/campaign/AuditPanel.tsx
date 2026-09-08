@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, m } from 'motion/react'
-import { useState } from 'react'
+import { useRef, useState, type KeyboardEvent } from 'react'
 import { scrollToTarget } from '@/components/motion/SmoothScroll'
 import { useMotionPrefs } from '@/hooks/useMotionPrefs'
 import { EASE } from '@/lib/motion'
@@ -47,6 +47,7 @@ const SAMPLE_OUTPUT: Record<string, { impact: string; decision: string }> = {
  */
 export function AuditPanel() {
   const [selectedId, setSelectedId] = useState('security')
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
   const { reduced } = useMotionPrefs()
   const selectedIndex = Math.max(
     0,
@@ -54,6 +55,28 @@ export function AuditPanel() {
   )
   const selected = lpChecks.items[selectedIndex]
   const sample = SAMPLE_OUTPUT[selected.id]
+
+  function selectLens(index: number, moveFocus = false) {
+    const bounded = (index + lpChecks.items.length) % lpChecks.items.length
+    setSelectedId(lpChecks.items[bounded].id)
+    if (moveFocus) tabRefs.current[bounded]?.focus()
+  }
+
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      event.preventDefault()
+      selectLens(index + 1, true)
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      selectLens(index - 1, true)
+    } else if (event.key === 'Home') {
+      event.preventDefault()
+      selectLens(0, true)
+    } else if (event.key === 'End') {
+      event.preventDefault()
+      selectLens(lpChecks.items.length - 1, true)
+    }
+  }
 
   return (
     <section
@@ -93,37 +116,62 @@ export function AuditPanel() {
         </div>
       </dl>
 
+      <div className="relative z-10 flex items-center justify-between gap-step-2 border-b border-vanilla/15 bg-bordeaux/30 px-step-2 py-1.5 font-mono text-[0.53rem] font-semibold tracking-[0.08em] text-vanilla/70 sm:px-step-3 sm:text-[0.58rem]">
+        <span>CHOOSE A REVIEW LENS</span>
+        <span className="inline-flex items-center gap-1 text-vanilla/90">
+          TAP TO SWITCH <span aria-hidden>↔</span>
+        </span>
+      </div>
+
       <div
-        role="group"
-        aria-label="Choose a sample audit lens"
-        className="relative z-10 grid grid-cols-5 border-b border-vanilla/15 bg-bordeaux/15"
+        role="tablist"
+        aria-label="Sample audit lenses"
+        className="relative z-10 grid grid-cols-5 gap-px border-b border-vanilla/20 bg-vanilla/20 p-px"
       >
         {lpChecks.items.map((item, index) => {
           const active = item.id === selected.id
           return (
             <button
               key={item.id}
+              ref={(node) => {
+                tabRefs.current[index] = node
+              }}
               type="button"
+              id={`sample-audit-tab-${item.id}`}
+              role="tab"
               aria-label={`Preview ${item.name}`}
-              aria-pressed={active}
+              aria-selected={active}
               aria-controls="sample-audit-panel"
-              onClick={() => setSelectedId(item.id)}
-              className={`relative min-h-14 min-w-0 border-l border-vanilla/15 px-0.5 py-1 text-center first:border-l-0 sm:px-step-1 ${
-                active ? 'bg-vanilla text-bordeaux' : 'text-vanilla/80 hover:bg-vanilla/10'
+              tabIndex={active ? 0 : -1}
+              onClick={() => selectLens(index)}
+              onKeyDown={(event) => handleTabKeyDown(event, index)}
+              className={`relative min-h-[4.25rem] min-w-0 cursor-pointer px-0.5 py-2 text-center outline-none transition-[background-color,color,box-shadow,transform] duration-200 after:absolute after:inset-x-2 after:bottom-1 after:h-0.5 after:rounded-full after:bg-cherry after:transition-opacity active:translate-y-px sm:px-step-1 ${
+                active
+                  ? 'bg-vanilla text-bordeaux shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] after:opacity-100'
+                  : 'bg-bordeaux/55 text-vanilla/78 after:opacity-0 hover:bg-vanilla/15 hover:text-vanilla focus-visible:bg-vanilla/15 focus-visible:text-vanilla focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-vanilla/80'
               }`}
             >
               <span className={`block font-mono text-[0.5rem] tabular-nums ${active ? 'text-bordeaux/55' : 'text-vanilla/50'}`}>
                 {String(index + 1).padStart(2, '0')}
               </span>
-              <span className="mt-1 block truncate font-mono text-[0.58rem] font-semibold tracking-[0.04em] sm:text-[0.65rem]">
+              <span className="mt-1 block truncate font-mono text-[0.6rem] font-semibold tracking-[0.05em] sm:text-[0.68rem]">
                 {TAB_LABELS[index]}
+              </span>
+              <span className={`mt-0.5 block font-mono text-[0.45rem] tracking-[0.08em] ${active ? 'text-cherry' : 'text-vanilla/45'}`}>
+                {active ? 'VIEWING' : 'OPEN'}
               </span>
             </button>
           )
         })}
       </div>
 
-      <div id="sample-audit-panel" aria-live="polite" className="lp-console-grid relative min-h-[22rem] p-step-2 sm:min-h-[21rem] sm:p-step-3">
+      <div
+        id="sample-audit-panel"
+        role="tabpanel"
+        aria-labelledby={`sample-audit-tab-${selected.id}`}
+        aria-live="polite"
+        className="lp-console-grid relative min-h-[22rem] p-step-2 sm:min-h-[21rem] sm:p-step-3"
+      >
         <AnimatePresence mode="wait" initial={false}>
           <m.div
             key={selected.id}

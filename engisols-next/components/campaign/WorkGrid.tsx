@@ -55,10 +55,9 @@ function WorkCard({
  * The whole card is the button. A card that looks clickable and is not is worse
  * than one that never offered.
  *
- * The tile shows the client's own mark where one exists, on a light ground so
- * the logo keeps its own colours — the four that have a public brand. The two
- * that do not fall back to the comp's letterform on bordeaux, which is why the
- * tile has two treatments rather than one.
+ * The tile shows the client's own mark where an approved asset exists, on a
+ * light ground so the logo keeps its own colours. Projects without a standalone
+ * mark in the repository use the campaign's letterform fallback on bordeaux.
  */
 export function WorkGrid() {
   const [open, setOpen] = useState<number | null>(null)

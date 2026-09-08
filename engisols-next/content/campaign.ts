@@ -156,10 +156,9 @@ export const lpChecks = {
 /**
  * Work.
  *
- * All six are real clients with real marks, fetched from their own sites and
- * normalised to 128px squares in public/logos. They keep their own colours:
- * recolouring a client's logo to match a palette is the one thing a logo may
- * never do.
+ * All six are real products. Public marks keep their own colours; Alula uses
+ * the campaign's letter fallback because the repository already contains a
+ * current product capture but not a standalone, approved logo asset.
  *
  * SoloSuit replaced the Account Lookup Agent, which was the one entry with no
  * company behind it — an internal engineering piece, so no mark to fetch and
@@ -167,6 +166,9 @@ export const lpChecks = {
  * own brand and its own case study on the site; its copy here is condensed from
  * that entry rather than written fresh.
  *
+ * Project facts are deliberately product facts, not ENGISOLS performance
+ * claims. They are sourced from the products' current public sites and kept to
+ * the same three-item shape so cards and detail sheets scan consistently.
  * `initial` stays on every entry as the fallback for a mark that fails to load.
  */
 export const lpWork = {
@@ -189,6 +191,11 @@ export const lpWork = {
         'Retrieval built to be inspected, so an answer can be traced to its source',
         'Voice and chat sharing one conversation model rather than two codebases',
       ],
+      facts: [
+        { value: '3', label: 'Voice, chat & email channels' },
+        { value: 'Human', label: 'Handoff when AI is unsure' },
+        { value: 'Live', label: 'CRM & workflow integrations' },
+      ],
     },
     {
       name: 'PastPresent',
@@ -207,6 +214,7 @@ export const lpWork = {
       facts: [
         { value: '5', label: 'Occasion types supported' },
         { value: 'Zero', label: 'Apps for contributors' },
+        { value: 'AI', label: 'Writing coach for contributors' },
       ],
     },
     {
@@ -224,6 +232,11 @@ export const lpWork = {
         'Explicit boundaries on what personal context reaches a prompt',
         'Cost per active user treated as a design constraint, not a surprise',
       ],
+      facts: [
+        { value: '7', label: 'Context signals modelled' },
+        { value: 'iOS', label: 'Public TestFlight product' },
+        { value: 'Connected', label: 'Learns from linked apps' },
+      ],
     },
     {
       name: 'MeetCaregivers',
@@ -238,6 +251,11 @@ export const lpWork = {
         'Matching and scheduling across a nationwide caregiver network',
         'Ownership and access checks enforced server-side, not in the interface',
         'Workflows that survive the messy cases — cancellations, replacements, partial shifts',
+      ],
+      facts: [
+        { value: 'W-2', label: 'Employed caregiver network' },
+        { value: 'AI', label: 'Assisted caregiver matching' },
+        { value: 'Live', label: 'Shared family care portal' },
       ],
     },
     {
@@ -255,25 +273,28 @@ export const lpWork = {
         'Settlement tooling for what happens after the response is filed',
       ],
       facts: [
-        { value: '$2.99B', label: 'Debt protected on platform' },
-        { value: '393K', label: 'People helped' },
-        { value: '50', label: 'US states covered' },
+        { value: '$2.73B', label: 'Debt protected on platform' },
+        { value: '376K+', label: 'People helped' },
+        { value: '14–30', label: 'Days to answer a lawsuit' },
       ],
     },
     {
-      name: 'Retell AI + GHL',
-      initial: '◈',
-      logo: '/logos/retell.png',
-      logoSecondary: '/logos/ghl.png',
-      image: '/work-lp/retell.jpg',
-      blurb: 'Voice AI connected to real business workflows.',
-      tags: ['Voice AI', 'API', 'Automation', 'Integration'],
+      name: 'Alula',
+      initial: 'A',
+      image: '/work/alula.jpeg',
+      blurb: 'Family care coordination for complex care.',
+      tags: ['Care Tech', 'React', 'Node.js', 'AWS'],
       summary:
-        'Voice agents joined to a CRM, where the interesting engineering is never the call itself. It is the retry, the duplicate, the webhook that arrives twice, and the record that must not end up in two states.',
+        'A shared care platform for families managing complex conditions across relatives, professional caregivers, and clinicians. Care plans, medication, appointments, documents, and daily updates stay visible in one family circle instead of being scattered across group chats and folders.',
       built: [
-        'Call outcomes written back to the CRM idempotently',
-        'Webhook handling that survives redelivery and out-of-order events',
-        'Failure paths that hand back to a human instead of dropping the lead',
+        'One shared care space for plans, medications, appointments, documents, and daily updates',
+        'Role-aware coordination across family members, professional caregivers, and clinicians',
+        'Care workflows designed around complex conditions, changing routines, and backup coverage',
+      ],
+      facts: [
+        { value: '159', label: 'Safety-review categories' },
+        { value: '24h', label: 'Human follow-up target' },
+        { value: 'One', label: 'Shared family care view' },
       ],
     },
   ],
