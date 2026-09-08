@@ -1,208 +1,236 @@
-import { Card, Eyebrow, TickItem } from '@/components/campaign/ui'
 import { ProductionCheckFooter } from '@/components/production-check/ProductionCheckFooter'
 import { ProductionCheckHeader } from '@/components/production-check/ProductionCheckHeader'
-import type { FounderFinding, FounderReport, PersistedScan } from '@/src/production-check/types'
+import type { FounderReport, PersistedScan } from '@/src/production-check/types'
+import type { ReviewRequestContext } from '@/src/production-check/review-intake'
 
+import { FindingExplorer } from './FindingExplorer'
 import { ReportActions } from './ReportActions'
-import { TrackedDisclosure } from './TrackedDisclosure'
+import { ReportEvidenceExplorer } from './ReportEvidenceExplorer'
 
 export function ReportView({ scan, report }: { scan: PersistedScan; report: FounderReport }) {
-  const result = scan.result
-  if (!result) return null
-  const fixes = [
-    `Production readiness review for ${result.target.finalUrl}`,
-    '',
-    ...report.findings.filter((item) => item.label !== 'EXPECTED').map((item, index) => `${index + 1}. ${item.title}\n${item.recommendedAction}`),
-    '',
-    'Do not weaken authentication, authorization, Row Level Security, or server-side validation while applying these changes.',
-  ].join('\n')
-  const scannedAt = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(scan.createdAt))
-
   return (
     <>
-      <ProductionCheckHeader />
-
-      <section data-ground="light" className="bg-vanilla text-bordeaux">
-        <div className="shell pb-step-6 pt-[calc(var(--spacing-step-6)+3.5rem)] lg:pt-[calc(var(--spacing-step-6)+4rem)]">
-          <Eyebrow>PRODUCTION READINESS REPORT</Eyebrow>
-          <div className="mt-step-4 grid gap-step-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,27rem)] lg:items-start">
-            <div>
-              <p className="production-check-wrap font-mono text-xs tracking-[0.08em] text-bordeaux/70">{result.target.finalUrl}</p>
-              <h1 className="mt-step-2 max-w-[17ch] text-[clamp(2.6rem,5vw,4.5rem)]">{report.verdict}</h1>
-              <div className="mt-step-4 flex flex-wrap gap-x-step-3 gap-y-step-1 font-mono text-xs text-bordeaux/70">
-                <span>SCANNED {scannedAt.toUpperCase()}</span>
-                <span>{scan.status === 'partial' ? 'PARTIAL SCAN' : 'SCAN COMPLETE'}</span>
-                <span>PUBLIC-SURFACE ONLY</span>
-              </div>
-            </div>
-
-            <section data-ground="dark" className="order-first rounded-2xl bg-cherry p-step-3 text-vanilla on-dark sm:p-step-4 lg:order-last">
-              <p className="font-mono text-xs tracking-[0.08em] text-vanilla/75">OBSERVED PUBLIC-SURFACE RISK</p>
-              <div className="mt-step-3 flex items-end gap-step-2">
-                <p className="font-display text-[clamp(5rem,12vw,8rem)] leading-[0.75] tabular-nums">{report.publicSurfaceRisk}</p>
-                <p className="pb-1 font-mono text-sm text-vanilla/75">/ 100</p>
-              </div>
-              <p className="mt-step-4 border-t border-vanilla/25 pt-step-3 text-sm leading-relaxed text-vanilla/90">Deterministic public exposure—not a claim that this app is {100 - report.publicSurfaceRisk}% production-ready.</p>
-            </section>
-          </div>
-
-          {scan.status === 'partial' ? (
-            <div className="mt-step-4 rounded-2xl border border-greige/60 bg-oat p-step-3">
-              <p className="font-mono text-xs tracking-[0.08em]">PARTIAL SCAN</p>
-              <p className="measure mt-step-2 text-bordeaux/85">Some public assets blocked or outlasted automated access. This report contains everything Scanner v1.1 could verify.</p>
-            </div>
-          ) : null}
-
-          <div className="mt-step-5 grid grid-cols-3 gap-step-1 sm:gap-step-3" aria-label="Finding summary">
-            <SummaryCard label="FIX NOW" count={report.counts.fixNow} tone="urgent" />
-            <SummaryCard label="REVIEW" count={report.counts.review} tone="review" />
-            <SummaryCard label="EXPECTED" count={report.counts.expected} tone="expected" />
-          </div>
-
-          <div className="mt-step-5 grid gap-step-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,.8fr)]">
-            <section className="rounded-2xl border border-greige/50 bg-oat p-step-3 sm:p-step-4">
-              <p className="font-mono text-xs tracking-[0.08em] text-bordeaux/70">START HERE</p>
-              <h2 className="mt-step-2 max-w-[25ch] text-[clamp(1.8rem,4vw,3rem)]">{report.startHere.title}</h2>
-              <p className="measure mt-step-3 text-lg text-bordeaux/85">{report.startHere.action}</p>
-            </section>
-            <section className="rounded-2xl border border-greige/50 bg-vanilla p-step-3 sm:p-step-4">
-              <p className="font-mono text-xs tracking-[0.08em] text-bordeaux/70">EVIDENCE COVERAGE</p>
-              <p className="mt-step-2 font-display text-4xl capitalize">{report.coverage.confidence}</p>
-              <p className="mt-step-2 text-sm leading-relaxed text-bordeaux/80">{report.coverage.score}/100 bounded coverage. {report.productionProof.needsCodeReview} production controls still need code review.</p>
-            </section>
-          </div>
-        </div>
-      </section>
-
-      <section data-ground="light" className="bg-oat text-bordeaux">
-        <div className="shell py-step-6">
-          <div className="grid gap-step-3 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-end">
-            <div>
-              <Eyebrow>PRIORITIZED FINDINGS</Eyebrow>
-              <h2 className="mt-step-3 text-[clamp(2.2rem,5vw,4.5rem)]">What matters, in order.</h2>
-            </div>
-            <p className="measure text-bordeaux/80">Every finding leads with the decision you need to make. Technical evidence stays available without taking over the report.</p>
-          </div>
-          {report.findings.length ? (
-            <div className="mt-step-5 space-y-step-3">
-              {report.findings.map((finding) => <FindingCard key={finding.id} finding={finding} />)}
-            </div>
-          ) : (
-            <Card className="mt-step-5">
-              <h3 className="text-2xl">No supported public exposure signal was found.</h3>
-              <p className="measure mt-step-2 text-bordeaux/80">Continue with the production-proof checks below; a bounded public scan cannot verify private controls.</p>
-            </Card>
-          )}
-        </div>
-      </section>
-
-      <section data-ground="light" className="bg-vanilla text-bordeaux">
-        <div className="shell py-step-6">
-          <div className="grid gap-step-3 lg:grid-cols-2">
-            <Card className="h-full">
-              <Eyebrow>DETECTED</Eyebrow>
-              <h2 className="mt-step-3 text-3xl">Technology signals</h2>
-              {report.detectedTechnologies.length ? (
-                <ul className="mt-step-4 flex flex-wrap gap-step-1">
-                  {report.detectedTechnologies.map((technology) => (
-                    <li key={technology.name} className="rounded-full border border-greige/60 bg-oat/40 px-step-2 py-step-1 font-mono text-xs">{technology.name} · {technology.confidence}</li>
-                  ))}
-                </ul>
-              ) : <p className="mt-step-3 text-bordeaux/75">No supported stack signal was confirmed in the sampled files.</p>}
-            </Card>
-            <Card className="h-full">
-              <Eyebrow>WHAT THIS SCAN CANNOT VERIFY</Eyebrow>
-              <h2 className="mt-step-3 text-3xl">The private side of production</h2>
-              <ul className="mt-step-4 space-y-step-2 text-sm text-bordeaux/85">
-                {['Database Row Level Security policies', 'Private server-side authorization logic', 'Private APIs and internal infrastructure', 'Source-code security and authentication bypasses', 'Penetration-test or compliance coverage'].map((item) => <TickItem key={item}>{item}</TickItem>)}
-              </ul>
-              <p className="measure mt-step-4 border-t border-greige/50 pt-step-3 text-sm text-bordeaux/80">We deliberately do not use discovered credentials, call discovered APIs, or attempt to exploit your application.</p>
-            </Card>
-          </div>
-
-          {report.builderPrompt ? (
-            <section className="mt-step-5 overflow-hidden rounded-2xl border border-greige/50">
-              <div className="bg-bordeaux p-step-3 text-vanilla on-dark" data-ground="dark">
-                <p className="font-mono text-xs tracking-[0.08em] text-vanilla/75">{report.builderPrompt.label.toUpperCase()}</p>
-                <h2 className="mt-step-2 text-3xl">A safer first prompt.</h2>
-              </div>
-              <pre className="production-check-wrap whitespace-pre-wrap bg-oat p-step-3 font-mono text-sm leading-relaxed sm:p-step-4">{report.builderPrompt.prompt}</pre>
-            </section>
-          ) : null}
-
-          <section className="mt-step-6">
-            <Eyebrow>NEXT ACTION</Eyebrow>
-            <h2 className="mt-step-3 text-[clamp(2.2rem,5vw,4.5rem)]">What do you want to do next?</h2>
-            <div className="mt-step-4"><ReportActions reportId={scan.publicId} fixes={fixes} prompt={report.builderPrompt?.prompt} /></div>
-          </section>
-
-          <section className="mt-step-5 max-w-3xl rounded-2xl border border-greige/50 bg-oat p-step-3 sm:p-step-4">
-            <p className="font-mono text-xs tracking-[0.08em] text-bordeaux/70">WANT A COPY OF THIS REPORT?</p>
-            <p className="mt-step-2 text-bordeaux/80">Email delivery and automatic re-checks arrive in a later step. Your full report is already visible and shareable.</p>
-            <div className="mt-step-3 flex flex-col gap-step-2 sm:flex-row">
-              <label className="sr-only" htmlFor="future-report-email">Work email</label>
-              <input id="future-report-email" type="email" disabled placeholder="work@email.com" className="h-12 min-w-0 flex-1 rounded-xl border border-bordeaux/25 bg-vanilla px-step-2 opacity-65" />
-              <button type="button" disabled className="h-12 rounded-full border border-bordeaux/25 px-step-3 font-mono text-xs opacity-65 disabled:cursor-not-allowed">EMAIL DELIVERY COMING NEXT</button>
-            </div>
-          </section>
-        </div>
-      </section>
-
+      <ProductionCheckHeader variant="report" />
+      <ReportContent scan={scan} report={report} />
       <ProductionCheckFooter />
     </>
   )
 }
 
-function SummaryCard({ label, count, tone }: { label: string; count: number; tone: 'urgent' | 'review' | 'expected' }) {
-  const urgent = tone === 'urgent' && count > 0
-  const classes = urgent
-    ? 'border-cherry bg-cherry text-vanilla on-dark'
-    : tone === 'review'
-      ? 'border-bordeaux bg-oat text-bordeaux'
-      : 'border-greige/60 bg-vanilla text-bordeaux'
+export function ReportContent({ scan, report, showSummary = true }: { scan: PersistedScan; report: FounderReport; showSummary?: boolean }) {
+  const result = scan.result
+  if (!result) return null
+  const fixes = fixesFor(result.target.finalUrl, report)
+  const scannedAt = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(scan.createdAt))
+  const visibleFindings = report.counts.fixNow + report.counts.review
+  const reviewContext = reviewContextFor(scan, report)
+
   return (
-    <div data-ground={urgent ? 'dark' : 'light'} className={`min-w-0 rounded-2xl border p-step-2 text-center sm:p-step-3 ${classes}`}>
-      <p className="font-display text-[clamp(2.75rem,8vw,5.5rem)] leading-none tabular-nums">{count}</p>
-      <p className={`production-check-wrap mt-step-2 font-mono text-[0.62rem] tracking-[0.08em] sm:text-xs ${urgent ? 'text-vanilla/85' : 'text-bordeaux/75'}`}>{label}</p>
+    <>
+      {showSummary ? <section id="report-summary" data-ground="light" className="lp-in bg-vanilla text-bordeaux">
+          <div className="shell scroll-mt-28 pb-step-5 pt-[calc(var(--spacing-step-3)+4.5rem)] lg:pb-step-6 lg:pt-[calc(var(--spacing-step-4)+4.5rem)]">
+            <div className="flex flex-wrap items-center gap-x-step-2 gap-y-step-1 font-mono text-[0.68rem] tracking-[0.06em] text-bordeaux/65">
+              <span>{scan.status === 'partial' ? 'PARTIAL SCAN' : 'SCAN COMPLETE'}</span>
+              <span aria-hidden>·</span>
+              <span>SCANNED {scannedAt.toUpperCase()}</span>
+              <span aria-hidden>·</span>
+              <span>PUBLIC SURFACE ONLY</span>
+            </div>
+
+            <p className="production-check-wrap mt-step-2 font-mono text-xs text-bordeaux/70">{result.target.finalUrl}</p>
+            <h1 className="mt-step-2 max-w-[30ch] text-[clamp(2.2rem,4vw,3.6rem)]">{report.verdict}</h1>
+
+            <div className="mt-step-4 grid gap-step-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,.85fr)] lg:items-stretch">
+              <section className="rounded-2xl border border-greige/55 bg-oat p-step-3" aria-labelledby="finding-summary-title">
+                <div className="flex flex-wrap items-start justify-between gap-step-2">
+                  <div>
+                    <h2 id="finding-summary-title" className="text-xl sm:text-2xl">What the scan found</h2>
+                    <p className="mt-step-1 text-sm text-bordeaux/70">
+                      {visibleFindings === 0 ? 'No supported issue signal was observed.' : `${visibleFindings} ${visibleFindings === 1 ? 'item needs' : 'items need'} your attention.`}
+                    </p>
+                  </div>
+                  <div className="rounded-full border border-bordeaux/20 bg-vanilla px-step-2 py-1 font-mono text-[0.68rem] tabular-nums text-bordeaux/70">
+                    PUBLIC RISK {report.publicSurfaceRisk}/100
+                  </div>
+                </div>
+
+                <div className="mt-step-3 grid grid-cols-3 divide-x divide-greige/60 border-y border-greige/60 py-step-2" aria-label="Finding summary">
+                  <SummaryStat label="FIX NOW" count={report.counts.fixNow} urgent />
+                  <SummaryStat label="REVIEW" count={report.counts.review} />
+                  <SummaryStat label="EXPECTED" count={report.counts.expected} />
+                </div>
+
+                <p className="mt-step-2 text-sm leading-relaxed text-bordeaux/75">
+                  <span className="font-medium capitalize text-bordeaux">{report.coverage.confidence} evidence coverage</span>
+                  {' · '}{report.coverage.score}/100 sampled coverage
+                  {' · '}{report.productionProof.needsCodeReview} controls still need code review.
+                </p>
+                {scan.status === 'partial' ? (
+                  <p className="mt-step-2 text-sm leading-relaxed text-bordeaux/75">Some public assets blocked or outlasted automated access, so absence of a finding is not proof of readiness.</p>
+                ) : null}
+              </section>
+
+              <section className="flex flex-col overflow-hidden rounded-2xl border border-cherry/30 bg-oat/45 p-step-3 text-bordeaux" aria-labelledby="start-here-title">
+                <div className="flex flex-wrap items-center justify-between gap-step-2">
+                  <div className="flex items-center gap-step-1">
+                    <span aria-hidden className="h-1 w-step-3 rounded-full bg-cherry" />
+                    <p className="font-mono text-[0.68rem] tracking-[0.08em] text-bordeaux/60">YOUR NEXT ENGINEERING DECISION</p>
+                  </div>
+                  <span className="rounded-full border border-cherry/35 bg-vanilla px-step-2 py-1 font-mono text-[0.62rem] text-bordeaux">START HERE</span>
+                </div>
+                <h2 id="start-here-title" className="mt-step-2 max-w-[30ch] text-[clamp(1.55rem,2.5vw,2.05rem)]">{report.startHere.title}</h2>
+                <p className="mt-step-2 text-sm leading-relaxed text-bordeaux/80 sm:text-base">{report.startHere.action}</p>
+                <div className="mt-auto pt-step-3">
+                  <ReportActions
+                    reportId={scan.publicId}
+                    fixes={fixes}
+                    prompt={report.builderPrompt?.prompt}
+                    urgentFindings={report.counts.fixNow}
+                    reviewContext={reviewContext}
+                    tone="light"
+                  />
+                </div>
+              </section>
+            </div>
+          </div>
+      </section> : null}
+
+      <section id="findings" data-ground="light" className="scroll-mt-24 bg-oat text-bordeaux">
+          <div className="shell py-step-5 lg:py-step-6">
+            <div className="grid gap-step-2 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-end">
+              <h2 className="text-[clamp(2.2rem,5vw,4.25rem)]">Choose a signal. See the decision behind it.</h2>
+              <p className="measure text-bordeaux/75">Move between urgent, needs-review, and expected signals without reading a wall of cards. The selected finding keeps the evidence and next move together.</p>
+            </div>
+            {report.findings.length ? (
+              <FindingExplorer findings={report.findings} />
+            ) : (
+              <div className="mt-step-4 border-t border-greige/60 py-step-4">
+                <h3 className="text-2xl">No supported public exposure signal was found.</h3>
+                <p className="measure mt-step-2 text-bordeaux/75">Continue with the production-proof checks below; a bounded public scan cannot verify private controls.</p>
+              </div>
+            )}
+          </div>
+      </section>
+
+      <section id="coverage" data-ground="light" className="scroll-mt-24 bg-vanilla text-bordeaux">
+          <div className="shell py-step-5 lg:py-step-6">
+            <h2 className="max-w-[22ch] text-[clamp(2rem,4vw,3.6rem)]">Know what the scanner saw—and what it could not prove.</h2>
+            <p className="measure mt-step-2 text-bordeaux/75">Explore the sampled surface, the source-level proof gap, and a ready-to-use engineering handoff.</p>
+            <ReportEvidenceExplorer
+              reportId={scan.publicId}
+              coverage={result.coverage}
+              coverageScore={report.coverage.score}
+              confidence={report.coverage.confidence}
+              coverageReasons={report.coverage.reasons}
+              checks={report.productionProof.checks}
+              needsCodeReview={report.productionProof.needsCodeReview}
+              technologies={report.detectedTechnologies}
+              builderPrompt={report.builderPrompt}
+            />
+          </div>
+      </section>
+
+    </>
+  )
+}
+
+export function InlineReportPanel({ scan, report }: { scan: PersistedScan; report: FounderReport }) {
+  const result = scan.result
+  if (!result) return null
+  const visibleFindings = report.counts.fixNow + report.counts.review
+  const reviewContext = reviewContextFor(scan, report)
+
+  return (
+    <section className="rounded-2xl border border-greige/50 bg-vanilla p-step-3 text-bordeaux shadow-[0_24px_70px_-48px_rgba(42,20,24,0.75)] sm:p-step-4" aria-labelledby="inline-report-title">
+      <div className="flex flex-wrap items-center justify-between gap-step-2 border-b border-greige/50 pb-step-2">
+        <p className="font-display text-lg">Production check</p>
+        <span className="rounded-full bg-oat px-step-2 py-1 font-mono text-[0.65rem] tabular-nums">100%</span>
+      </div>
+
+      <p className="production-check-wrap mt-step-3 font-mono text-[0.68rem] text-bordeaux/60">{result.target.finalUrl}</p>
+      <p role="status" className="mt-step-2 text-xl font-medium">
+        {scan.status === 'partial' ? 'Check complete with limited coverage' : 'Check complete'}
+      </p>
+
+      <div
+        className="mt-step-3 h-2 overflow-hidden rounded-full bg-oat"
+        role="progressbar"
+        aria-label="Production check progress"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={100}
+      >
+        <div className="h-full w-full rounded-full bg-cherry" />
+      </div>
+
+      <div className="lp-in mt-step-2 border-t border-greige/60 pt-step-2">
+        <div className="flex flex-wrap items-center justify-between gap-step-2">
+          <p className="font-mono text-[0.65rem] tracking-[0.06em] text-bordeaux/60">YOUR REPORT</p>
+          <span className="rounded-full border border-bordeaux/20 px-step-2 py-1 font-mono text-[0.65rem] tabular-nums text-bordeaux/70">PUBLIC RISK {report.publicSurfaceRisk}/100</span>
+        </div>
+        <h2 id="inline-report-title" className="mt-step-2 text-[clamp(1.55rem,2.4vw,2rem)]">{report.verdict}</h2>
+
+        <div className="mt-step-2 grid grid-cols-3 divide-x divide-greige/60 border-y border-greige/60 py-step-1" aria-label="Finding summary">
+          <SummaryStat label="FIX NOW" count={report.counts.fixNow} urgent compact />
+          <SummaryStat label="REVIEW" count={report.counts.review} compact />
+          <SummaryStat label="EXPECTED" count={report.counts.expected} compact />
+        </div>
+        <p className="mt-step-1 text-sm text-bordeaux/70">
+          {visibleFindings} {visibleFindings === 1 ? 'item needs' : 'items need'} attention · <span className="capitalize">{report.coverage.confidence}</span> coverage.
+        </p>
+
+        <div className="mt-step-2 border-t border-greige/60 pt-step-2">
+          <p className="font-mono text-[0.65rem] tracking-[0.06em] text-bordeaux/60">FIRST ACTION</p>
+          <h3 className="mt-step-1 text-lg">{report.startHere.title}</h3>
+          <p className="mt-step-1 text-sm leading-relaxed text-bordeaux/80">{report.startHere.action}</p>
+        </div>
+
+        <div className="mt-step-1">
+          <ReportActions
+            reportId={scan.publicId}
+            fixes={fixesFor(result.target.finalUrl, report)}
+            prompt={report.builderPrompt?.prompt}
+            urgentFindings={report.counts.fixNow}
+            reviewContext={reviewContext}
+            tone="light"
+          />
+        </div>
+        <a href="#findings" className="mt-step-2 inline-flex min-h-11 items-center font-mono text-xs text-bordeaux underline decoration-bordeaux/35 underline-offset-4">VIEW ALL FINDINGS</a>
+      </div>
+    </section>
+  )
+}
+
+function fixesFor(targetUrl: string, report: FounderReport): string {
+  return [
+    `Production readiness review for ${targetUrl}`,
+    '',
+    ...report.findings.filter((item) => item.label !== 'EXPECTED').map((item, index) => `${index + 1}. ${item.title}\n${item.recommendedAction}`),
+    '',
+    'Do not weaken authentication, authorization, Row Level Security, or server-side validation while applying these changes.',
+  ].join('\n')
+}
+
+function reviewContextFor(scan: PersistedScan, report: FounderReport): ReviewRequestContext {
+  return {
+    reportId: scan.publicId,
+    targetUrl: scan.result?.target.finalUrl ?? scan.requestedUrl,
+    verdict: report.verdict,
+    recommendedAction: report.startHere.action,
+    fixNow: report.counts.fixNow,
+    review: report.counts.review,
+    expected: report.counts.expected,
+    needsCodeReview: report.productionProof.needsCodeReview,
+    builder: scan.answers.builder,
+    launchStage: scan.answers.launchStage,
+  }
+}
+
+function SummaryStat({ label, count, urgent = false, compact = false }: { label: string; count: number; urgent?: boolean; compact?: boolean }) {
+  return (
+    <div className="min-w-0 px-step-1 text-center sm:px-step-2">
+      <p className={`font-display leading-none tabular-nums ${compact ? 'text-[2rem]' : 'text-[clamp(2.2rem,6vw,3.5rem)]'} ${urgent && count > 0 ? 'text-cherry' : ''}`}>{count}</p>
+      <p className="production-check-wrap mt-step-1 font-mono text-[0.58rem] tracking-[0.06em] text-bordeaux/65 sm:text-[0.68rem]">{label}</p>
     </div>
   )
-}
-
-export function FindingCard({ finding }: { finding: FounderFinding }) {
-  const urgent = finding.label === 'FIX NOW'
-  const expected = finding.label === 'EXPECTED'
-  return (
-    <article className={`overflow-hidden rounded-2xl border bg-vanilla ${urgent ? 'border-cherry' : 'border-greige/60'}`}>
-      <div className={`flex flex-wrap items-center justify-between gap-step-2 border-b px-step-3 py-step-2 sm:px-step-4 ${urgent ? 'border-cherry bg-cherry text-vanilla on-dark' : expected ? 'border-greige/50 bg-vanilla' : 'border-greige/60 bg-oat'}`} data-ground={urgent ? 'dark' : 'light'}>
-        <p className="font-mono text-xs font-medium tracking-[0.1em]">{finding.label}</p>
-        <p className={`font-mono text-[0.65rem] ${urgent ? 'text-vanilla/75' : 'text-bordeaux/60'}`}>{expected ? 'NORMAL BY DESIGN' : `RISK POINTS ${finding.riskPoints}`}</p>
-      </div>
-      <div className="p-step-3 sm:p-step-4">
-        <h3 className="max-w-[30ch] text-[clamp(1.8rem,4vw,3.25rem)]">{finding.title}</h3>
-        {expected ? <p className="mt-step-2 font-display text-xl">This can be normal.</p> : null}
-        <div className="mt-step-4 grid gap-step-3 md:grid-cols-2">
-          <Explanation title={expected ? 'Why this is expected' : 'Why this matters'} body={finding.whyItMatters} />
-          <Explanation title="What we found" body={finding.whatWeFound} />
-          {finding.whatWeCannotVerify ? <Explanation title="What we cannot verify" body={finding.whatWeCannotVerify} /> : null}
-          <div className="rounded-xl bg-oat p-step-3">
-            <Explanation title="Recommended action" body={finding.recommendedAction} />
-          </div>
-        </div>
-        <div className="mt-step-4">
-          <TrackedDisclosure findingId={finding.id}>
-            <dl className="production-check-wrap mt-step-2 grid gap-step-1 rounded-xl bg-oat p-step-2 font-mono text-xs">
-              <div><dt className="inline text-bordeaux/60">Rule </dt><dd className="inline">{finding.ruleId}</dd></div>
-              <div><dt className="inline text-bordeaux/60">Category </dt><dd className="inline">{finding.technical.category}</dd></div>
-              <div><dt className="inline text-bordeaux/60">Location </dt><dd className="inline">{finding.technical.location}</dd></div>
-              <div><dt className="inline text-bordeaux/60">Evidence </dt><dd className="inline">{finding.technical.evidence}</dd></div>
-            </dl>
-          </TrackedDisclosure>
-        </div>
-      </div>
-    </article>
-  )
-}
-
-function Explanation({ title, body }: { title: string; body: string }) {
-  return <div><p className="font-mono text-xs tracking-[0.06em] text-bordeaux/65">{title.toUpperCase()}</p><p className="measure mt-step-2 leading-relaxed text-bordeaux/90">{body}</p></div>
 }

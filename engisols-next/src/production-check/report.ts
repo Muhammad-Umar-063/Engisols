@@ -50,7 +50,7 @@ export function buildFounderReport(
     )
     .map(toFounderFinding)
 
-  const top = findings[0]
+  const top = findings.find((finding) => finding.label !== 'EXPECTED')
   const startHere = top
     ? {
         ruleId: top.ruleId,

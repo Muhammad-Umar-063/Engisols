@@ -5,18 +5,18 @@ import { Reveal } from '@/components/motion/Reveal'
 const checkCards = [
   {
     n: '01',
-    title: 'PUBLIC EXPOSURE',
-    body: 'We inspect public HTML, browser bundles, response headers, and supported credential patterns.',
+    title: 'PUBLIC APP SURFACE',
+    body: 'We inspect public pages, browser code, response headers, and supported credential patterns.',
   },
   {
     n: '02',
-    title: 'ARCHITECTURE SIGNALS',
-    body: 'We look for client-side data access, administrative routes, webhooks, and supported stack signals.',
+    title: 'DATA AND ADMIN SIGNALS',
+    body: 'We look for browser-side data access, administrative routes, webhooks, and supported stack signals.',
   },
   {
     n: '03',
-    title: 'PROOF STILL NEEDED',
-    body: 'We name the private controls a public scan cannot verify, including authorization and database policies.',
+    title: 'CODE REVIEW NEEDED',
+    body: 'We name the private controls that still require source access, including authorization and database policies.',
   },
 ] as const
 
@@ -56,7 +56,7 @@ export function ProductionCheckLanding() {
           <Reveal y={16}>
             <Eyebrow>WHAT IT CHECKS</Eyebrow>
             <h2 className="mt-step-3 text-[clamp(2rem,4vw,3.5rem)]">A public check that knows where public evidence ends.</h2>
-            <p className="measure mt-step-3 text-bordeaux/80">Useful enough to find real signals. Conservative enough not to turn normal frontend configuration into a scare story.</p>
+            <p className="measure mt-step-3 text-bordeaux/80">See what the public app exposes, then separate visible evidence from controls that require source access.</p>
           </Reveal>
           <div className="grid gap-step-2 md:grid-cols-3">
             {checkCards.map((item, index) => (
@@ -142,8 +142,8 @@ export function ProductionCheckLanding() {
       <section data-ground="dark" className="bg-cherry text-vanilla on-dark">
         <div className="shell grid gap-step-4 py-step-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <Reveal y={16}>
-            <h2 className="max-w-[20ch] text-[clamp(2rem,4vw,3.5rem)]">Your live app can answer more than a demo can.</h2>
-            <p className="measure mt-step-3 text-vanilla/90">Run the free public-surface check before more users, more traffic, or more payments arrive.</p>
+            <h2 className="max-w-[20ch] text-[clamp(2rem,4vw,3.5rem)]">Check your live app before more users depend on it.</h2>
+            <p className="measure mt-step-3 text-vanilla/90">The report takes about 12 seconds and does not require login or source-code access.</p>
           </Reveal>
           <Reveal y={8} delay={0.08}>
             <a href="#tool" className="inline-flex min-h-12 items-center rounded-full bg-vanilla px-step-4 font-mono text-sm font-medium text-cherry no-underline">

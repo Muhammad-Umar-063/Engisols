@@ -18,9 +18,11 @@ import { EASE } from '@/lib/motion'
  * No confetti.
  */
 export function DotsMorphButton({
+  id,
   label,
   state,
 }: {
+  id?: string
   label: string
   state: 'idle' | 'pending' | 'done'
 }) {
@@ -28,6 +30,7 @@ export function DotsMorphButton({
 
   return (
     <m.button
+      id={id}
       layout
       type="submit"
       disabled={state !== 'idle'}

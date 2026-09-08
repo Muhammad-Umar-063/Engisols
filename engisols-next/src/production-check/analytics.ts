@@ -5,6 +5,9 @@ export const PRODUCTION_CHECK_EVENTS = [
   'scan_failed',
   'report_viewed',
   'finding_expanded',
+  'finding_selected',
+  'finding_filter_selected',
+  'report_lens_selected',
   'copy_prompt_clicked',
   'copy_fixes_clicked',
   'fix_cta_clicked',
@@ -12,6 +15,10 @@ export const PRODUCTION_CHECK_EVENTS = [
   'builder_answered',
   'launch_stage_answered',
   'report_link_copied',
+  'review_intake_opened',
+  'review_request_copied',
+  'review_request_sent',
+  'review_request_failed',
 ] as const
 
 export type ProductionCheckEvent = (typeof PRODUCTION_CHECK_EVENTS)[number]

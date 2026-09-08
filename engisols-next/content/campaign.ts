@@ -1,11 +1,9 @@
 /**
  * Copy for the AI App Audit landing page (/ai-app-audit).
  *
- * TRANSCRIBED FROM THE DESIGN, VERBATIM. Labels, casing and arrows are the
- * design's, including the ones the site's own build spec bans elsewhere —
- * all-caps letterspaced eyebrows and "→" on buttons. This is a campaign asset
- * matched to a supplied comp, not a page of the site, and the instruction is
- * that only the palette changes.
+ * The campaign's content source of truth. Labels and section order preserve the
+ * supplied composition; form copy and interaction labels are maintained here
+ * so the sealed funnel stays consistent.
  *
  * Nothing here may link into the site. Where the design shows a link that would
  * have left — "Learn more", "View project", "View full report", the footer's
@@ -464,20 +462,19 @@ export const lpFooter = {
 /**
  * The booking dialog behind every CTA.
  *
- * Not drawn in the comp — the comp's buttons have no destination, and this page
- * may not send anyone to the site's /contact. A dialog keeps the page identical
- * to the comp until a visitor asks for it. Swap the whole thing for a calendar
- * embed the moment there is an account to embed.
+ * The same-route dialog behind every primary CTA. It qualifies the request with
+ * enough context for an engineer to respond usefully, without making visitors
+ * leave the campaign or open a local mail client.
  */
 export const lpForm = {
   heading: 'Book a free scoping call',
-  lead: 'Tell us what you built and what worries you. No deck, no pitch.',
+  lead: 'Tell us what you built and what you need to trust before launch. A senior engineer will read this before replying.',
   fields: {
     name: 'Your name',
     email: 'Work email',
-    app: 'What did you build it with?',
-    worry: 'What worries you most about it?',
+    app: 'App URL or product name',
+    worry: 'What should we investigate first?',
   },
-  submit: 'Request the call',
-  done: 'Thanks — we will reply from a real address, usually within a working day.',
+  submit: 'Send to an engineer',
+  done: 'Request received. A senior engineer will reply within one working day.',
 }

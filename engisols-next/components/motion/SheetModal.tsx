@@ -2,6 +2,7 @@
 
 import { m, AnimatePresence } from 'motion/react'
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useMotionPrefs } from '@/hooks/useMotionPrefs'
 import { lockPageScroll, unlockPageScroll } from '@/components/motion/SmoothScroll'
 import { EASE } from '@/lib/motion'
@@ -59,11 +60,13 @@ export function SheetModal({
   onClose,
   title,
   children,
+  themeClassName = '',
 }: {
   open: boolean
   onClose: () => void
   title: string
   children: ReactNode
+  themeClassName?: string
 }) {
   const { reduced } = useMotionPrefs()
   const sheetRef = useRef<HTMLDivElement>(null)
@@ -77,9 +80,38 @@ export function SheetModal({
   useEffect(() => {
     if (!open) return
     restoreFocus.current = document.activeElement as HTMLElement
+    // The same dialog instance can reopen after an error or a long project
+    // disclosure. Always begin at its heading instead of preserving an old
+    // internal scroll position and making the top of the next flow disappear.
+    if (sheetRef.current) sheetRef.current.scrollTop = 0
     sheetRef.current?.focus()
 
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (event.key !== 'Tab' || !sheetRef.current) return
+      const focusable = Array.from(
+        sheetRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => !element.hasAttribute('hidden'))
+      if (!focusable.length) {
+        event.preventDefault()
+        sheetRef.current.focus()
+        return
+      }
+      const first = focusable[0]
+      const last = focusable.at(-1)!
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     // Hidden overflow alone stops the scrollbar, not Lenis: it reads wheel
@@ -95,12 +127,13 @@ export function SheetModal({
     }
   }, [open, onClose])
 
-  return (
-    <AnimatePresence>
+  const modal = (
+    <div className={themeClassName}>
+      <AnimatePresence>
       {open ? (
         <>
           <m.div
-            className="fixed inset-0 z-80 bg-bordeaux/60"
+            className="fixed inset-0 z-80 bg-bordeaux/55 supports-[backdrop-filter]:backdrop-blur-[3px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -116,7 +149,7 @@ export function SheetModal({
                 aria-modal="true"
                 aria-label={title}
                 data-lenis-prevent
-                className="pointer-events-auto max-h-[85svh] w-[min(44rem,100%)] overflow-y-auto overscroll-contain rounded-2xl border border-greige/40 bg-vanilla p-step-5 shadow-[0_40px_90px_-50px_rgba(42,20,24,0.75)] outline-none"
+                className="pointer-events-auto max-h-[92svh] w-[min(44rem,100%)] overflow-y-auto overscroll-contain rounded-2xl border border-greige/50 bg-vanilla p-step-4 shadow-[0_40px_90px_-50px_rgba(23,23,23,0.75)] outline-none"
                 initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={
@@ -131,7 +164,7 @@ export function SheetModal({
                 }
                 transition={reduced ? { duration: 0 } : { duration: 0.28, ease: EASE.enter }}
               >
-                <h2 className="text-xl">{title}</h2>
+                <ModalHeading title={title} onClose={onClose} />
                 <div className="mt-step-3">{children}</div>
               </m.div>
             </div>
@@ -143,7 +176,7 @@ export function SheetModal({
               aria-modal="true"
               aria-label={title}
               data-lenis-prevent
-              className="fixed inset-x-0 bottom-0 z-90 max-h-[85svh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-greige/40 bg-vanilla p-step-4 outline-none"
+              className="fixed inset-x-0 bottom-0 z-90 max-h-[92svh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-greige/50 bg-vanilla p-step-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] outline-none sm:p-step-4"
               initial={reduced ? { opacity: 0 } : { y: '100%' }}
               animate={{ y: 0, opacity: 1 }}
               exit={
@@ -162,12 +195,36 @@ export function SheetModal({
               {/* The grab handle belongs to the gesture, so it exists only
                   where the gesture does. */}
               <div aria-hidden className="mx-auto mb-step-3 h-1 w-10 rounded-full bg-greige" />
-              <h2 className="text-xl">{title}</h2>
+              <ModalHeading title={title} onClose={onClose} />
               <div className="mt-step-2">{children}</div>
             </m.div>
           )}
         </>
       ) : null}
-    </AnimatePresence>
+      </AnimatePresence>
+    </div>
+  )
+
+  // Several callers live inside animated surfaces whose transform creates a
+  // containing block. Portalling keeps `position: fixed` anchored to the
+  // viewport instead of letting a scrolled/animated ancestor move the sheet.
+  return typeof document === 'undefined' ? modal : createPortal(modal, document.body)
+}
+
+function ModalHeading({ title, onClose }: { title: string; onClose: () => void }) {
+  return (
+    <div className="flex items-start justify-between gap-step-3">
+      <h2 className="text-xl">{title}</h2>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close dialog"
+        className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border border-bordeaux/30 text-bordeaux transition-colors hover:border-bordeaux hover:bg-oat/60"
+      >
+        <svg aria-hidden viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.75">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      </button>
+    </div>
   )
 }

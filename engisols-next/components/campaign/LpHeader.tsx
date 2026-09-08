@@ -83,8 +83,8 @@ export function LpHeader() {
       transition={{ duration: 0.3, ease: EASE.micro }}
     >
       <div
-        className={`shell flex items-center justify-between gap-step-3 rounded-full border border-greige/40 bg-vanilla/90 py-2 pl-step-3 pr-2 backdrop-blur-md transition-shadow duration-300 ${
-          lifted ? 'shadow-[0_10px_30px_-18px_rgba(42,20,24,0.55)]' : ''
+        className={`shell flex items-center justify-between gap-step-2 rounded-full border border-greige/55 bg-vanilla/88 py-1.5 pl-step-2 pr-1.5 backdrop-blur-md transition-shadow duration-300 sm:gap-step-3 sm:py-2 sm:pl-step-3 sm:pr-2 ${
+          lifted ? 'shadow-[0_12px_32px_-20px_rgba(23,23,23,0.5)]' : ''
         }`}
         style={{ transitionTimingFunction: 'var(--ease-micro)' }}
       >
@@ -130,7 +130,7 @@ export function LpHeader() {
           ))}
         </nav>
 
-        <BookButton label="BOOK A SCOPING CALL" variant="compact" />
+        <BookButton label="BOOK A SCOPING CALL" shortLabel="BOOK CALL" variant="compact" />
       </div>
     </m.header>
   )

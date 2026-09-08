@@ -136,6 +136,7 @@ export function WorkGrid() {
         open={project !== null}
         onClose={() => setOpen(null)}
         title={project?.name ?? ''}
+        themeClassName="engisols-campaign-brand"
       >
         {project ? (
           <div className="text-bordeaux">

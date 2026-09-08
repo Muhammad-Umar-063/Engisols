@@ -34,6 +34,8 @@ test('does not describe an expected-only partial scan as healthy or production-r
   ]))
   assert.doesNotMatch(report.verdict, /healthy|ready|safe|secure/i)
   assert.match(report.verdict, /not proven|code review/i)
+  assert.equal(report.startHere.ruleId, 'production.code_review')
+  assert.match(report.startHere.action, /authentication|authorization|database/i)
 })
 
 test('refuses to serialize a raw privileged credential at the persistence boundary', () => {

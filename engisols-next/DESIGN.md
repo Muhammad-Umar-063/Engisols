@@ -8,6 +8,13 @@ colors:
   cherry: "#8e2430"
   bordeaux: "#43212a"
   valid: "#2f6b4f"
+  campaignCrimson: "#cb1037"
+  campaignBrightGray: "#f2f2f0"
+  campaignSupportGray: "#dededc"
+  campaignRuleGray: "#9b9b9b"
+  campaignChicagoBlack: "#171717"
+  campaignDarkCrimson: "#5e0d20"
+  campaignCrimsonGlow: "rgb(203 16 55 / 0.2)"
 typography:
   display:
     fontFamily: "Bricolage Grotesque, system-ui, sans-serif"
@@ -45,6 +52,14 @@ components:
 ---
 
 # Engisols Design System
+
+## Brand authority and migration
+
+The formal Engisols identity guide supplied in September 2026 is the authority for future brand work: Crimson Red, Bright Gray, Chicago Black, a restrained dark-crimson/black gradient, Aeronaut primary, and Bricolage Grotesque secondary. Aeronaut webfont files are not currently available, so the supplied Bricolage variable asset is the approved interim face.
+
+`/production-check` and `/ai-app-audit` are the first migrated campaign funnels. Their scoped `.production-check-brand` and `.engisols-campaign-brand` tokens in `app/globals.css` intentionally override the incumbent warm site palette and use Bricolage for every typographic role. Landing, progress, inline result, shared report, project disclosures, and inquiry modals must remain inside that one high-contrast system. Other routes retain the incumbent system until the separately approved site-wide migration; do not copy the override onto them piecemeal.
+
+The approved interim web values for those funnels are Crimson `#cb1037`, Bright Gray `#f2f2f0`, Chicago Black `#171717`, supporting gray `#dededc`, rule gray `#9b9b9b`, and dark crimson `#5e0d20`. The production-check hero may use Crimson at 20% opacity as a light source over the 70/30 dark-crimson/black composition. These are scoped migration tokens, not additions to the incumbent site palette.
 
 ## Overview
 

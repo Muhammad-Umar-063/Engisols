@@ -1,4 +1,4 @@
-import { isValidPublicScanId } from '../../../../../src/production-check/report'
+import { buildFounderReport, isValidPublicScanId } from '../../../../../src/production-check/report'
 import { loadScan } from '../../../../../src/production-check/load'
 import { ScanStoreConfigurationError } from '../../../../../src/production-check/store'
 
@@ -14,7 +14,8 @@ export async function GET(
   try {
     const scan = await loadScan(scanId)
     if (!scan) return notFound()
-    return Response.json({ ok: true, scan }, { headers: { 'Cache-Control': 'no-store' } })
+    const report = scan.result ? buildFounderReport(scan.result, scan.answers.builder) : undefined
+    return Response.json({ ok: true, scan, report }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     if (error instanceof ScanStoreConfigurationError) {
       return Response.json(

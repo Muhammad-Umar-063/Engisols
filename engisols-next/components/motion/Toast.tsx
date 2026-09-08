@@ -76,7 +76,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{ push }}>
       {children}
-      <div className="pointer-events-none fixed bottom-0 z-70 flex w-full flex-col items-center gap-step-1 p-step-3 md:items-end">
+      <div data-toast-stack className="pointer-events-none fixed bottom-0 z-70 flex w-full flex-col items-center gap-step-1 p-step-3 md:items-end">
         <AnimatePresence initial={false}>
           {toasts.map((toast) => (
             <m.div
@@ -105,7 +105,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               tabIndex={0}
             >
               <span className="font-mono text-xs text-greige">
-                {toast.tone === 'success' ? 'Sent' : 'Not sent'}
+                {toast.tone === 'success' ? 'Done' : 'Not completed'}
               </span>
               <p className="mt-0.5">{toast.message}</p>
               {toast.tone === 'error' ? (

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ProductionCheckLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <main id="main" className="flex-1">{children}</main>
+      <main id="main" className="production-check-brand flex-1">{children}</main>
       <Cursor />
     </>
   )

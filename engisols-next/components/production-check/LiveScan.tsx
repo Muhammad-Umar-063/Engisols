@@ -1,16 +1,15 @@
 'use client'
 
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
 import { trackProductionCheck } from '@/src/production-check/analytics'
-import { destinationForScan } from '@/src/production-check/navigation'
+import { InlineReportPanel } from '@/components/production-check/ReportView'
 import { productionAnswersPath, productionStatusPath } from '@/src/production-check/paths'
 import {
   BUILDER_ANSWERS,
   LAUNCH_STAGE_ANSWERS,
   type BuilderAnswer,
+  type FounderReport,
   type LaunchStageAnswer,
   type PersistedScan,
   type ScanAnswers,
@@ -39,11 +38,22 @@ const stageLabels: Record<LaunchStageAnswer, string> = {
   has_users: 'Already has users', taking_payments: 'Taking payments',
 }
 
-export function LiveScan({ initial }: { initial: PersistedScan }) {
-  const router = useRouter()
+export function LiveScan({
+  initial,
+  initialReport,
+  onComplete,
+  onRestart,
+}: {
+  initial: PersistedScan
+  initialReport?: FounderReport
+  onComplete: (scan: PersistedScan, report: FounderReport) => void
+  onRestart: () => void
+}) {
   const [scan, setScan] = useState(initial)
+  const [report, setReport] = useState<FounderReport | undefined>(initialReport)
   const [statusError, setStatusError] = useState('')
   const pollFailures = useRef(0)
+  const completionHandled = useRef(false)
   const currentIndex = phaseLabels.findIndex(({ phase }) => phase === scan.progress.phase)
   const visiblePhaseLabels = phaseLabels.slice(
     Math.max(0, currentIndex - 1),
@@ -51,14 +61,15 @@ export function LiveScan({ initial }: { initial: PersistedScan }) {
   )
   const scanId = scan.publicId
   const scanStatus = scan.status
-  const destination = destinationForScan({ publicId: scanId, status: scanStatus })
-  const reconnectFailed = statusError.startsWith('We could not reconnect')
+  const complete = scanStatus === 'completed' || scanStatus === 'partial'
   const liveObservation = observationFor(scan)
 
   useEffect(() => {
-    if (destination) {
+    if (complete && report) {
+      if (completionHandled.current) return
+      completionHandled.current = true
       trackProductionCheck(scanStatus === 'partial' ? 'scan_partial' : 'scan_completed')
-      router.replace(destination)
+      onComplete(scan, report)
       return
     }
     if (scanStatus === 'failed') {
@@ -75,8 +86,9 @@ export function LiveScan({ initial }: { initial: PersistedScan }) {
           signal: controller.signal,
         })
         if (!response.ok) throw new Error('status unavailable')
-        const body = (await response.json()) as { ok: boolean; scan: PersistedScan }
+        const body = (await response.json()) as { ok: boolean; scan: PersistedScan; report?: FounderReport }
         if (body.ok) {
+          if (body.report) setReport(body.report)
           setScan((current) => sameLiveSnapshot(current, body.scan) ? current : body.scan)
           setStatusError('')
           pollFailures.current = 0
@@ -85,10 +97,10 @@ export function LiveScan({ initial }: { initial: PersistedScan }) {
         if (!controller.signal.aborted) {
           pollFailures.current += 1
           if (pollFailures.current >= 8) {
-            setStatusError('We could not reconnect to this scan. Reload to check its latest state.')
+            setStatusError('We could not reconnect to this scan. Reload the page to check its latest state.')
             controller.abort()
           } else {
-            setStatusError('Connection paused. Reconnecting to your scan…')
+            setStatusError('Connection paused. Reconnecting…')
           }
         }
       } finally {
@@ -100,7 +112,7 @@ export function LiveScan({ initial }: { initial: PersistedScan }) {
       controller.abort()
       if (timeout) clearTimeout(timeout)
     }
-  }, [destination, router, scanId, scanStatus])
+  }, [complete, onComplete, report, scan, scanId, scanStatus])
 
   async function answer(values: ScanAnswers) {
     setScan((current) => ({ ...current, answers: { ...current.answers, ...values } }))
@@ -115,102 +127,82 @@ export function LiveScan({ initial }: { initial: PersistedScan }) {
 
   if (scan.status === 'failed') {
     return (
-      <div className="max-w-3xl rounded-2xl border border-greige/50 bg-oat p-step-4 sm:p-step-5">
-        <p className="inline-flex rounded-full bg-vanilla px-step-2 py-1 font-mono text-[0.65rem] tracking-[0.08em]">SCAN NOT COMPLETED</p>
-        <h2 className="mt-step-3 text-[clamp(2rem,5vw,3.5rem)]">We couldn&apos;t reach this app.</h2>
-        <p className="measure mt-step-3 text-lg text-bordeaux/80">{scan.error?.message}</p>
-        <div className="mt-step-4 flex flex-wrap gap-step-2">
-          <Link href="/production-check#tool" className="inline-flex min-h-12 items-center rounded-full bg-cherry px-step-4 font-mono text-sm text-vanilla no-underline">TRY AGAIN <span aria-hidden className="ml-2">→</span></Link>
-          <Link href="/production-check#tool" className="inline-flex min-h-12 items-center px-step-2 font-mono text-sm underline decoration-bordeaux/40 underline-offset-4">ENTER ANOTHER URL</Link>
-        </div>
-      </div>
+      <section className="rounded-2xl border border-greige/50 bg-vanilla p-step-3 text-bordeaux shadow-[0_24px_70px_-48px_rgba(42,20,24,0.75)] sm:p-step-4" aria-labelledby="scan-failed-title">
+        <p className="font-mono text-[0.65rem] tracking-[0.08em] text-bordeaux/60">SCAN NOT COMPLETED</p>
+        <h2 id="scan-failed-title" className="mt-step-2 text-[clamp(1.8rem,4vw,2.6rem)]">We couldn&apos;t reach this app.</h2>
+        <p className="mt-step-2 text-bordeaux/75">{scan.error?.message}</p>
+        <p className="mt-step-1 text-sm text-bordeaux/65">Check that the URL opens without signing in, then try again.</p>
+        <button type="button" onClick={onRestart} className="mt-step-3 min-h-12 cursor-pointer rounded-full bg-cherry px-step-4 font-mono text-xs text-vanilla">TRY ANOTHER URL</button>
+      </section>
     )
   }
 
+  if (complete && report) return <InlineReportPanel scan={scan} report={report} />
+
   return (
-    <div className="grid min-w-0 gap-step-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(20rem,.6fr)] lg:items-start">
-      <section className="min-w-0 overflow-hidden rounded-2xl border border-greige/50 bg-oat/55">
-        <div className="p-step-3 sm:p-step-4">
-          <div className="flex flex-col gap-step-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="min-w-0">
-              <p className="font-mono text-xs tracking-[0.08em] text-bordeaux/70">CHECKING YOUR APP</p>
-              <p className="production-check-wrap mt-step-1 font-display text-[clamp(1.4rem,3vw,2.1rem)]">{scan.requestedUrl}</p>
-              <p role="status" aria-live="polite" className="mt-step-3 text-xl font-medium sm:text-2xl">{scan.progress.message}</p>
-            </div>
-            <div className="shrink-0">
-              <p className="font-display text-[clamp(4.5rem,10vw,7rem)] leading-[0.82] tabular-nums">{scan.progress.progress}<span className="ml-1 text-2xl">%</span></p>
-              <p className="mt-step-2 font-mono text-[0.65rem] tracking-[0.08em] text-bordeaux/65">REAL SCANNER PROGRESS</p>
-            </div>
-          </div>
+    <section className="rounded-2xl border border-greige/50 bg-vanilla p-step-3 text-bordeaux shadow-[0_24px_70px_-48px_rgba(42,20,24,0.75)] sm:p-step-4" aria-labelledby="live-scan-title">
+      <div className="flex items-center justify-between gap-step-2 border-b border-greige/50 pb-step-2">
+        <h2 id="live-scan-title" className="font-display text-lg">Checking your app</h2>
+        <span className="rounded-full bg-oat px-step-2 py-1 font-mono text-[0.65rem] tabular-nums">{scan.progress.progress}%</span>
+      </div>
 
-          <div className="mt-step-4 h-3 overflow-hidden rounded-full border border-bordeaux/15 bg-vanilla" aria-hidden="true">
-            <div className="h-full rounded-full bg-cherry transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${scan.progress.progress}%` }} />
-          </div>
-          {statusError ? (
-            <div className="mt-step-2 flex flex-wrap items-center gap-step-2 text-sm text-bordeaux/75">
-              <p>{statusError}</p>
-              {reconnectFailed ? (
-                <button type="button" onClick={() => window.location.reload()} className="cursor-pointer font-medium underline decoration-bordeaux/40 underline-offset-4">Reload status</button>
-              ) : null}
-            </div>
-          ) : null}
+      <p className="production-check-wrap mt-step-3 font-mono text-xs text-bordeaux/60">{scan.requestedUrl}</p>
+      <p role="status" aria-live="polite" className="mt-step-2 text-xl font-medium">{scan.progress.message}</p>
 
-          <ol className="mt-step-4 grid gap-x-step-3 sm:grid-cols-2">
-            {visiblePhaseLabels.map((item) => {
-              const index = phaseLabels.findIndex(({ phase }) => phase === item.phase)
-              const state = index < currentIndex ? 'done' : index === currentIndex ? 'active' : 'upcoming'
-              return (
-                <li key={item.phase} className={`flex min-h-11 items-center gap-step-2 border-t border-greige/60 py-step-2 ${state === 'active' ? 'font-medium' : ''}`}>
-                  <span aria-hidden className={`grid size-7 shrink-0 place-items-center rounded-full border font-mono text-xs ${state === 'active' ? 'border-cherry bg-cherry text-vanilla' : state === 'done' ? 'border-bordeaux bg-bordeaux text-vanilla' : 'border-bordeaux/30 text-bordeaux/60'}`}>
-                    {state === 'done' ? '✓' : state === 'active' ? '→' : '○'}
-                  </span>
-                  <span className={state === 'upcoming' ? 'text-bordeaux/60' : 'text-bordeaux'}>{item.label}</span>
-                  <span className="sr-only">{state}</span>
-                </li>
-              )
-            })}
-          </ol>
-        </div>
+      <div
+        className="mt-step-3 h-2 overflow-hidden rounded-full bg-oat"
+        role="progressbar"
+        aria-label="Production check progress"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={scan.progress.progress}
+      >
+        <div className="h-full rounded-full bg-cherry transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${scan.progress.progress}%` }} />
+      </div>
+      {statusError ? <p className="mt-step-2 text-sm text-bordeaux/70">{statusError}</p> : null}
 
-      </section>
+      <ol className="mt-step-3 divide-y divide-greige/55 border-y border-greige/55">
+        {visiblePhaseLabels.map((item) => {
+          const index = phaseLabels.findIndex(({ phase }) => phase === item.phase)
+          const state = index < currentIndex ? 'done' : index === currentIndex ? 'active' : 'upcoming'
+          return (
+            <li key={item.phase} className="flex min-h-10 items-center gap-step-2 py-step-1 text-sm">
+              <span aria-hidden className={`size-2 shrink-0 rounded-full ${state === 'active' ? 'bg-cherry' : state === 'done' ? 'bg-bordeaux' : 'border border-bordeaux/35'}`} />
+              <span className={state === 'upcoming' ? 'text-bordeaux/55' : 'text-bordeaux'}>{item.label}</span>
+              <span className="sr-only">{state}</span>
+            </li>
+          )
+        })}
+      </ol>
 
-      <aside className="min-w-0 space-y-step-2">
-        <div data-ground="dark" className="rounded-2xl bg-cherry p-step-3 text-vanilla on-dark sm:p-step-4" aria-label="Current scanner observation">
-          <p className="font-mono text-xs tracking-[0.08em] text-vanilla/75">{liveObservation.label}</p>
-          <p className="measure mt-step-2 font-display text-xl leading-snug sm:text-2xl">{liveObservation.message}</p>
-          {scan.progress.events.length ? (
-            <ul className="mt-step-3 space-y-step-1 border-t border-vanilla/25 pt-step-2 text-sm text-vanilla/85">
-              {scan.progress.events.slice(-3).map((event, index) => (
-                <li key={`${event.timestamp}-${index}`} className="production-check-wrap">{event.message}</li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-        <div className="rounded-2xl border border-greige/50 bg-vanilla p-step-3 sm:p-step-4">
-          <p className="font-mono text-xs tracking-[0.08em] text-bordeaux/65">WHILE WE FINISH…</p>
-          <div className="mt-step-3 space-y-step-4">
+      <div className="mt-step-3 rounded-xl bg-oat p-step-2">
+        <p className="font-mono text-[0.65rem] tracking-[0.06em] text-bordeaux/60">{liveObservation.label}</p>
+        <p className="mt-step-1 text-sm leading-relaxed text-bordeaux/80">{liveObservation.message}</p>
+      </div>
+
+      <details className="group mt-step-2 border-t border-greige/50 pt-step-1">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-step-2 text-sm font-medium">
+          Optional: personalize the report
+          <span aria-hidden className="text-lg text-cherry transition-transform group-open:rotate-45 motion-reduce:transition-none">+</span>
+        </summary>
+        <div className="space-y-step-3 pb-step-2">
+          <Question
+            title="What did you use to build this app?"
+            options={BUILDER_ANSWERS.map((value) => ({ value, label: builderLabels[value] }))}
+            selected={scan.answers.builder}
+            onSelect={(value) => answer({ builder: value as BuilderAnswer })}
+          />
+          {scan.progress.progress >= 35 ? (
             <Question
-              title="What did you use to build this app?"
-              options={BUILDER_ANSWERS.map((value) => ({ value, label: builderLabels[value] }))}
-              selected={scan.answers.builder}
-              onSelect={(value) => answer({ builder: value as BuilderAnswer })}
+              title="Where is this app today?"
+              options={LAUNCH_STAGE_ANSWERS.map((value) => ({ value, label: stageLabels[value] }))}
+              selected={scan.answers.launchStage}
+              onSelect={(value) => answer({ launchStage: value as LaunchStageAnswer })}
             />
-            {scan.progress.progress >= 35 ? (
-              <Question
-                title="Where is this app today?"
-                options={LAUNCH_STAGE_ANSWERS.map((value) => ({ value, label: stageLabels[value] }))}
-                selected={scan.answers.launchStage}
-                onSelect={(value) => answer({ launchStage: value as LaunchStageAnswer })}
-              />
-            ) : null}
-          </div>
+          ) : null}
         </div>
-        <div className="rounded-2xl bg-bordeaux p-step-3 text-vanilla on-dark sm:p-step-4" data-ground="dark">
-          <p className="font-mono text-xs tracking-[0.08em] text-vanilla/70">PASSIVE BY DESIGN</p>
-          <p className="mt-step-2 text-sm leading-relaxed text-vanilla/90">We never replay credentials, call discovered APIs, or attempt to exploit your application.</p>
-        </div>
-      </aside>
-    </div>
+      </details>
+    </section>
   )
 }
 
@@ -219,15 +211,9 @@ function observationFor(scan: PersistedScan): { label: string; message: string }
   const event = recentEvents.find(({ type }) => type === 'technology')
     ?? recentEvents.find(({ type }) => type === 'observation')
   const technology = event?.metadata?.technology
-  if (technology === 'Supabase') {
-    return { label: 'SUPABASE DETECTED', message: 'Public anon keys can be normal. We are checking what actually needs attention.' }
-  }
-  if (technology === 'Stripe') {
-    return { label: 'STRIPE DETECTED', message: 'Publishable keys belong in browser code. Privileged keys do not.' }
-  }
-  if (technology === 'OpenAI') {
-    return { label: 'OPENAI SIGNAL DETECTED', message: 'Server-side AI credentials should never be shipped to a browser.' }
-  }
+  if (technology === 'Supabase') return { label: 'SUPABASE DETECTED', message: 'Public anon keys can be normal. We are checking what actually needs attention.' }
+  if (technology === 'Stripe') return { label: 'STRIPE DETECTED', message: 'Publishable keys belong in browser code. Privileged keys do not.' }
+  if (technology === 'OpenAI') return { label: 'OPENAI SIGNAL DETECTED', message: 'Server-side AI credentials should never be shipped to a browser.' }
   if (event) return { label: 'LIVE OBSERVATION', message: event.message }
   return { label: 'PUBLIC-SURFACE CHECK', message: 'Public frontend configuration is not automatically a security leak.' }
 }
@@ -251,11 +237,10 @@ function sameLiveSnapshot(left: PersistedScan, right: PersistedScan): boolean {
 function Question({ title, options, selected, onSelect }: { title: string; options: Array<{ value: string; label: string }>; selected?: string; onSelect: (value: string) => void }) {
   return (
     <fieldset>
-      <legend className="font-display text-xl leading-snug">{title}</legend>
-      <p className="mt-step-1 text-sm text-bordeaux/65">Optional — the scan will not wait.</p>
-      <div className="mt-step-2 flex flex-wrap gap-step-1">
+      <legend className="font-display text-base">{title}</legend>
+      <div className="mt-step-1 flex flex-wrap gap-step-1">
         {options.map((option) => (
-          <button key={option.value} type="button" aria-pressed={selected === option.value} onClick={() => onSelect(option.value)} className="min-h-11 cursor-pointer rounded-full border border-bordeaux/35 px-step-2 py-step-1 text-sm transition-colors hover:border-bordeaux aria-pressed:border-bordeaux aria-pressed:bg-bordeaux aria-pressed:text-vanilla">
+          <button key={option.value} type="button" aria-pressed={selected === option.value} onClick={() => onSelect(option.value)} className="min-h-10 cursor-pointer rounded-full border border-bordeaux/30 px-step-2 py-step-1 text-sm transition-colors hover:border-bordeaux aria-pressed:border-bordeaux aria-pressed:bg-bordeaux aria-pressed:text-vanilla">
             {option.label}
           </button>
         ))}

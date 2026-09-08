@@ -27,18 +27,15 @@ import {
 /**
  * AI App Audit — the campaign landing page.
  *
- * MATCHED TO THE SUPPLIED COMP. Same sections in the same order, same copy,
- * same labels and casing, same arrows. The only thing translated is colour:
- * white/blue/lime becomes vanilla/cherry/oat/bordeaux, mapped in
- * components/campaign/ui.tsx. Two treatments here are ones the site's own build
- * spec bans — all-caps letterspaced eyebrows and "→" on buttons — and they stay,
- * because the instruction is that only the palette changes.
+ * The supplied campaign composition remains intact while the surface now uses
+ * the current Engisols campaign identity: Bright Gray, Chicago Black, Crimson,
+ * and Bricolage. Shared treatments live in components/campaign/ui.tsx.
  *
  * SEALED. No link leaves for the site. The header is anchors, "Learn more" and
- * every CTA open the booking dialog, "View project" opens a dialog, "View full
- * report" scrolls, and the footer's service names are text as they cannot be
- * links to /services. Only a mailto and this page's own legal routes go
- * anywhere. That is why the page sits in the `(campaign)` route group, outside
+ * every CTA opens the booking dialog, "View project" opens a dialog, "View full
+ * report" scrolls, and the footer's service names are text. The inquiry form
+ * posts to a same-origin server route and keeps the user in this funnel. That
+ * is why the page sits in the `(campaign)` route group, outside
  * the layout that renders the site's header and footer: there is nothing to
  * hide with CSS because nothing is rendered.
  *
@@ -82,7 +79,7 @@ export default function AiAppAuditPage() {
 
       {/* 1 Hero */}
       <section id="top" className="bg-vanilla">
-        <div className="shell grid gap-step-5 pb-step-6 pt-[calc(var(--spacing-step-6)+3.5rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start lg:pt-[calc(var(--spacing-step-6)+4rem)]">
+        <div className="shell grid gap-step-5 pb-step-5 pt-[calc(var(--spacing-step-5)+4.5rem)] sm:pb-step-6 sm:pt-[calc(var(--spacing-step-6)+3.5rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start lg:pt-[calc(var(--spacing-step-6)+4rem)]">
           <div>
             <div className="lp-in" style={{ '--i': 0 } as CSSProperties}>
               <Eyebrow>{lpHero.eyebrow}</Eyebrow>
@@ -97,7 +94,7 @@ export default function AiAppAuditPage() {
             />
 
             <p
-              className="lp-in mt-step-1 font-display text-[clamp(1.5rem,3vw,2.5rem)] leading-[1.1] tracking-[-0.02em] text-bordeaux/45"
+              className="lp-in mt-step-1 max-w-[22ch] font-display text-[clamp(1.5rem,3vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-cherry"
               style={{ '--i': 3 } as CSSProperties}
             >
               {lpHero.counter}
@@ -132,7 +129,7 @@ export default function AiAppAuditPage() {
               className="lp-in mt-step-4 flex flex-wrap items-center gap-step-3"
               style={{ '--i': 11 } as CSSProperties}
             >
-              <BookButton label={lpHero.primary} />
+              <BookButton label={lpHero.primary} shortLabel="BOOK A FREE CALL" className="w-full justify-center sm:w-auto" />
               <a
                 href="#checks"
                 data-cursor="link"
@@ -214,7 +211,7 @@ export default function AiAppAuditPage() {
                   ))}
                 </ul>
                 <div className="mt-step-4">
-                  <BookButton label={lpFamiliar.panel.cta} variant="inverse" />
+                  <BookButton label={lpFamiliar.panel.cta} shortLabel="BOOK A CALL" variant="inverse" className="w-full justify-center sm:w-auto" />
                 </div>
               </div>
             </Reveal>
@@ -347,7 +344,7 @@ export default function AiAppAuditPage() {
             </ul>
           </Reveal>
           <Reveal y={8} delay={0.16}>
-            <BookButton label={lpFinal.cta} variant="inverse" />
+            <BookButton label={lpFinal.cta} shortLabel="BOOK A FREE CALL" variant="inverse" className="w-full justify-center sm:w-auto" />
           </Reveal>
         </div>
       </section>

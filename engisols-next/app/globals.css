@@ -61,6 +61,62 @@
   --ease-micro: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Paid campaign funnels are the first routes moving onto the supplied Engisols
+   identity. The wider site keeps its incumbent palette until its later brand
+   migration. Aeronaut remains unavailable, so the approved Bricolage asset
+   carries display, body, and utility hierarchy on these focused surfaces. */
+.engisols-campaign-brand,
+.production-check-brand {
+  --color-vanilla: #f2f2f0;
+  --color-oat: #dededc;
+  --color-greige: #9b9b9b;
+  --color-cherry: #cb1037;
+  --color-bordeaux: #171717;
+  --font-display: var(--font-display-brand), system-ui, sans-serif;
+  --font-body: var(--font-display-brand), system-ui, sans-serif;
+  --font-mono: var(--font-display-brand), system-ui, sans-serif;
+  background: var(--color-vanilla);
+  color: var(--color-bordeaux);
+  font-family: var(--font-body);
+}
+
+.engisols-campaign-brand ::selection,
+.production-check-brand ::selection {
+  background: var(--color-cherry);
+  color: var(--color-vanilla);
+}
+
+/* Toasts are rendered beside the route tree, so they cannot inherit the
+   funnel variables directly. Keep their feedback in the same visual system
+   whenever the production-check surface is present. */
+html:has(:is(.engisols-campaign-brand, .production-check-brand)) [data-toast-stack] {
+  --color-vanilla: #f2f2f0;
+  --color-oat: #dededc;
+  --color-greige: #9b9b9b;
+  --color-cherry: #cb1037;
+  --color-bordeaux: #171717;
+  --font-mono: var(--font-display-brand), system-ui, sans-serif;
+  font-family: var(--font-display-brand), system-ui, sans-serif;
+}
+
+@media (max-width: 40rem) {
+  .engisols-campaign-brand .ticker {
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      black 24px,
+      black calc(100% - 24px),
+      transparent 100%
+    );
+  }
+}
+
+.production-check-hero {
+  background:
+    radial-gradient(circle at 78% 18%, rgb(203 16 55 / 0.2), transparent 30%),
+    linear-gradient(112deg, #171717 0%, #171717 30%, #5e0d20 70%, #cb1037 100%);
+}
+
 /* Trust-strip marquee. CSS rather than a Motion scene because this sits in the
    hero critical path, where spec section 12 forbids an animation library.
    Transform-only, so it stays off the main thread. */
