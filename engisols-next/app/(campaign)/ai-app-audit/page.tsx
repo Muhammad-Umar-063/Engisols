@@ -94,7 +94,7 @@ export default function AiAppAuditPage() {
           </div>
 
           <div
-            className="lp-in order-3 flex flex-wrap items-center gap-step-2 lg:col-start-1 lg:row-start-3"
+            className="lp-in order-2 flex flex-wrap items-center gap-step-2 lg:col-start-1 lg:row-start-3"
             style={{ '--i': 4 } as CSSProperties}
           >
             <BookButton label={lpHero.primary} shortLabel="BOOK A FREE CALL" className="w-full justify-center sm:w-auto" />
@@ -110,7 +110,7 @@ export default function AiAppAuditPage() {
 
           <div
             id="sample"
-            className="lp-in order-2 min-w-0 scroll-mt-24 lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:self-center"
+            className="lp-in order-3 min-w-0 scroll-mt-24 lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:self-center"
             style={{ '--i': 5 } as CSSProperties}
           >
             <AuditPanel />
