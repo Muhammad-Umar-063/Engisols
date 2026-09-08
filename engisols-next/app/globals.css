@@ -72,6 +72,7 @@
   --color-greige: #9b9b9b;
   --color-cherry: #cb1037;
   --color-bordeaux: #171717;
+  --color-scan-active: #72dfa2;
   --font-display: var(--font-display-brand), system-ui, sans-serif;
   --font-body: var(--font-display-brand), system-ui, sans-serif;
   --font-mono: var(--font-display-brand), system-ui, sans-serif;
@@ -427,7 +428,15 @@ html:has(:is(.engisols-campaign-brand, .production-check-brand)) [data-toast-sta
 
 .lp-console-trace {
   animation: lp-console-trace 2100ms var(--ease-enter) both;
-  box-shadow: 0 8px 22px rgb(255 255 255 / 0.18);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-scan-active) 55%, transparent) 14%,
+    var(--color-scan-active) 48%,
+    color-mix(in srgb, var(--color-scan-active) 55%, transparent) 82%,
+    transparent 100%
+  );
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--color-scan-active) 24%, transparent);
   pointer-events: none;
 }
 
@@ -437,12 +446,14 @@ html:has(:is(.engisols-campaign-brand, .production-check-brand)) [data-toast-sta
     opacity: 1;
   }
   50% {
-    opacity: 0.35;
+    opacity: 0.45;
+    transform: scale(0.78);
   }
 }
 
 .lp-console-dot {
   animation: lp-console-pulse 2.4s var(--ease-micro) infinite;
+  background: var(--color-scan-active);
 }
 
 /* Cards. A 2px lift and 1% of scale is the whole move: enough to answer the

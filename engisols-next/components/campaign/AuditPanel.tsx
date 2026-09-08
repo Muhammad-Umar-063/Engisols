@@ -84,7 +84,7 @@ export function AuditPanel() {
       data-ground="dark"
       className="lp-audit-console relative min-w-0 overflow-hidden rounded-2xl border border-vanilla/20 text-vanilla shadow-[0_32px_80px_-38px_rgba(93,8,31,0.8)]"
     >
-      <span key={selected.id} aria-hidden className="lp-console-trace absolute inset-x-0 top-0 z-20 h-px bg-vanilla/70" />
+      <span key={selected.id} aria-hidden className="lp-console-trace absolute inset-x-0 top-0 z-20 h-0.5" />
 
       <div className="relative z-10 flex items-start justify-between gap-step-2 border-b border-vanilla/15 bg-vanilla/8 px-step-2 py-step-2 backdrop-blur-md sm:px-step-3">
         <div>
@@ -96,7 +96,7 @@ export function AuditPanel() {
           </h2>
         </div>
         <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-vanilla/30 bg-vanilla/10 px-3 py-1 font-mono text-[0.56rem] font-semibold tracking-[0.06em] text-vanilla/90 sm:px-step-2 sm:text-[0.6rem]">
-          <span className="lp-console-dot size-1.5 rounded-full bg-vanilla" aria-hidden />
+          <span className="lp-console-dot size-1.5 rounded-full" aria-hidden />
           SAMPLE MODE
         </span>
       </div>
