@@ -1,19 +1,12 @@
 /**
  * Copy for the AI App Audit landing page (/ai-app-audit).
  *
- * The campaign's content source of truth. Labels and section order preserve the
- * supplied composition; form copy and interaction labels are maintained here
- * so the sealed funnel stays consistent.
+ * The campaign's content source of truth. Form copy and interaction labels are
+ * maintained here so the sealed funnel stays consistent.
  *
- * Nothing here may link into the site. Where the design shows a link that would
- * have left — "Learn more", "View project", "View full report", the footer's
- * service names — the label stays exactly as drawn and the destination is on
- * this page: a disclosure, a dialog, or an anchor. The page looks like the comp
- * and cannot leave it.
- *
- * The audit panel's statuses are the design's resting values. Do not "improve"
- * them into clean passes; the comp shows three rows mid-review and two with
- * findings, and that is what ships.
+ * Nothing here may link into the site. Educational controls reveal content,
+ * project controls open details, and conversion controls open the same-route
+ * inquiry form.
  */
 
 /**
@@ -26,10 +19,10 @@
  * nav is decorative and stops using it. Both sections are written now.
  */
 export const lpNav = [
+  { label: 'What You Get', href: '#report' },
   { label: 'The Checks', href: '#checks' },
   { label: 'Our Work', href: '#work' },
   { label: 'How It Works', href: '#how' },
-  { label: 'What You Get', href: '#report' },
   { label: 'FAQ', href: '#faq' },
 ] as const
 
@@ -37,48 +30,10 @@ export const lpHero = {
   eyebrow: 'VIBE CHECK FOR AI-BUILT APPS',
   headline: 'YOUR AI APP LOOKS 80% DONE.',
   counter: 'The last 20% is where things get expensive.',
-  lede: 'Built with Cursor, Claude, Lovable, Bolt, v0, Replit, or by a freelancer using the same tools?',
-  body: 'The demo works. The screens look finished. Then real users arrive and the questions change.',
-  /**
-   * Six, not the comp's five. The grid is two columns, so five left a hole in
-   * the last cell and the block read as unfinished next to the CTA row beneath
-   * it. The sixth is the page's own language — the cost question is the one
-   * the quotes section already raises ("no idea what it will cost at scale") —
-   * and it maps to a check that exists, so it is a gap being closed rather
-   * than a claim being added.
-   */
-  questions: [
-    'Is it secure?',
-    'Can another engineer maintain it?',
-    'What happens when it fails?',
-    'Is the AI layer production-ready?',
-    'Will it scale?',
-    'What will it cost at scale?',
-  ],
+  lede: 'Built with Cursor, Lovable, Bolt, v0, Replit, Claude—or by a freelancer? Get a senior engineer’s view before real users find the weak spots.',
   primary: 'BOOK A FREE SCOPING CALL',
-  secondary: 'SEE THE CHECKS WE RUN',
+  secondary: 'EXPLORE A SAMPLE REPORT',
   assurances: ['Free scoping call', 'Fixed-scope audit', 'Written report', 'No lock-in'],
-}
-
-export const lpAudit = {
-  title: 'AI APP AUDIT',
-  status: 'REVIEW IN PROGRESS',
-  repoLabel: 'Repository',
-  repo: 'your-app/main',
-  rows: [
-    { name: 'CODE QUALITY', detail: 'Reviewing structure & change risk', status: 'Reviewing' },
-    { name: 'SECURITY', detail: 'Checking access & data boundaries', status: '2 Findings' },
-    { name: 'RELIABILITY', detail: 'Tracing critical flows', status: 'Reviewing' },
-    { name: 'ARCHITECTURE', detail: 'Reviewing bottlenecks', status: 'Reviewing' },
-    { name: 'AI LAYER', detail: 'Checking models, tools & controls', status: '1 Finding' },
-  ],
-  prioritiesTitle: 'TOP PRIORITIES',
-  priorities: [
-    { rank: 1, label: 'Server-side authorization', severity: 'High' },
-    { rank: 2, label: 'Missing retries on failures', severity: 'Medium' },
-    { rank: 3, label: 'AI cost controls', severity: 'Medium' },
-  ],
-  report: 'View full report',
 }
 
 /**
@@ -108,31 +63,10 @@ export const lpTools = {
   ],
 }
 
-export const lpFamiliar = {
-  eyebrow: 'SOUND FAMILIAR?',
-  heading: 'The app works. You just don’t completely trust it.',
-  quotes: [
-    'Every quick fix creates two new problems.',
-    'I don’t really know what’s in the codebase anymore.',
-    'I’m scared to touch authentication.',
-    'It worked fine with five users.',
-    'The freelancer finished the app, but I’m just not sure how solid it is.',
-    'The AI works, but I have no idea what it will cost at scale.',
-  ],
-  note: 'Those aren’t automatic reasons for a rewrite.',
-  noteStrong: 'They are reasons to understand the system.',
-  panel: {
-    heading: 'Get clarity before you spend more.',
-    points: ['No pressure', 'No sales pitch', 'Just a technical opinion'],
-    cta: 'BOOK A SCOPING CALL',
-  },
-}
-
 export const lpChecks = {
   eyebrow: 'THE FIVE CHECKS',
   heading: 'Five places fast-built apps usually get expensive.',
   lead: 'We review the areas most likely to become security, reliability, cost, scaling, or development problems later. If something is built well, we tell you that too.',
-  more: 'Learn more',
   items: [
     {
       id: 'code-quality',

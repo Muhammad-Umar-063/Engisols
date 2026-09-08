@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useState, type FormEvent, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Magnetic } from '@/components/motion/Magnetic'
 import { SheetModal } from '@/components/motion/SheetModal'
 import { DotsMorphButton } from '@/components/motion/DotsMorphButton'
@@ -40,11 +40,44 @@ export function useBooking() {
 
 export function BookingProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
+  const [showMobileDock, setShowMobileDock] = useState(false)
   const show = useCallback(() => setOpen(true), [])
+
+  useEffect(() => {
+    const update = () => setShowMobileDock(window.scrollY > 520)
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    return () => window.removeEventListener('scroll', update)
+  }, [])
 
   return (
     <BookingCtx.Provider value={show}>
       {children}
+      <div
+        aria-hidden={!showMobileDock || open}
+        className={`fixed inset-x-step-2 bottom-step-2 z-40 rounded-2xl border border-greige/60 bg-vanilla/92 p-2 shadow-[0_18px_45px_-24px_rgba(23,23,23,0.65)] backdrop-blur-md transition-[transform,opacity] duration-300 sm:hidden ${
+          showMobileDock && !open
+            ? 'translate-y-0 opacity-100'
+            : 'pointer-events-none translate-y-[140%] opacity-0'
+        }`}
+        style={{
+          paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
+          transitionTimingFunction: 'var(--ease-enter)',
+        }}
+      >
+        <button
+          type="button"
+          onClick={show}
+          tabIndex={showMobileDock && !open ? 0 : -1}
+          className="flex min-h-12 w-full items-center justify-between gap-step-2 rounded-xl bg-cherry px-step-3 text-left text-vanilla"
+        >
+          <span>
+            <span className="block font-display text-sm font-semibold">Talk to a senior engineer</span>
+            <span className="mt-0.5 block text-[0.68rem] text-vanilla/75">Free · 30 minutes · no prep</span>
+          </span>
+          <span className="font-mono text-sm" aria-hidden>→</span>
+        </button>
+      </div>
       <SheetModal
         open={open}
         onClose={() => setOpen(false)}

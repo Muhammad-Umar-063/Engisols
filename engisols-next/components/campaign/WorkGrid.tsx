@@ -35,6 +35,7 @@ function WorkCard({
           ? { duration: 0 }
           : { duration: DUR.standard, ease: EASE.enter, delay: reduced ? 0 : (i % 3) * 0.05 }
       }
+      className="min-w-[82vw] shrink-0 snap-center md:min-w-0"
     >
       {children}
     </m.li>
@@ -61,21 +62,29 @@ export function WorkGrid() {
   const [open, setOpen] = useState<number | null>(null)
   const { reduced } = useMotionPrefs()
   const project = open === null ? null : lpWork.projects[open]
+  // Put the two projects with verified public outcomes first. On a phone these
+  // are the cards visible before the visitor chooses to keep swiping.
+  const displayOrder = [4, 1, 0, 3, 2, 5]
 
   return (
     <>
-      <ul className="mt-step-5 grid gap-step-2 md:grid-cols-2 xl:grid-cols-3">
-        {lpWork.projects.map((item, i) => (
-          <WorkCard key={item.name} index={i} reduced={reduced}>
+      <p className="mt-step-3 font-mono text-[0.65rem] font-semibold tracking-[0.08em] text-bordeaux/55 md:hidden">
+        SWIPE THROUGH SELECTED WORK →
+      </p>
+      <ul className="-mx-step-2 mt-step-2 flex snap-x snap-mandatory gap-step-2 overflow-x-auto px-step-2 pb-step-2 [scrollbar-width:none] md:mx-0 md:mt-step-4 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 xl:grid-cols-3 [&::-webkit-scrollbar]:hidden">
+        {displayOrder.map((projectIndex, displayIndex) => {
+          const item = lpWork.projects[projectIndex]
+          return (
+            <WorkCard key={item.name} index={displayIndex} reduced={reduced}>
             {/* No `data-cursor`: the card is already a shape, and wrapping a
                 240px card in a cursor slab covers the content being pointed
                 at. The hover lift is the affordance. */}
             <button
               type="button"
-              onClick={() => setOpen(i)}
+              onClick={() => setOpen(projectIndex)}
               className="h-full w-full text-left"
             >
-              <Card className="flex h-full flex-col transition-colors duration-200 hover:border-greige">
+              <Card className="flex h-full min-h-[19rem] flex-col transition-colors duration-200 hover:border-greige md:min-h-0">
                 <div className="flex items-start gap-step-2">
                   {item.logo ? (
                     <span
@@ -118,6 +127,17 @@ export function WorkGrid() {
                   ))}
                 </ul>
 
+                {item.facts ? (
+                  <dl className="mb-step-3 grid grid-cols-2 gap-step-2 border-y border-greige/35 py-step-2">
+                    {item.facts.slice(0, 2).map((fact) => (
+                      <div key={fact.label}>
+                        <dt className="text-xs leading-tight text-bordeaux/55">{fact.label}</dt>
+                        <dd className="mt-1 font-display text-xl font-semibold tabular-nums">{fact.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+
                 {/* Pinned to the foot of the card. The blurbs run to one or
                     two lines, so in normal flow these landed at three different
                     heights across the row and the grid read as ragged — the
@@ -128,8 +148,9 @@ export function WorkGrid() {
                 </span>
               </Card>
             </button>
-          </WorkCard>
-        ))}
+            </WorkCard>
+          )
+        })}
       </ul>
 
       <SheetModal
@@ -166,7 +187,7 @@ export function WorkGrid() {
             {project.facts ? (
               <dl className="mt-step-3 grid grid-cols-2 gap-step-2 sm:grid-cols-3">
                 {project.facts.map((fact) => (
-                  <div key={fact.label} className="border-t-2 border-cherry pt-step-1">
+                  <div key={fact.label} className="border-t border-cherry pt-step-1">
                     <dt className="sr-only">{fact.label}</dt>
                     <dd>
                       <span className="block font-display text-xl tabular-nums">

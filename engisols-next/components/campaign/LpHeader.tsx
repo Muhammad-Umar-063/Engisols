@@ -130,7 +130,9 @@ export function LpHeader() {
           ))}
         </nav>
 
-        <BookButton label="BOOK A SCOPING CALL" shortLabel="BOOK CALL" variant="compact" />
+        <div className="hidden sm:block">
+          <BookButton label="BOOK A SCOPING CALL" shortLabel="BOOK CALL" variant="compact" />
+        </div>
       </div>
     </m.header>
   )
