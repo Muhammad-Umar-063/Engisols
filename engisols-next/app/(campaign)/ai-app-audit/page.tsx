@@ -71,8 +71,8 @@ export default function AiAppAuditPage() {
 
       {/* 1 Hero */}
       <section id="top" className="bg-vanilla">
-        <div className="shell grid gap-step-3 pb-step-5 pt-[calc(var(--spacing-step-2)+4rem)] sm:gap-step-4 sm:pt-[calc(var(--spacing-step-5)+4rem)] lg:grid-cols-[minmax(0,1fr)_minmax(24rem,0.78fr)] lg:items-center lg:gap-step-5 lg:pb-step-6">
-          <div>
+        <div className="shell grid gap-step-3 pb-step-5 pt-[calc(var(--spacing-step-2)+4rem)] sm:gap-step-4 sm:pt-[calc(var(--spacing-step-5)+4rem)] lg:grid-cols-[minmax(0,1fr)_minmax(24rem,0.78fr)] lg:gap-x-step-5 lg:gap-y-step-2 lg:pb-step-6">
+          <div className="order-1 lg:col-start-1 lg:row-start-1">
             <div className="lp-in" style={{ '--i': 0 } as CSSProperties}>
               <Eyebrow>{lpHero.eyebrow}</Eyebrow>
             </div>
@@ -91,38 +91,43 @@ export default function AiAppAuditPage() {
             >
               {lpHero.counter}
             </p>
-
-            <p
-              className="lp-in measure mt-step-3 text-base font-medium leading-relaxed sm:text-lg"
-              style={{ '--i': 4 } as CSSProperties}
-            >
-              {lpHero.lede}
-            </p>
-            <div
-              className="lp-in mt-step-3 flex flex-wrap items-center gap-step-2"
-              style={{ '--i': 5 } as CSSProperties}
-            >
-              <BookButton label={lpHero.primary} shortLabel="BOOK A FREE CALL" className="w-full justify-center sm:w-auto" />
-              <a
-                href="#sample"
-                data-cursor="link"
-                className="inline-flex min-h-11 items-center gap-1.5 px-step-1 font-mono text-xs font-semibold tracking-tight underline decoration-bordeaux/40 underline-offset-4 transition-colors hover:decoration-bordeaux"
-              >
-                {lpHero.secondary}
-                <span aria-hidden>↓</span>
-              </a>
-            </div>
-
-            <PointRow
-              points={lpHero.assurances}
-              className="lp-in mt-step-2 text-bordeaux/65"
-              style={{ '--i': 6 } as CSSProperties}
-            />
           </div>
 
-          <div id="sample" className="lp-in min-w-0 scroll-mt-28" style={{ '--i': 2 } as CSSProperties}>
+          <div
+            className="lp-in order-3 flex flex-wrap items-center gap-step-2 lg:col-start-1 lg:row-start-3"
+            style={{ '--i': 4 } as CSSProperties}
+          >
+            <BookButton label={lpHero.primary} shortLabel="BOOK A FREE CALL" className="w-full justify-center sm:w-auto" />
+            <a
+              href="#sample"
+              data-cursor="link"
+              className="hidden min-h-11 items-center gap-1.5 px-step-1 font-mono text-xs font-semibold tracking-tight underline decoration-bordeaux/40 underline-offset-4 transition-colors hover:decoration-bordeaux lg:inline-flex"
+            >
+              {lpHero.secondary}
+              <span aria-hidden>↓</span>
+            </a>
+          </div>
+
+          <div
+            id="sample"
+            className="lp-in order-2 min-w-0 scroll-mt-24 lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:self-center"
+            style={{ '--i': 5 } as CSSProperties}
+          >
             <AuditPanel />
           </div>
+
+          <p
+            className="lp-in measure order-4 text-base font-medium leading-relaxed sm:text-lg lg:col-start-1 lg:row-start-2"
+            style={{ '--i': 6 } as CSSProperties}
+          >
+            {lpHero.lede}
+          </p>
+
+          <PointRow
+            points={lpHero.assurances}
+            className="lp-in order-5 text-bordeaux/65 lg:col-start-1 lg:row-start-4"
+            style={{ '--i': 7 } as CSSProperties}
+          />
         </div>
       </section>
 
