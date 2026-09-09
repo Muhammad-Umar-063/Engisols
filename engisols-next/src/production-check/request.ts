@@ -1,5 +1,11 @@
 import { ScannerError } from '../scanner/errors'
 import { DEFAULT_SCAN_LIMITS } from '../scanner/limits'
+import { verifyAttributionToken } from './attribution-token.server'
+import type { ProductionCheckAttribution } from './types'
+
+type AttributionTokenVerifier = (
+  token: string,
+) => ProductionCheckAttribution | null
 
 export async function readLimitedJson(request: Request): Promise<unknown> {
   const contentType = request.headers.get('content-type')?.toLowerCase()
@@ -44,19 +50,32 @@ export async function readLimitedJson(request: Request): Promise<unknown> {
 }
 
 export async function readUrlInput(request: Request): Promise<string> {
+  return (await readScanCreationInput(request)).url
+}
+
+export async function readScanCreationInput(
+  request: Request,
+  verifyToken: AttributionTokenVerifier = verifyAttributionToken,
+): Promise<{ url: string; attribution: ProductionCheckAttribution }> {
   const parsed = await readLimitedJson(request)
   if (
     !parsed ||
     typeof parsed !== 'object' ||
     Array.isArray(parsed) ||
-    Object.keys(parsed).length !== 1 ||
+    Object.keys(parsed).some((key) => key !== 'url' && key !== 'attributionToken') ||
     !('url' in parsed) ||
     typeof parsed.url !== 'string' ||
     parsed.url.length === 0
   ) {
     throw new ScannerError('invalid_request')
   }
-  return parsed.url
+  if (!('attributionToken' in parsed)) return { url: parsed.url, attribution: {} }
+  if (typeof parsed.attributionToken !== 'string' || !parsed.attributionToken) {
+    throw new ScannerError('invalid_request')
+  }
+  const attribution = verifyToken(parsed.attributionToken)
+  if (!attribution) throw new ScannerError('invalid_request')
+  return { url: parsed.url, attribution }
 }
 
 async function readBeforeDeadline(

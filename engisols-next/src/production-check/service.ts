@@ -6,6 +6,7 @@ import { createPublicScanId, sanitizeResultForPersistence } from './report'
 import { containsCredentialLikeValue } from './security'
 import type {
   PersistedScan,
+  ProductionCheckAttribution,
   ScanProgressSnapshot,
   ScanStore,
 } from './types'
@@ -21,7 +22,11 @@ export async function createScanRecord(
   input: string,
   store: ScanStore,
   now: () => Date = () => new Date(),
+  attribution: ProductionCheckAttribution = {},
 ): Promise<PersistedScan> {
+  if (containsCredentialLikeValue(attribution)) {
+    throw new ScannerError('invalid_request')
+  }
   const requestedUrl = displayUrl(input)
   const createdAt = now()
   const scan: PersistedScan = {
@@ -35,6 +40,7 @@ export async function createScanRecord(
       events: [],
     },
     answers: {},
+    attribution: structuredClone(attribution),
     createdAt: createdAt.toISOString(),
     expiresAt: new Date(createdAt.getTime() + SCAN_RECORD_LIFETIME_MS).toISOString(),
   }

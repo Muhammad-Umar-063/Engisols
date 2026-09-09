@@ -1,9 +1,9 @@
 import { after } from 'next/server'
 
-import { readUrlInput } from '../../../src/production-check/request'
+import { readScanCreationInput } from '../../../src/production-check/request'
 import { createScanRecord, runScanRecord, type ScanFunction } from '../../../src/production-check/service'
 import { getScanStore, ScanStoreConfigurationError } from '../../../src/production-check/store'
-import type { ScanStore } from '../../../src/production-check/types'
+import type { ProductionCheckAttribution, ScanStore } from '../../../src/production-check/types'
 import { DEFAULT_SCAN_LIMITS, ScannerError, toPublicScanError } from '../../../src/scanner'
 
 export const runtime = 'nodejs'
@@ -13,12 +13,14 @@ interface HandlerDependencies {
   store?: ScanStore
   schedule?: (task: () => Promise<void>) => void
   scan?: ScanFunction
+  verifyAttributionToken?: (token: string) => ProductionCheckAttribution | null
 }
 
 export function createScansPostHandler({
   store,
   schedule = (task) => after(task),
   scan,
+  verifyAttributionToken,
 }: HandlerDependencies = {}) {
   let activeScans = 0
   return async function POST(request: Request): Promise<Response> {
@@ -30,9 +32,12 @@ export function createScansPostHandler({
       }
       activeScans += 1
       slotReserved = true
-      const target = await readUrlInput(request)
+      const { url: target, attribution } = await readScanCreationInput(
+        request,
+        verifyAttributionToken,
+      )
       const activeStore = store ?? getScanStore()
-      const record = await createScanRecord(target, activeStore)
+      const record = await createScanRecord(target, activeStore, undefined, attribution)
       schedule(async () => {
         try {
           await runScanRecord(record.publicId, target, activeStore, scan)

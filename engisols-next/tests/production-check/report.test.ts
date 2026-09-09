@@ -4,9 +4,11 @@ import test from 'node:test'
 import {
   buildFounderReport,
   createPublicScanId,
+  redactPersistedScanForPublic,
   sanitizeResultForPersistence,
 } from '../../src/production-check/report'
 import { finding, scanResult } from './fixtures'
+import type { PersistedScan } from '../../src/production-check/types'
 
 test('creates high-entropy non-sequential public report ids', () => {
   const ids = new Set(Array.from({ length: 100 }, createPublicScanId))
@@ -62,6 +64,34 @@ test('serialized public reports retain sanitized evidence without raw secrets', 
   assert.match(result.findings[0]?.evidence.display ?? '', /redacted/i)
 })
 
+test('drops unexpected raw HTML and JavaScript payloads before persistence', () => {
+  const injected = Object.assign(scanResult(), {
+    rawHtml: '<html><body>private source</body></html>',
+    javascriptBundles: ['window.__PRIVATE_SOURCE__ = true'],
+  })
+  const serialized = JSON.stringify(sanitizeResultForPersistence(injected))
+  assert.doesNotMatch(serialized, /rawHtml|javascriptBundles|private source|PRIVATE_SOURCE/)
+})
+
+test('removes URL credentials and query values from persisted report locations', () => {
+  const result = scanResult([
+    finding({
+      ruleId: 'route.query',
+      classification: 'needs_proof',
+      evidence: {
+        display: 'A route with a private query value was observed.',
+        sourceKind: 'javascript',
+        sourceUrl: 'https://app.example/assets/main.js?token=private-query-value',
+      },
+    }),
+  ])
+  result.target.finalUrl = 'https://user:password@app.example/dashboard?token=private-query-value#section'
+  const persisted = sanitizeResultForPersistence(result)
+  assert.equal(persisted.target.finalUrl, 'https://app.example/dashboard')
+  assert.equal(persisted.findings[0]?.evidence.sourceUrl, 'https://app.example/assets/main.js')
+  assert.doesNotMatch(JSON.stringify(persisted), /password|private-query-value/)
+})
+
 test('keeps legitimate browser configuration expected and review signals conservative', () => {
   const report = buildFounderReport(scanResult([
     finding({ ruleId: 'supabase.anon_key', classification: 'by_design' }),
@@ -78,4 +108,26 @@ test('keeps legitimate browser configuration expected and review signals conserv
       'supabase.sensitive_table': 'REVIEW',
     },
   )
+})
+
+test('does not expose internal lead segmentation in public report data', () => {
+  const serialized = JSON.stringify(buildFounderReport(scanResult()))
+  assert.doesNotMatch(serialized, /"segment"|nurture|maybe|qualified/)
+})
+
+test('keeps persisted attribution server-side when scan data is made public', () => {
+  const scan: PersistedScan = {
+    publicId: 'rpt_abcdefghijklmnopqrstuvwx',
+    status: 'completed',
+    requestedUrl: 'https://app.example/',
+    progress: { phase: 'complete', progress: 100, message: 'Complete', events: [] },
+    answers: {},
+    attribution: { source: 'meta', fbclid: 'private-click-id' },
+    result: scanResult(),
+    createdAt: '2026-09-09T10:00:00.000Z',
+    expiresAt: '2026-12-08T10:00:00.000Z',
+  }
+  const publicScan = redactPersistedScanForPublic(scan)
+  assert.deepEqual(publicScan.attribution, {})
+  assert.deepEqual(scan.attribution, { source: 'meta', fbclid: 'private-click-id' })
 })

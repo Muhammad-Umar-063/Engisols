@@ -9,15 +9,21 @@ import { ProductionCheckHeader } from '@/components/production-check/ProductionC
 import { ReportContent } from '@/components/production-check/ReportView'
 import { StartScanForm } from '@/components/production-check/StartScanForm'
 import { HeroHeadline } from '@/components/sections/HeroHeadline'
-import { productionRestartPath, productionStatusPath } from '@/src/production-check/paths'
+import {
+  productionRestartPath,
+  productionStatusPath,
+  replaceProductionScanHistory,
+} from '@/src/production-check/paths'
 import type { FounderReport, PersistedScan } from '@/src/production-check/types'
 
 export function ProductionCheckExperience({
   initialScan,
   initialReport,
+  initialAttributionToken,
 }: {
   initialScan?: PersistedScan
   initialReport?: FounderReport
+  initialAttributionToken: string
 }) {
   const [scan, setScan] = useState(initialScan)
   const [report, setReport] = useState(initialReport)
@@ -28,6 +34,7 @@ export function ProductionCheckExperience({
   }, [])
 
   async function startScan(scanId: string) {
+    replaceProductionScanHistory(window.history, scanId)
     const response = await fetch(productionStatusPath(scanId), { cache: 'no-store' })
     const body = (await response.json()) as { ok: boolean; scan?: PersistedScan; report?: FounderReport; error?: { message?: string } }
     if (!response.ok || !body.ok || !body.scan) {
@@ -72,7 +79,10 @@ export function ProductionCheckExperience({
               <LiveScan key={scan.publicId} initial={scan} initialReport={report} onComplete={completeScan} onRestart={restart} />
             ) : (
               <div className="lp-in" style={{ '--i': 2 } as CSSProperties}>
-                <StartScanForm onStarted={startScan} />
+                <StartScanForm
+                  attributionToken={initialAttributionToken}
+                  onStarted={startScan}
+                />
               </div>
             )}
           </div>

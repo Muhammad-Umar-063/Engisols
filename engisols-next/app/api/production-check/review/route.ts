@@ -1,21 +1,28 @@
-import { createHash } from 'node:crypto'
-
+import {
+  buildLeadNotificationText,
+  createProductionCheckLead,
+  markLeadNotification,
+  UnsafeLeadContentError,
+} from '../../../../src/production-check/lead'
 import { loadScan } from '../../../../src/production-check/load'
 import { productionReportPath } from '../../../../src/production-check/paths'
-import { buildFounderReport, isValidPublicScanId } from '../../../../src/production-check/report'
+import { nextStepForLeadSegment } from '../../../../src/production-check/qualification'
+import { isValidPublicScanId } from '../../../../src/production-check/report'
 import { readLimitedJson } from '../../../../src/production-check/request'
 import {
-  ReviewEmailConfigurationError,
   sendReviewEmail,
   type ReviewEmailSender,
 } from '../../../../src/production-check/review-email'
 import {
-  buildReviewRequestText,
   parseReviewRequestSubmission,
   reviewRequestSubject,
-  type ReviewRequestContext,
 } from '../../../../src/production-check/review-intake'
-import type { PersistedScan } from '../../../../src/production-check/types'
+import { getLeadStore } from '../../../../src/production-check/store'
+import type {
+  LeadStore,
+  PersistedScan,
+  ProductionCheckLeadNextStep,
+} from '../../../../src/production-check/types'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -23,15 +30,23 @@ export const maxDuration = 15
 
 interface HandlerDependencies {
   load?: (publicId: string) => Promise<PersistedScan | null>
+  leads?: LeadStore
   send?: ReviewEmailSender
+  now?: () => Date
+  createId?: () => string
 }
 
 export function createReviewRequestPostHandler({
   load = loadScan,
+  leads,
   send = sendReviewEmail,
+  now = () => new Date(),
+  createId,
 }: HandlerDependencies = {}) {
   return async function POST(request: Request): Promise<Response> {
-    if (!isSameOrigin(request)) return errorResponse(403, 'request_blocked', 'This request could not be submitted.')
+    if (!isSameOrigin(request)) {
+      return errorResponse(403, 'request_blocked', 'This request could not be submitted.')
+    }
 
     let parsed: unknown
     try {
@@ -45,53 +60,119 @@ export function createReviewRequestPostHandler({
       return errorResponse(400, 'invalid_request', 'Check the form and try again.')
     }
 
-    // Silently accept bot-filled honeypots without sending an email.
+    // Silently accept bot-filled honeypots without loading private state or notifying.
     if (submission.website) return successResponse()
 
     let scan: PersistedScan | null
     try {
       scan = await load(submission.reportId)
     } catch {
-      return errorResponse(503, 'review_unavailable', 'Review requests are temporarily unavailable. Please try again.')
+      return errorResponse(
+        503,
+        'review_unavailable',
+        'Review requests are temporarily unavailable. Please try again.',
+      )
     }
     if (!scan) {
       return errorResponse(404, 'report_not_found', 'This report could not be found or has expired.')
     }
     if (!scan.result || (scan.status !== 'completed' && scan.status !== 'partial')) {
-      return errorResponse(409, 'report_not_ready', 'Wait for the production check to finish before requesting a review.')
+      return errorResponse(
+        409,
+        'report_not_ready',
+        'Wait for the production check to finish before requesting a review.',
+      )
     }
 
-    const report = buildFounderReport(scan.result, scan.answers.builder)
-    const reviewContext: ReviewRequestContext = {
-      reportId: scan.publicId,
-      targetUrl: scan.result.target.finalUrl,
-      verdict: report.verdict,
-      recommendedAction: report.startHere.action,
-      fixNow: report.counts.fixNow,
-      review: report.counts.review,
-      expected: report.counts.expected,
-      needsCodeReview: report.productionProof.needsCodeReview,
-      builder: scan.answers.builder,
-      launchStage: scan.answers.launchStage,
+    let candidateLead
+    try {
+      candidateLead = createProductionCheckLead(submission, scan, now, createId)
+    } catch (error) {
+      if (error instanceof UnsafeLeadContentError) {
+        return errorResponse(400, 'sensitive_content', error.message)
+      }
+      return errorResponse(500, 'lead_failed', 'We could not prepare this request. Please try again.')
     }
+
+    let leadStore: LeadStore
+    let lead: typeof candidateLead
+    let created: boolean
+    try {
+      leadStore = leads ?? getLeadStore()
+      const resolved = await leadStore.createOrGet(candidateLead)
+      lead = resolved.lead
+      created = resolved.created
+    } catch {
+      return errorResponse(
+        503,
+        'persistence_unavailable',
+        'We could not save your request. Your details are still here—please try again.',
+      )
+    }
+
+    const nextStep = nextStepForLeadSegment(lead.segment)
+    if (!created) {
+      if (lead.notification.status === 'sent') {
+        return leadResponse(200, lead.id, nextStep, 'sent')
+      }
+      if (lead.notification.status === 'pending') {
+        return delayedLeadResponse(lead.id, nextStep)
+      }
+
+      try {
+        const claimed = await leadStore.claimFailedNotification(lead.id, now().toISOString())
+        if (!claimed) {
+          const current = await leadStore.get(lead.id)
+          if (current?.notification.status === 'sent') {
+            return leadResponse(
+              200,
+              current.id,
+              nextStepForLeadSegment(current.segment),
+              'sent',
+            )
+          }
+          return delayedLeadResponse(lead.id, nextStep)
+        }
+        lead = claimed
+      } catch {
+        return errorResponse(
+          503,
+          'persistence_unavailable',
+          'Your request is saved, but notification retry is temporarily unavailable.',
+        )
+      }
+    }
+
     const reportUrl = new URL(productionReportPath(scan.publicId), request.url).toString()
-    const text = buildReviewRequestText(submission, reviewContext, reportUrl)
+    const text = buildLeadNotificationText(lead, reportUrl)
 
     try {
       await send({
         replyTo: submission.email,
-        subject: reviewRequestSubject(reviewContext.targetUrl),
+        subject: reviewRequestSubject(lead.appUrl),
         text,
-        idempotencyKey: idempotencyKeyFor(submission.reportId, submission.email, text),
+        idempotencyKey: `production-check/${lead.id}`,
       })
-      return successResponse()
-    } catch (error) {
-      const message = error instanceof ReviewEmailConfigurationError
-        ? 'Online requests are not configured yet. Copy the request and email it to us directly.'
-        : 'We could not send your request. Your details are still here—try again or copy the request.'
-      return errorResponse(503, 'delivery_failed', message)
+      await leadStore.save(markLeadNotification(lead, 'sent', now())).catch(() => undefined)
+      return leadResponse(200, lead.id, nextStep, 'sent')
+    } catch {
+      await leadStore.save(markLeadNotification(lead, 'failed', now())).catch(() => undefined)
+      return delayedLeadResponse(lead.id, nextStep)
     }
   }
+}
+
+function delayedLeadResponse(
+  requestId: string,
+  nextStep: ProductionCheckLeadNextStep,
+): Response {
+  return leadResponse(
+    202,
+    requestId,
+    nextStep,
+    'delayed',
+    'Your request is saved. Email notification is delayed, but your details were not lost.',
+  )
 }
 
 function isSameOrigin(request: Request): boolean {
@@ -104,13 +185,21 @@ function isSameOrigin(request: Request): boolean {
   }
 }
 
-function idempotencyKeyFor(reportId: string, email: string, text: string): string {
-  const fingerprint = createHash('sha256').update(`${email.toLowerCase()}\n${text}`).digest('hex').slice(0, 32)
-  return `production-check/${reportId}/${fingerprint}`
-}
-
 function successResponse(): Response {
   return Response.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } })
+}
+
+function leadResponse(
+  status: number,
+  requestId: string,
+  nextStep: ProductionCheckLeadNextStep,
+  notification: 'sent' | 'delayed',
+  message?: string,
+): Response {
+  return Response.json(
+    { ok: true, requestId, nextStep, notification, ...(message ? { message } : {}) },
+    { status, headers: { 'Cache-Control': 'no-store' } },
+  )
 }
 
 function errorResponse(status: number, code: string, message: string): Response {

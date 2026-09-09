@@ -4,6 +4,13 @@ export function productionScanPath(publicId: string): string {
   return `${productionLandingPath}?scanId=${encodeURIComponent(publicId)}`
 }
 
+export function replaceProductionScanHistory(
+  history: Pick<History, 'replaceState'>,
+  publicId: string,
+): void {
+  history.replaceState(null, '', productionScanPath(publicId))
+}
+
 export function productionReportPath(publicId: string): string {
   return `${productionLandingPath}/report/${publicId}`
 }

@@ -6,6 +6,10 @@ import { SheetModal } from '@/components/motion/SheetModal'
 import { useToast } from '@/components/motion/Toast'
 import { SITE } from '@/lib/site'
 import { trackProductionCheck } from '@/src/production-check/analytics'
+import {
+  formatProductionCheckPrice,
+  LAUNCH_BLOCKER_FIX_PRICE_USD,
+} from '@/src/production-check/config'
 import { productionReportPath, productionReviewRequestPath } from '@/src/production-check/paths'
 import {
   REVIEW_HELP_OPTIONS,
@@ -16,8 +20,17 @@ import {
   type ReviewRequestErrors,
   type ReviewRequestInput,
 } from '@/src/production-check/review-intake'
+import type { ProductionCheckLeadNextStep } from '@/src/production-check/types'
 
 type SubmissionState = 'idle' | 'sending' | 'sent' | 'error'
+type LeadEvent = 'lead_nurture' | 'lead_maybe' | 'lead_qualified'
+
+interface ReviewSubmissionResult {
+  requestId: string
+  nextStep: ProductionCheckLeadNextStep
+  notification: 'sent' | 'delayed'
+  message?: string
+}
 
 export function CodeReviewIntake({
   open,
@@ -40,6 +53,7 @@ export function CodeReviewIntake({
   const [errors, setErrors] = useState<ReviewRequestErrors>({})
   const [submissionState, setSubmissionState] = useState<SubmissionState>('idle')
   const [submissionError, setSubmissionError] = useState('')
+  const [submissionResult, setSubmissionResult] = useState<ReviewSubmissionResult>()
   const [copied, setCopied] = useState(false)
   const sending = submissionState === 'sending'
 
@@ -88,10 +102,30 @@ export function CodeReviewIntake({
       if (!response.ok || !body.ok) {
         throw new Error(body.error?.message || 'We could not send your request. Please try again.')
       }
+      if (!body.requestId || !body.nextStep || !body.notification) {
+        throw new Error('Your request was received, but its confirmation could not be loaded.')
+      }
+      setSubmissionResult({
+        requestId: body.requestId,
+        nextStep: body.nextStep,
+        notification: body.notification,
+        ...(body.message ? { message: body.message } : {}),
+      })
       setSubmissionState('sent')
       trackProductionCheck('review_request_sent', { reportId: reviewContext.reportId })
-      push('Engineering review request sent.')
-      requestAnimationFrame(() => document.getElementById('review-request-status')?.focus())
+      trackProductionCheck('lead_created', { reportId: reviewContext.reportId })
+      trackProductionCheck('lead_segmented', {
+        reportId: reviewContext.reportId,
+        nextStep: body.nextStep,
+      })
+      trackProductionCheck(leadEventFor(body.nextStep), { reportId: reviewContext.reportId })
+      push(body.notification === 'delayed' ? 'Engineering review request saved.' : 'Engineering review request sent.')
+      requestAnimationFrame(() => {
+        const status = document.getElementById('review-request-status')
+        status?.focus({ preventScroll: true })
+        const dialog = status?.closest<HTMLElement>('[role="dialog"]')
+        if (dialog) dialog.scrollTop = 0
+      })
     } catch (error) {
       setSubmissionState('error')
       setSubmissionError(error instanceof Error ? error.message : 'We could not send your request. Please try again.')
@@ -115,18 +149,13 @@ export function CodeReviewIntake({
 
   return (
     <SheetModal open={open} onClose={onClose} title="Request an engineering review" themeClassName="production-check-brand">
-      {submissionState === 'sent' ? (
-        <section id="review-request-status" tabIndex={-1} role="status" aria-live="polite" className="space-y-step-3 text-bordeaux outline-none">
-          <p className="font-mono text-[0.68rem] tracking-[0.08em] text-cherry">REQUEST SENT</p>
-          <h2 className="max-w-[22ch] text-[clamp(1.8rem,4vw,2.8rem)]">Your report is with an Engisols engineer.</h2>
-          <p className="max-w-[58ch] leading-relaxed text-bordeaux/75">
-            We sent the report, its recommended first action, and your project context. We&apos;ll reply to <strong className="font-medium text-bordeaux">{values.email}</strong> after reviewing it.
-          </p>
-          <ReviewReportSummary context={reviewContext} compact />
-          <button type="button" onClick={onClose} className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-cherry px-step-4 font-mono text-xs font-medium text-vanilla transition-opacity hover:opacity-90">
-            RETURN TO REPORT <span aria-hidden className="ml-2">→</span>
-          </button>
-        </section>
+      {submissionState === 'sent' && submissionResult ? (
+        <LeadRoutingConfirmation
+          result={submissionResult}
+          email={values.email}
+          reviewContext={reviewContext}
+          onClose={onClose}
+        />
       ) : (
         <form onSubmit={submit} noValidate className="space-y-step-3 text-bordeaux">
           <p className="max-w-[62ch] text-sm leading-relaxed text-bordeaux/75 sm:text-base">
@@ -159,7 +188,7 @@ export function CodeReviewIntake({
           </Field>
 
           <Field id="review-context" label="What are you trying to ship next?" hint="Optional · 1,000 characters maximum" error={errors.context}>
-            <textarea id="review-context" name="context" rows={3} maxLength={1_000} disabled={sending} value={values.context} onChange={(event) => update('context', event.target.value)} aria-invalid={Boolean(errors.context)} aria-describedby={errors.context ? 'review-context-error' : 'review-context-hint'} className={`${fieldClass} min-h-24 resize-y py-step-2`} />
+            <textarea id="review-context" name="context" rows={4} maxLength={1_000} disabled={sending} value={values.context} onChange={(event) => update('context', event.target.value)} aria-invalid={Boolean(errors.context)} aria-describedby={errors.context ? 'review-context-error' : 'review-context-hint'} className={`${fieldClass} min-h-32 resize-none py-step-2`} />
           </Field>
 
           <div className="absolute left-[-10000px] top-auto size-px overflow-hidden" aria-hidden="true">
@@ -179,7 +208,7 @@ export function CodeReviewIntake({
           ) : null}
 
           <div className="flex flex-col gap-step-2 border-t border-greige/60 pt-step-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <button id="review-request-submit" type="submit" disabled={sending} className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-cherry px-step-4 font-mono text-xs font-medium text-vanilla transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60">
+            <button id="review-request-submit" type="submit" disabled={sending} aria-busy={sending} className="inline-flex min-h-12 min-w-[12.5rem] cursor-pointer items-center justify-center rounded-full bg-cherry px-step-4 font-mono text-xs font-medium text-vanilla transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60">
               {sending ? 'SENDING…' : submissionState === 'error' ? 'TRY SEND AGAIN' : 'SEND REVIEW REQUEST'} {!sending ? <span aria-hidden className="ml-2">→</span> : null}
             </button>
             {submissionState === 'error' ? (
@@ -220,6 +249,89 @@ export function CodeReviewIntake({
       )}
     </SheetModal>
   )
+}
+
+function LeadRoutingConfirmation({
+  result,
+  email,
+  reviewContext,
+  onClose,
+}: {
+  result: ReviewSubmissionResult
+  email: string
+  reviewContext: ReviewRequestContext
+  onClose: () => void
+}) {
+  const launchBlockerSubject = encodeURIComponent(
+    `Launch Blocker Fix — ${hostnameFor(reviewContext.targetUrl)}`,
+  )
+  const heading = result.nextStep === 'launch_blocker_fix'
+    ? 'A focused production pass may be the best next step.'
+    : result.nextStep === 'senior_engineer_review'
+      ? 'Review this with a senior product engineer.'
+      : 'Keep the report as your launch checklist.'
+  const message = result.nextStep === 'launch_blocker_fix'
+    ? 'Your app looks close enough that a focused production pass may be the best next step.'
+    : result.nextStep === 'senior_engineer_review'
+      ? `Your report and project context are saved. We’ll follow up with ${email} after a senior engineer reviews them.`
+      : 'Use the recommended first action in your report, then work through the remaining review items before launch.'
+
+  return (
+    <section id="review-request-status" tabIndex={-1} role="status" aria-live="polite" className="space-y-step-3 text-bordeaux outline-none">
+      <p className="font-mono text-[0.68rem] tracking-[0.08em] text-cherry">REQUEST SAVED</p>
+      <h2 className="max-w-[24ch] text-[clamp(1.8rem,4vw,2.8rem)]">{heading}</h2>
+      <p className="max-w-[58ch] leading-relaxed text-bordeaux/75">{message}</p>
+
+      {result.notification === 'delayed' ? (
+        <div className="rounded-xl border border-bordeaux/25 bg-oat/55 p-step-2 text-sm leading-relaxed">
+          <p className="font-medium text-bordeaux">You do not need to submit again.</p>
+          <p className="mt-1 text-bordeaux/70">{result.message}</p>
+        </div>
+      ) : null}
+
+      {result.nextStep === 'launch_blocker_fix' ? (
+        <section className="rounded-xl border border-cherry/35 bg-oat/55 p-step-3" aria-labelledby="launch-blocker-fix-title">
+          <div className="flex flex-wrap items-baseline justify-between gap-step-1">
+            <h3 id="launch-blocker-fix-title" className="text-xl">Launch Blocker Fix</h3>
+            <p className="font-mono text-sm font-semibold text-cherry">
+              {formatProductionCheckPrice(LAUNCH_BLOCKER_FIX_PRICE_USD)} fixed scope
+            </p>
+          </div>
+          <p className="mt-step-1 max-w-[58ch] text-sm leading-relaxed text-bordeaux/70">
+            A focused pass to resolve the highest-priority production blocker without turning this into a long consulting engagement.
+          </p>
+          <a
+            href={`mailto:${SITE.email}?subject=${launchBlockerSubject}`}
+            className="mt-step-2 inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-cherry px-step-4 font-mono text-xs font-medium text-vanilla transition-opacity hover:opacity-90"
+          >
+            ASK ABOUT THE FIX <span aria-hidden className="ml-2">→</span>
+          </a>
+        </section>
+      ) : null}
+
+      <ReviewReportSummary context={reviewContext} compact />
+      <div className="flex flex-wrap items-center gap-step-2">
+        <button type="button" onClick={onClose} className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-cherry px-step-4 font-mono text-xs font-medium text-vanilla transition-opacity hover:opacity-90">
+          RETURN TO REPORT <span aria-hidden className="ml-2">→</span>
+        </button>
+        <p className="font-mono text-[0.62rem] text-bordeaux/50">REQUEST {result.requestId}</p>
+      </div>
+    </section>
+  )
+}
+
+function leadEventFor(nextStep: ProductionCheckLeadNextStep): LeadEvent {
+  if (nextStep === 'senior_engineer_review') return 'lead_qualified'
+  if (nextStep === 'launch_blocker_fix') return 'lead_maybe'
+  return 'lead_nurture'
+}
+
+function hostnameFor(value: string): string {
+  try {
+    return new URL(value).hostname
+  } catch {
+    return 'production-check'
+  }
 }
 
 function ReportAttachment({ context }: { context: ReviewRequestContext }) {
@@ -294,9 +406,23 @@ function ReviewStat({ value, label, urgent = false }: { value: number; label: st
 
 const fieldClass = 'mt-step-1 min-h-12 w-full rounded-xl border border-bordeaux/30 bg-vanilla px-step-2 text-base outline-none transition-colors focus-visible:border-cherry focus-visible:ring-2 focus-visible:ring-cherry/25 disabled:cursor-wait disabled:opacity-60'
 
-async function readResponse(response: Response): Promise<{ ok: boolean; error?: { message?: string } }> {
+async function readResponse(response: Response): Promise<{
+  ok: boolean
+  requestId?: string
+  nextStep?: ProductionCheckLeadNextStep
+  notification?: 'sent' | 'delayed'
+  message?: string
+  error?: { message?: string }
+}> {
   try {
-    return await response.json() as { ok: boolean; error?: { message?: string } }
+    return await response.json() as {
+      ok: boolean
+      requestId?: string
+      nextStep?: ProductionCheckLeadNextStep
+      notification?: 'sent' | 'delayed'
+      message?: string
+      error?: { message?: string }
+    }
   } catch {
     return { ok: false }
   }
