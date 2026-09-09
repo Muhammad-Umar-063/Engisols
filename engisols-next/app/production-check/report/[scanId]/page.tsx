@@ -4,7 +4,11 @@ import { notFound, redirect } from 'next/navigation'
 import { ReportView } from '@/components/production-check/ReportView'
 import { loadScan } from '@/src/production-check/load'
 import { productionScanPath } from '@/src/production-check/paths'
-import { buildFounderReport, isValidPublicScanId } from '@/src/production-check/report'
+import {
+  buildFounderReport,
+  isValidPublicScanId,
+  redactPersistedScanForPublic,
+} from '@/src/production-check/report'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,5 +25,10 @@ export default async function ProductionReportPage({ params }: PageProps<'/produ
     redirect(productionScanPath(scanId))
   }
   if (!scan.result) notFound()
-  return <ReportView scan={scan} report={buildFounderReport(scan.result, scan.answers.builder)} />
+  return (
+    <ReportView
+      scan={redactPersistedScanForPublic(scan)}
+      report={buildFounderReport(scan.result, scan.answers.builder)}
+    />
+  )
 }

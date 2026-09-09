@@ -19,6 +19,11 @@ export const PRODUCTION_CHECK_EVENTS = [
   'review_request_copied',
   'review_request_sent',
   'review_request_failed',
+  'lead_created',
+  'lead_segmented',
+  'lead_nurture',
+  'lead_maybe',
+  'lead_qualified',
 ] as const
 
 export type ProductionCheckEvent = (typeof PRODUCTION_CHECK_EVENTS)[number]

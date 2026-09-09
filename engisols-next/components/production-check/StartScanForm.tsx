@@ -4,7 +4,13 @@ import { useRef, useState, type FormEvent } from 'react'
 
 import { trackProductionCheck } from '@/src/production-check/analytics'
 
-export function StartScanForm({ onStarted }: { onStarted: (scanId: string) => Promise<void> }) {
+export function StartScanForm({
+  attributionToken,
+  onStarted,
+}: {
+  attributionToken: string
+  onStarted: (scanId: string) => Promise<void>
+}) {
   const inputRef = useRef<HTMLInputElement>(null)
   const submitGuard = useRef(false)
   const [url, setUrl] = useState('')
@@ -28,7 +34,7 @@ export function StartScanForm({ onStarted }: { onStarted: (scanId: string) => Pr
       const response = await fetch('/api/scans', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: normalized }),
+        body: JSON.stringify({ url: normalized, attributionToken }),
       })
       const body = (await response.json()) as {
         ok: boolean

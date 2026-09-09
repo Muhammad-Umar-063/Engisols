@@ -18,10 +18,10 @@ The production-check engineering-review form and the AI App Audit scoping form s
 
 ## Endpoints and safeguards
 
-- `/api/production-check/review` reloads the report server-side so the browser cannot invent its verdict or finding counts.
+- `/api/production-check/review` reloads the report server-side so the browser cannot invent its verdict, finding counts, or campaign attribution. It saves a typed lead to Upstash before attempting delivery.
 - `/api/ai-app-audit/inquiry` accepts only the four visible fields plus a honeypot.
 - Both endpoints bound request bodies, reject unexpected keys and cross-origin browser submissions, use idempotency keys, apply an eight-second provider timeout, and suppress provider error details.
 
 ## Failure behavior
 
-If the provider is unavailable or configuration is missing, each form keeps every entered value on screen and offers retry. The production-check flow also offers a copy-request fallback because its report context is already self-contained. Neither form displays raw provider errors or credentials.
+If the provider is unavailable or configuration is missing, the AI App Audit form keeps every entered value on screen and offers retry. The Production Check request remains saved as a durable lead and returns a successful delayed-notification state, so the visitor does not need to submit again. Neither form displays raw provider errors or credentials.

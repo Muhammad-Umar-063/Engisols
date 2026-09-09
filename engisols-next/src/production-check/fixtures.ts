@@ -63,6 +63,7 @@ export function getDevelopmentFixture(publicId: string): PersistedScan | null {
             ],
       },
       answers: midScan ? { builder: 'lovable' } : {},
+      attribution: {},
     }
   }
   if (kind === 'failed') {
@@ -92,6 +93,7 @@ export function getDevelopmentFixture(publicId: string): PersistedScan | null {
     createdAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + SCAN_RECORD_LIFETIME_MS).toISOString(),
     answers: { builder: kind === 'critical' ? 'lovable' : 'cursor' },
+    attribution: {},
   }
 }
 
@@ -112,6 +114,7 @@ function baseRecord(
       events: [],
     },
     answers: {},
+    attribution: {},
     ...(result ? { result } : {}),
     ...(error ? { error } : {}),
     createdAt: new Date().toISOString(),

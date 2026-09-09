@@ -35,8 +35,11 @@ export interface ReviewRequestInput {
   context: string
 }
 
-export interface ReviewRequestSubmission extends ReviewRequestInput {
+export interface ReviewRequestSubmission
+  extends Omit<ReviewRequestInput, 'help' | 'timeline'> {
   reportId: string
+  help: ReviewHelp
+  timeline: ReviewTimeline
   website: string
 }
 
@@ -112,17 +115,26 @@ export function parseReviewRequestSubmission(value: unknown): ReviewRequestSubmi
   ) {
     return null
   }
+  if (!isReviewHelp(input.help) || !isReviewTimeline(input.timeline)) return null
 
   const submission: ReviewRequestSubmission = {
     reportId: input.reportId,
     name: input.name.trim(),
     email: input.email.trim(),
-    help: input.help as ReviewRequestInput['help'],
-    timeline: input.timeline as ReviewRequestInput['timeline'],
+    help: input.help,
+    timeline: input.timeline,
     context: input.context.trim(),
     website: input.website ?? '',
   }
   return Object.keys(validateReviewRequest(submission)).length === 0 ? submission : null
+}
+
+function isReviewHelp(value: string): value is ReviewHelp {
+  return REVIEW_HELP_OPTIONS.some((option) => option.value === value)
+}
+
+function isReviewTimeline(value: string): value is ReviewTimeline {
+  return REVIEW_TIMELINE_OPTIONS.some((option) => option.value === value)
 }
 
 export function reviewRequestSubject(targetUrl: string): string {

@@ -39,12 +39,22 @@ export interface ScanAnswers {
   launchStage?: LaunchStageAnswer
 }
 
+export interface ProductionCheckAttribution {
+  source?: string
+  medium?: string
+  campaign?: string
+  content?: string
+  term?: string
+  fbclid?: string
+}
+
 export interface PersistedScan {
   publicId: string
   status: PersistedScanStatus
   requestedUrl: string
   progress: ScanProgressSnapshot
   answers: ScanAnswers
+  attribution: ProductionCheckAttribution
   result?: ScanResult
   error?: {
     code: 'target_blocked' | 'target_unavailable' | 'scan_failed'
@@ -62,6 +72,56 @@ export interface ScanStore {
   updateAnswers(publicId: string, answers: ScanAnswers): Promise<boolean>
   complete(publicId: string, result: ScanResult): Promise<void>
   fail(publicId: string, error: NonNullable<PersistedScan['error']>): Promise<void>
+}
+
+export type ProductionCheckLeadSegment = 'nurture' | 'maybe' | 'qualified'
+export type ProductionCheckLeadStatus = 'new' | 'contacted' | 'booked' | 'proposal' | 'won' | 'lost'
+export type ProductionCheckLeadNextStep =
+  | 'report_guidance'
+  | 'launch_blocker_fix'
+  | 'senior_engineer_review'
+
+export interface ProductionCheckLead {
+  id: string
+  scanId: string
+  createdAt: string
+  updatedAt: string
+  expiresAt: string
+  name: string
+  email: string
+  company?: string
+  appUrl: string
+  builder?: BuilderAnswer
+  launchStage?: LaunchStageAnswer
+  helpNeeded: 'verify' | 'fix' | 'ongoing'
+  timeline: 'now' | 'month' | 'quarter' | 'exploring'
+  shippingContext?: string
+  attribution: ProductionCheckAttribution
+  score: number
+  segment: ProductionCheckLeadSegment
+  status: ProductionCheckLeadStatus
+  estimatedValue?: number
+  scanSummary: {
+    publicRisk: number
+    fixNow: number
+    review: number
+    expected: number
+    exposureBand: string
+  }
+  notification: {
+    status: 'pending' | 'sent' | 'failed'
+    attemptedAt?: string
+  }
+}
+
+export interface LeadStore {
+  createOrGet(lead: ProductionCheckLead): Promise<{
+    lead: ProductionCheckLead
+    created: boolean
+  }>
+  claimFailedNotification(id: string, updatedAt: string): Promise<ProductionCheckLead | null>
+  save(lead: ProductionCheckLead): Promise<void>
+  get(id: string): Promise<ProductionCheckLead | null>
 }
 
 export type FounderLabel = 'FIX NOW' | 'REVIEW' | 'EXPECTED'

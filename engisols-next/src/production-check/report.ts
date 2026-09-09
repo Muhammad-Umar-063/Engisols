@@ -13,6 +13,7 @@ import type {
   FounderFinding,
   FounderLabel,
   FounderReport,
+  PersistedScan,
 } from './types'
 
 const labels: Record<FindingClassification, FounderLabel> = {
@@ -29,12 +30,63 @@ export function isValidPublicScanId(value: string): boolean {
   return /^rpt_[A-Za-z0-9_-]{24}$/.test(value)
 }
 
+export function redactPersistedScanForPublic(scan: PersistedScan): PersistedScan {
+  return { ...scan, attribution: {} }
+}
+
 export function sanitizeResultForPersistence(result: ScanResult): ScanResult {
-  const serialized = JSON.stringify(result)
+  const projection: ScanResult = {
+    schemaVersion: result.schemaVersion,
+    status: result.status,
+    target: {
+      ...result.target,
+      requestedUrl: sanitizePersistedUrl(result.target.requestedUrl),
+      finalUrl: sanitizePersistedUrl(result.target.finalUrl),
+    },
+    score: result.score,
+    assessment: result.assessment,
+    summary: result.summary,
+    findings: result.findings.map((finding) => ({
+      ...finding,
+      evidence: {
+        ...finding.evidence,
+        sourceUrl: sanitizePersistedUrl(finding.evidence.sourceUrl),
+      },
+    })),
+    checks: result.checks,
+    coverage: result.coverage,
+    limitations: result.limitations,
+    durationMs: result.durationMs,
+  }
+  const prohibitedRawFields = new Set([
+    'rawHtml',
+    'htmlBody',
+    'rawJavaScript',
+    'javascriptBundles',
+    'bundleContents',
+    'rawSecrets',
+  ])
+  const serialized = JSON.stringify(
+    projection,
+    (key, value) => prohibitedRawFields.has(key) ? undefined : value,
+  )
   if (containsCredentialLikeValue(serialized)) {
     throw new Error('Public report contains a credential-like value and cannot be persisted.')
   }
   return JSON.parse(serialized) as ScanResult
+}
+
+function sanitizePersistedUrl(value: string): string {
+  try {
+    const url = new URL(value)
+    url.username = ''
+    url.password = ''
+    url.search = ''
+    url.hash = ''
+    return url.href
+  } catch {
+    return value.replace(/[?#].*$/, '')
+  }
 }
 
 export function buildFounderReport(
