@@ -1,43 +1,16 @@
 import type { CSSProperties, ReactNode } from 'react'
 
 /**
- * The landing page's small shared parts, and the one place its palette
- * translation is written down.
- *
- * The campaign design arrives in a different colour language: white ground,
- * black type, a saturated blue for every primary action, a lime accent on the
- * eyebrow pills, and green ticks. None of those exist here. The mapping:
- *
- *   white ground          -> vanilla     the page
- *   light grey panel      -> oat         sections that need to sit back
- *   black type            -> bordeaux    all body and display type
- *   blue button           -> cherry      filled CTAs — rule 2's second job
- *   blue panel            -> cherry      full-bleed panels — rule 2's first job
- *   lime eyebrow pill     -> oat/greige  a pill, in mono, at 12px
- *   green tick            -> bordeaux    see below
- *   grey hairline         -> greige      rules and borders, its stated job
- *
- * Two of those are decisions rather than substitutions.
- *
- * The ticks are not green. `--color-valid` exists in this palette and is
- * reserved for one thing: form validation success. Red is the brand colour, so
- * red cannot mean failure, which is the entire reason green is ring-fenced —
- * spending it on decorative checklist ticks would take the only signal the
- * forms have. The ticks are bordeaux, and the checklist reads as a list rather
- * than as a status.
- *
- * Everything else is the comp's, including two treatments the site's own build
- * spec bans by name: all-caps letterspaced eyebrow labels, and "→" appended to
- * button text. Those bans govern the SITE. This is a campaign asset matched to
- * a supplied design, the instruction is that only the palette changes, and a
- * landing page that quietly redesigns the comp is not the asset that was asked
- * for. If these ever migrate onto a site page, they have to lose both.
+ * Shared primitives for the AI App Audit campaign. Their semantic palette is
+ * inherited from `.engisols-campaign-brand`: Bright Gray ground, Chicago Black
+ * type, supporting gray panels and Crimson actions. Checkmarks remain neutral
+ * because Crimson is brand emphasis, not an error status.
  */
 
 /** Section eyebrow — the comp's accent pill, caps and letterspaced as drawn. */
 export function Eyebrow({ children }: { children: ReactNode }) {
   return (
-    <p className="inline-flex rounded-full bg-greige/30 px-step-2 py-1 font-mono text-[0.65rem] tracking-[0.12em] text-bordeaux/75">
+    <p className="inline-flex rounded-full border border-greige/55 bg-oat/65 px-step-2 py-1 font-mono text-[0.65rem] font-semibold tracking-[0.12em] text-bordeaux/80">
       {children}
     </p>
   )
@@ -120,7 +93,7 @@ export function LpSection({
     >
       {/* scroll-mt clears the floating header, which overlays the page rather
           than pushing it down — without it an anchor lands under the bar. */}
-      <div className="shell scroll-mt-28 py-step-6">{children}</div>
+      <div className="shell scroll-mt-28 py-step-5 sm:py-step-6">{children}</div>
     </section>
   )
 }
@@ -135,7 +108,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`lp-card rounded-2xl border border-greige/40 bg-vanilla p-step-3 hover:border-greige ${className}`}
+      className={`lp-card rounded-2xl border border-greige/50 bg-vanilla p-step-3 shadow-[0_20px_50px_-45px_rgba(23,23,23,0.65)] hover:border-greige ${className}`}
     >
       {children}
     </div>

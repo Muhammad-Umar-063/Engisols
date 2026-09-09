@@ -13,7 +13,6 @@ import { Logo } from '@/components/layout/Logo'
 import { SITE } from '@/lib/site'
 import {
   lpChecks,
-  lpFamiliar,
   lpFaq,
   lpFinal,
   lpFooter,
@@ -27,27 +26,17 @@ import {
 /**
  * AI App Audit — the campaign landing page.
  *
- * MATCHED TO THE SUPPLIED COMP. Same sections in the same order, same copy,
- * same labels and casing, same arrows. The only thing translated is colour:
- * white/blue/lime becomes vanilla/cherry/oat/bordeaux, mapped in
- * components/campaign/ui.tsx. Two treatments here are ones the site's own build
- * spec bans — all-caps letterspaced eyebrows and "→" on buttons — and they stay,
- * because the instruction is that only the palette changes.
+ * A focused, sealed paid-traffic funnel using the Engisols campaign identity:
+ * Bright Gray, Chicago Black, Crimson, and Bricolage. Shared treatments live
+ * in components/campaign/ui.tsx.
  *
- * SEALED. No link leaves for the site. The header is anchors, "Learn more" and
- * every CTA open the booking dialog, "View project" opens a dialog, "View full
- * report" scrolls, and the footer's service names are text as they cannot be
- * links to /services. Only a mailto and this page's own legal routes go
- * anywhere. That is why the page sits in the `(campaign)` route group, outside
+ * SEALED. No link leaves for the site. Educational controls reveal useful
+ * content, every CTA opens the booking dialog, and project controls open an
+ * on-page detail sheet. The inquiry form posts to a same-origin server route
+ * and keeps the user in this funnel. That is why the page sits in the
+ * `(campaign)` route group, outside
  * the layout that renders the site's header and footer: there is nothing to
  * hide with CSS because nothing is rendered.
- *
- * TWO SECTIONS THE COMP DID NOT DRAW. Its nav lists "What You Get" and "FAQ"
- * and it drew neither, so both items used to resolve to the nearest section
- * that existed — which teaches a reader the nav is decorative. Both are written
- * now: the report section from the deliverable step 03 already describes, the
- * FAQ from the fears the quotes section opens with, answered at the point a
- * reader has finished deciding whether to book.
  *
  * Server component apart from the interactive parts. Every word is in the first
  * HTML response, which for a page this expensive to get a visitor onto is not a
@@ -82,8 +71,8 @@ export default function AiAppAuditPage() {
 
       {/* 1 Hero */}
       <section id="top" className="bg-vanilla">
-        <div className="shell grid gap-step-5 pb-step-6 pt-[calc(var(--spacing-step-6)+3.5rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start lg:pt-[calc(var(--spacing-step-6)+4rem)]">
-          <div>
+        <div className="shell grid gap-step-3 pb-step-5 pt-[calc(var(--spacing-step-2)+4rem)] sm:gap-step-4 sm:pt-[calc(var(--spacing-step-5)+4rem)] lg:grid-cols-[minmax(0,1fr)_minmax(24rem,0.78fr)] lg:gap-x-step-5 lg:gap-y-step-2 lg:pb-step-6">
+          <div className="order-1 lg:col-start-1 lg:row-start-1">
             <div className="lp-in" style={{ '--i': 0 } as CSSProperties}>
               <Eyebrow>{lpHero.eyebrow}</Eyebrow>
             </div>
@@ -93,68 +82,52 @@ export default function AiAppAuditPage() {
                 elements below it are scheduled. */}
             <HeroHeadline
               text={lpHero.headline}
-              className="mt-step-3 text-[clamp(2.25rem,4.6vw,3.9rem)]"
+              className="mt-step-2 max-w-[13ch] text-[clamp(2.1rem,4.6vw,3.9rem)]"
             />
 
             <p
-              className="lp-in mt-step-1 font-display text-[clamp(1.5rem,3vw,2.5rem)] leading-[1.1] tracking-[-0.02em] text-bordeaux/45"
+              className="lp-in mt-step-1 max-w-[24ch] font-display text-[clamp(1.25rem,2.3vw,2rem)] font-semibold leading-[1.15] tracking-[-0.02em] text-cherry"
               style={{ '--i': 3 } as CSSProperties}
             >
               {lpHero.counter}
             </p>
-
-            <p
-              className="lp-in measure mt-step-4 text-lg font-medium"
-              style={{ '--i': 4 } as CSSProperties}
-            >
-              {lpHero.lede}
-            </p>
-            <p
-              className="lp-in measure mt-step-2 text-bordeaux/75"
-              style={{ '--i': 5 } as CSSProperties}
-            >
-              {lpHero.body}
-            </p>
-
-            <ul className="mt-step-4 grid gap-step-1 sm:grid-cols-2">
-              {lpHero.questions.map((question, i) => (
-                <TickItem
-                  key={question}
-                  className="lp-in text-sm text-bordeaux/85"
-                  style={{ '--i': 6 + i } as CSSProperties}
-                >
-                  {question}
-                </TickItem>
-              ))}
-            </ul>
-
-            <div
-              className="lp-in mt-step-4 flex flex-wrap items-center gap-step-3"
-              style={{ '--i': 11 } as CSSProperties}
-            >
-              <BookButton label={lpHero.primary} />
-              <a
-                href="#checks"
-                data-cursor="link"
-                className="inline-flex items-center gap-1.5 font-mono text-xs tracking-tight underline decoration-bordeaux/40 underline-offset-4 transition-colors hover:decoration-bordeaux"
-              >
-                {lpHero.secondary}
-                <span aria-hidden>↓</span>
-              </a>
-            </div>
-
-            <PointRow
-              points={lpHero.assurances}
-              className="lp-in mt-step-4 text-bordeaux/65"
-              style={{ '--i': 12 } as CSSProperties}
-            />
           </div>
 
-          {/* The audit panel assembles itself on view, then rests on the frame
-              the comp draws — see AuditPanel. */}
-          <div className="lp-in lg:pt-step-4" style={{ '--i': 2 } as CSSProperties}>
+          <div
+            className="lp-in order-2 flex flex-wrap items-center gap-step-2 lg:col-start-1 lg:row-start-3"
+            style={{ '--i': 4 } as CSSProperties}
+          >
+            <BookButton label={lpHero.primary} shortLabel="BOOK A FREE CALL" className="w-full justify-center sm:w-auto" />
+            <a
+              href="#sample"
+              data-cursor="link"
+              className="hidden min-h-11 items-center gap-1.5 px-step-1 font-mono text-xs font-semibold tracking-tight underline decoration-bordeaux/40 underline-offset-4 transition-colors hover:decoration-bordeaux lg:inline-flex"
+            >
+              {lpHero.secondary}
+              <span aria-hidden>↓</span>
+            </a>
+          </div>
+
+          <div
+            id="sample"
+            className="lp-in order-3 min-w-0 scroll-mt-24 lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:self-center"
+            style={{ '--i': 5 } as CSSProperties}
+          >
             <AuditPanel />
           </div>
+
+          <p
+            className="lp-in measure order-4 text-base font-medium leading-relaxed sm:text-lg lg:col-start-1 lg:row-start-2"
+            style={{ '--i': 6 } as CSSProperties}
+          >
+            {lpHero.lede}
+          </p>
+
+          <PointRow
+            points={lpHero.assurances}
+            className="lp-in order-5 text-bordeaux/65 lg:col-start-1 lg:row-start-4"
+            style={{ '--i': 7 } as CSSProperties}
+          />
         </div>
       </section>
 
@@ -172,54 +145,37 @@ export default function AiAppAuditPage() {
         </div>
       </section>
 
-      {/* 3 Sound familiar */}
-      <LpSection id="familiar" ground="oat">
-        <div className="grid gap-step-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-center">
+      {/* 3 Deliverable — proof of value before the long-form explanation. */}
+      <LpSection id="report" ground="oat">
+        <div className="grid gap-step-3 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:items-end">
           <Reveal y={16}>
-            <Eyebrow>{lpFamiliar.eyebrow}</Eyebrow>
-            <h2 className="mt-step-3 text-[clamp(1.75rem,3vw,2.5rem)]">{lpFamiliar.heading}</h2>
-            <p className="mt-step-4 text-sm text-bordeaux/70">{lpFamiliar.note}</p>
-            <p className="text-sm font-medium">{lpFamiliar.noteStrong}</p>
+            <Eyebrow>{lpReport.eyebrow}</Eyebrow>
+            <h2 className="mt-step-2 text-[clamp(1.75rem,3vw,2.5rem)]">{lpReport.heading}</h2>
           </Reveal>
-
-          <div className="grid gap-step-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,17rem)]">
-            <ul className="grid gap-step-2 sm:grid-cols-2 xl:grid-cols-3">
-              {lpFamiliar.quotes.map((quote, i) => (
-                <li key={quote}>
-                  <Reveal y={8} delay={i * 0.05} className="h-full">
-                    <Card className="h-full">
-                      <span
-                        aria-hidden
-                        className="block font-display text-2xl leading-none text-cherry"
-                      >
-                        “
-                      </span>
-                      <p className="mt-step-1 text-sm leading-relaxed">{quote}</p>
-                    </Card>
-                  </Reveal>
-                </li>
-              ))}
-            </ul>
-
-            {/* The comp's blue panel. Cherry here — a full-bleed panel is one of
-                the two jobs that colour has. */}
-            <Reveal y={16} delay={0.1} className="flex">
-              <div className="flex flex-1 flex-col rounded-2xl bg-cherry p-step-3 text-vanilla on-dark">
-                <p className="font-display text-lg leading-snug">{lpFamiliar.panel.heading}</p>
-                <ul className="mt-step-3 space-y-1.5 text-sm">
-                  {lpFamiliar.panel.points.map((point) => (
-                    <TickItem key={point} className="text-vanilla/90">
-                      {point}
-                    </TickItem>
-                  ))}
-                </ul>
-                <div className="mt-step-4">
-                  <BookButton label={lpFamiliar.panel.cta} variant="inverse" />
-                </div>
-              </div>
-            </Reveal>
-          </div>
+          <Reveal y={8} delay={0.06}>
+            <p className="measure text-sm text-bordeaux/75 sm:text-base">{lpReport.lead}</p>
+          </Reveal>
         </div>
+        <p className="mt-step-3 font-mono text-[0.65rem] font-semibold tracking-[0.08em] text-bordeaux/55 md:hidden">
+          SWIPE THROUGH THE DELIVERABLE →
+        </p>
+        <ul className="-mx-step-2 mt-step-2 flex snap-x snap-mandatory gap-step-2 overflow-x-auto px-step-2 pb-step-2 [scrollbar-width:none] md:mx-0 md:mt-step-4 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+          {lpReport.items.map((item, i) => (
+            <li key={item.title} className="min-w-[82vw] snap-center md:min-w-0">
+              <Reveal y={8} delay={i * 0.04} className="h-full">
+                <Card className="h-full">
+                  <span className="font-mono text-xs text-bordeaux/45">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <h3 className="mt-step-2 text-lg font-semibold">{item.title}</h3>
+                  <p className="mt-step-2 text-sm leading-relaxed text-bordeaux/75">
+                    {item.body}
+                  </p>
+                </Card>
+              </Reveal>
+            </li>
+          ))}
+        </ul>
       </LpSection>
 
       {/* 4 The five checks */}
@@ -304,33 +260,7 @@ export default function AiAppAuditPage() {
         </div>
       </LpSection>
 
-      {/* 7 What you get */}
-      <LpSection id="report" ground="oat">
-        <Reveal y={16}>
-          <Eyebrow>{lpReport.eyebrow}</Eyebrow>
-          <h2 className="mt-step-3 text-[clamp(1.75rem,3vw,2.5rem)]">{lpReport.heading}</h2>
-          <p className="measure mt-step-2 text-bordeaux/75">{lpReport.lead}</p>
-        </Reveal>
-        <ul className="mt-step-5 grid gap-step-2 md:grid-cols-2 xl:grid-cols-4">
-          {lpReport.items.map((item, i) => (
-            <li key={item.title}>
-              <Reveal y={16} delay={i * 0.05} className="h-full">
-                <Card className="h-full">
-                  <span className="font-mono text-xs text-bordeaux/45">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <h3 className="mt-step-2 text-base font-medium">{item.title}</h3>
-                  <p className="mt-step-2 text-sm leading-relaxed text-bordeaux/75">
-                    {item.body}
-                  </p>
-                </Card>
-              </Reveal>
-            </li>
-          ))}
-        </ul>
-      </LpSection>
-
-      {/* 8 Closing band */}
+      {/* 7 Closing band */}
       <section className="bg-cherry text-vanilla on-dark" data-ground="dark">
         <div className="shell grid gap-step-4 py-step-6 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center lg:gap-step-5">
           <Reveal y={16}>
@@ -347,7 +277,7 @@ export default function AiAppAuditPage() {
             </ul>
           </Reveal>
           <Reveal y={8} delay={0.16}>
-            <BookButton label={lpFinal.cta} variant="inverse" />
+            <BookButton label={lpFinal.cta} shortLabel="BOOK A FREE CALL" variant="inverse" className="w-full justify-center sm:w-auto" />
           </Reveal>
         </div>
       </section>
@@ -394,7 +324,7 @@ export default function AiAppAuditPage() {
       </LpSection>
 
       {/* 10 Footer */}
-      <footer className="bg-vanilla">
+      <footer className="bg-vanilla pb-24 sm:pb-0">
         <Reveal
           y={8}
           className="shell flex flex-col gap-step-3 border-t border-greige/40 py-step-4 md:flex-row md:items-center md:justify-between"

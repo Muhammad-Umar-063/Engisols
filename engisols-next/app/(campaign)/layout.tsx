@@ -39,7 +39,7 @@ export const metadata: Metadata = {
 export default function CampaignLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <main id="main" data-ground="light" className="flex-1 bg-vanilla text-bordeaux">
+      <main id="main" data-ground="light" className="engisols-campaign-brand flex-1 bg-vanilla text-bordeaux">
         {children}
       </main>
       <Cursor />

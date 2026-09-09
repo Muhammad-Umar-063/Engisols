@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { Bricolage_Grotesque, DM_Sans, Geist_Mono } from 'next/font/google'
+import { DM_Sans, Geist_Mono } from 'next/font/google'
+import localFont from 'next/font/local'
 import { MotionProvider } from '@/components/motion/MotionProvider'
 import { SmoothScroll } from '@/components/motion/SmoothScroll'
 import { ToastProvider } from '@/components/motion/Toast'
@@ -14,20 +15,16 @@ import './globals.css'
 import 'lenis/dist/lenis.css'
 
 /**
- * Engisols brand faces, carried over from the current site and self-hosted
- * through next/font — no external font requests, no CLS.
- *
- * This substitutes Bricolage Grotesque and DM Sans for the spec's Uncut Sans
- * and Inter Tight. The locked rule the spec actually cares about is "grotesque
- * only, no serif anywhere" (section 2), and Bricolage Grotesque is a grotesque,
- * so the typographic counterweight that stops this palette reading as a beauty
- * brand still holds. Bonus: both are on Google Fonts, which removes the
- * self-hosting blocker the spec's picks carried.
+ * The supplied Bricolage variable file is the approved interim Engisols face
+ * while the Aeronaut webfont from the identity guide is unavailable. Loading
+ * the exact local asset keeps it private, stable, and free of runtime requests.
  */
-const bricolage = Bricolage_Grotesque({
-  subsets: ['latin'],
+const bricolage = localFont({
+  src: './fonts/BricolageGrotesque-Variable.ttf',
   variable: '--font-display-brand',
   display: 'swap',
+  weight: '200 800',
+  style: 'normal',
 })
 
 const dmSans = DM_Sans({

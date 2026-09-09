@@ -1,146 +1,92 @@
 'use client'
 
-import { m } from 'motion/react'
-import type { CSSProperties } from 'react'
+import { AnimatePresence, m } from 'motion/react'
+import { useState, type CSSProperties } from 'react'
 import { useMotionPrefs } from '@/hooks/useMotionPrefs'
-import { useReveal } from '@/components/motion/Reveal'
 import { DUR, EASE } from '@/lib/motion'
 import { lpChecks } from '@/content/campaign'
-import { useBooking } from '@/components/campaign/Booking'
 import { Tick, TickItem } from '@/components/campaign/ui'
-
-/**
- * The five checks, as drawn: icon chip, number, name in caps, the question, a
- * four-item tick list, and "Learn more →". The fifth card is the filled one.
- *
- * "Learn more" is the one link in the comp with nowhere to go that does not
- * leave for the site. It opens the booking dialog instead of navigating, and it
- * keeps the comp's label and arrow.
- *
- * It sits at the FOOT of every card, pinned there by `mt-auto` inside the flex
- * column, so the five links land on one line across the grid instead of at
- * five different heights.
- *
- * No rule above it. There was one, and the cursor pill — which is taller than
- * the text it wraps — sat straight across it, so the line appeared to run
- * through the middle of the shape. Two horizontal edges within 10px of each
- * other, one of them moving, is a mess at any weight. The lists are equal
- * length now, which is what was actually holding the row together.
- *
- * `data-cursor="link"` gives it the same pill the hero's "SEE THE CHECKS WE
- * RUN" wears. It is the same kind of thing — a run of text with no shape of its
- * own — so it behaves the same way.
- */
 
 const ICONS = [
   'M9 6 4.5 10.5 9 15M15 6l4.5 4.5L15 15',
-  'M12 4.5 6 7v4.2c0 3.3 2.4 6.2 6 7.3 3.6-1.1 6-4 6-7.3V7l-6-2.5Z',
+  'M12 4.5 6 7v4.2c0 3.3 2.4 6 7.3 3.6-1.1 6-4 6-7.3V7l-6-2.5Z',
   'M13 4.5 6.5 13H11l-.5 6.5L17.5 11H13l.5-6.5Z',
   'M5 19V9m4.7 10V5m4.6 14v-7m4.7 7V8',
   'M12 4.5 13.6 9.4 18.5 11l-4.9 1.6L12 17.5l-1.6-4.9L5.5 11l4.9-1.6L12 4.5Z',
 ]
 
+/** A compact one-open-at-a-time disclosure. Every control does what it says. */
 export function CheckCards() {
+  const [openId, setOpenId] = useState<string | null>('security')
   const { reduced } = useMotionPrefs()
-  // The provider lives in the page; a server component cannot hand a click
-  // handler to a client one, so the button reaches for it directly.
-  const onMore = useBooking()
 
   return (
-    <ul className="mt-step-5 grid gap-step-2 md:grid-cols-2 xl:grid-cols-5">
-      {lpChecks.items.map((item, i) => (
-        <CheckCard key={item.id} item={item} index={i} onMore={onMore} reduced={reduced} />
-      ))}
+    <ul className="mt-step-4 overflow-hidden rounded-2xl border border-greige/50 bg-vanilla">
+      {lpChecks.items.map((item, index) => {
+        const open = openId === item.id
+        const panelId = `check-panel-${item.id}`
+
+        return (
+          <li key={item.id} className="border-t border-greige/45 first:border-t-0">
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls={panelId}
+              onClick={() => setOpenId(open ? null : item.id)}
+              className="group grid min-h-[5.5rem] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-step-2 px-step-2 py-step-2 text-left transition-colors hover:bg-oat/35 sm:px-step-3"
+            >
+              <span className={`grid size-10 place-items-center rounded-full ${open ? 'bg-cherry text-vanilla' : 'bg-oat/70'}`} aria-hidden>
+                <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={ICONS[index]} />
+                </svg>
+              </span>
+              <span className="min-w-0">
+                <span className="block font-mono text-[0.65rem] font-semibold tracking-[0.07em] text-bordeaux/55">
+                  {item.name}
+                </span>
+                <span className="mt-1 block text-sm font-medium leading-snug sm:text-base">
+                  {item.question}
+                </span>
+              </span>
+              <span className={`grid size-11 place-items-center rounded-full border border-greige/55 text-xl transition-transform ${open ? 'rotate-45 border-cherry text-cherry' : ''}`} aria-hidden>
+                +
+              </span>
+            </button>
+
+            <AnimatePresence initial={false}>
+              {open ? (
+                <m.div
+                  id={panelId}
+                  initial={reduced ? false : { height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={reduced ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                  transition={{ duration: reduced ? 0 : DUR.standard, ease: EASE.enter }}
+                  className="overflow-hidden"
+                >
+                  <div className="border-t border-greige/35 bg-oat/35 px-step-3 py-step-3 sm:pl-[5.75rem]">
+                    <p className="max-w-[60ch] text-sm text-bordeaux/65">
+                      We trace these signals together, then explain what is healthy, what needs proof, and what deserves action.
+                    </p>
+                    <ul className="mt-step-2 grid gap-x-step-4 gap-y-step-1 text-sm text-bordeaux/85 sm:grid-cols-2 lg:grid-cols-3">
+                      {item.points.map((point) => (
+                        <TickItem key={point}>{point}</TickItem>
+                      ))}
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => setOpenId(null)}
+                      className="mt-step-3 min-h-11 font-mono text-xs font-semibold underline decoration-bordeaux/40 underline-offset-4 hover:decoration-bordeaux"
+                    >
+                      COLLAPSE {item.name}
+                    </button>
+                  </div>
+                </m.div>
+              ) : null}
+            </AnimatePresence>
+          </li>
+        )
+      })}
     </ul>
-  )
-}
-
-function CheckCard({
-  item,
-  index: i,
-  onMore,
-  reduced,
-}: {
-  item: (typeof lpChecks.items)[number]
-  index: number
-  onMore: () => void
-  reduced: boolean
-}) {
-  const feature = i === lpChecks.items.length - 1
-  const { ref, hidden } = useReveal<HTMLLIElement>()
-
-  return (
-    <>
-      <m.li
-        ref={ref}
-        initial={false}
-        animate={hidden ? { opacity: 0, y: 16 } : { opacity: 1, y: 0 }}
-        transition={
-          hidden
-            ? { duration: 0 }
-            : { duration: DUR.standard, ease: EASE.enter, delay: reduced ? 0 : i * 0.05 }
-        }
-        // Same rule as the CTA: the filled card is a dark surface inside a
-        // light section, so it declares its own ground or the cursor
-        // vanishes over it.
-        data-ground={feature ? 'dark' : undefined}
-        whileHover={reduced ? undefined : { scale: 1.02 }}
-        className={`flex flex-col rounded-2xl border p-step-3 ${
-          feature
-            ? 'border-cherry bg-cherry text-vanilla on-dark'
-            : 'border-greige/40 bg-vanilla'
-        }`}
-      >
-        <span
-          className={`grid size-9 place-items-center rounded-full ${
-            feature ? 'bg-vanilla/15' : 'bg-oat/70'
-          }`}
-          aria-hidden
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="size-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d={ICONS[i]} />
-          </svg>
-        </span>
-
-        <p
-          className={`mt-step-3 font-mono text-xs ${feature ? 'text-vanilla/70' : 'text-bordeaux/50'}`}
-        >
-          {item.n}
-        </p>
-        <h3 className="mt-1 font-mono text-[0.8rem] font-medium tracking-[0.06em]">
-          {item.name}
-        </h3>
-        <p className={`mt-step-2 text-sm ${feature ? 'text-vanilla/85' : 'text-bordeaux/75'}`}>
-          {item.question}
-        </p>
-
-        <ul className="mt-step-3 mb-step-4 space-y-1.5 text-sm">
-          {item.points.map((point) => (
-            <TickItem key={point} className={feature ? 'text-vanilla/90' : 'text-bordeaux/80'}>
-              {point}
-            </TickItem>
-          ))}
-        </ul>
-
-        <button
-          type="button"
-          onClick={onMore}
-          data-cursor="link"
-          className="mt-auto inline-flex items-center gap-1.5 self-start pt-step-2 font-mono text-xs underline decoration-current/40 underline-offset-4 transition-colors hover:decoration-current"
-        >
-          {lpChecks.more}
-          <span aria-hidden>→</span>
-        </button>
-      </m.li>
-    </>
   )
 }
 

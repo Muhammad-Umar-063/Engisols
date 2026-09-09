@@ -1,21 +1,12 @@
 /**
  * Copy for the AI App Audit landing page (/ai-app-audit).
  *
- * TRANSCRIBED FROM THE DESIGN, VERBATIM. Labels, casing and arrows are the
- * design's, including the ones the site's own build spec bans elsewhere —
- * all-caps letterspaced eyebrows and "→" on buttons. This is a campaign asset
- * matched to a supplied comp, not a page of the site, and the instruction is
- * that only the palette changes.
+ * The campaign's content source of truth. Form copy and interaction labels are
+ * maintained here so the sealed funnel stays consistent.
  *
- * Nothing here may link into the site. Where the design shows a link that would
- * have left — "Learn more", "View project", "View full report", the footer's
- * service names — the label stays exactly as drawn and the destination is on
- * this page: a disclosure, a dialog, or an anchor. The page looks like the comp
- * and cannot leave it.
- *
- * The audit panel's statuses are the design's resting values. Do not "improve"
- * them into clean passes; the comp shows three rows mid-review and two with
- * findings, and that is what ships.
+ * Nothing here may link into the site. Educational controls reveal content,
+ * project controls open details, and conversion controls open the same-route
+ * inquiry form.
  */
 
 /**
@@ -28,10 +19,10 @@
  * nav is decorative and stops using it. Both sections are written now.
  */
 export const lpNav = [
+  { label: 'What You Get', href: '#report' },
   { label: 'The Checks', href: '#checks' },
   { label: 'Our Work', href: '#work' },
   { label: 'How It Works', href: '#how' },
-  { label: 'What You Get', href: '#report' },
   { label: 'FAQ', href: '#faq' },
 ] as const
 
@@ -39,48 +30,10 @@ export const lpHero = {
   eyebrow: 'VIBE CHECK FOR AI-BUILT APPS',
   headline: 'YOUR AI APP LOOKS 80% DONE.',
   counter: 'The last 20% is where things get expensive.',
-  lede: 'Built with Cursor, Claude, Lovable, Bolt, v0, Replit, or by a freelancer using the same tools?',
-  body: 'The demo works. The screens look finished. Then real users arrive and the questions change.',
-  /**
-   * Six, not the comp's five. The grid is two columns, so five left a hole in
-   * the last cell and the block read as unfinished next to the CTA row beneath
-   * it. The sixth is the page's own language — the cost question is the one
-   * the quotes section already raises ("no idea what it will cost at scale") —
-   * and it maps to a check that exists, so it is a gap being closed rather
-   * than a claim being added.
-   */
-  questions: [
-    'Is it secure?',
-    'Can another engineer maintain it?',
-    'What happens when it fails?',
-    'Is the AI layer production-ready?',
-    'Will it scale?',
-    'What will it cost at scale?',
-  ],
+  lede: 'Built with Cursor, Lovable, Bolt, v0, Replit, Claude—or by a freelancer? Get a senior engineer’s view before real users find the weak spots.',
   primary: 'BOOK A FREE SCOPING CALL',
-  secondary: 'SEE THE CHECKS WE RUN',
+  secondary: 'EXPLORE A SAMPLE REPORT',
   assurances: ['Free scoping call', 'Fixed-scope audit', 'Written report', 'No lock-in'],
-}
-
-export const lpAudit = {
-  title: 'AI APP AUDIT',
-  status: 'REVIEW IN PROGRESS',
-  repoLabel: 'Repository',
-  repo: 'your-app/main',
-  rows: [
-    { name: 'CODE QUALITY', detail: 'Reviewing structure & change risk', status: 'Reviewing' },
-    { name: 'SECURITY', detail: 'Checking access & data boundaries', status: '2 Findings' },
-    { name: 'RELIABILITY', detail: 'Tracing critical flows', status: 'Reviewing' },
-    { name: 'ARCHITECTURE', detail: 'Reviewing bottlenecks', status: 'Reviewing' },
-    { name: 'AI LAYER', detail: 'Checking models, tools & controls', status: '1 Finding' },
-  ],
-  prioritiesTitle: 'TOP PRIORITIES',
-  priorities: [
-    { rank: 1, label: 'Server-side authorization', severity: 'High' },
-    { rank: 2, label: 'Missing retries on failures', severity: 'Medium' },
-    { rank: 3, label: 'AI cost controls', severity: 'Medium' },
-  ],
-  report: 'View full report',
 }
 
 /**
@@ -110,31 +63,10 @@ export const lpTools = {
   ],
 }
 
-export const lpFamiliar = {
-  eyebrow: 'SOUND FAMILIAR?',
-  heading: 'The app works. You just don’t completely trust it.',
-  quotes: [
-    'Every quick fix creates two new problems.',
-    'I don’t really know what’s in the codebase anymore.',
-    'I’m scared to touch authentication.',
-    'It worked fine with five users.',
-    'The freelancer finished the app, but I’m just not sure how solid it is.',
-    'The AI works, but I have no idea what it will cost at scale.',
-  ],
-  note: 'Those aren’t automatic reasons for a rewrite.',
-  noteStrong: 'They are reasons to understand the system.',
-  panel: {
-    heading: 'Get clarity before you spend more.',
-    points: ['No pressure', 'No sales pitch', 'Just a technical opinion'],
-    cta: 'BOOK A SCOPING CALL',
-  },
-}
-
 export const lpChecks = {
   eyebrow: 'THE FIVE CHECKS',
   heading: 'Five places fast-built apps usually get expensive.',
   lead: 'We review the areas most likely to become security, reliability, cost, scaling, or development problems later. If something is built well, we tell you that too.',
-  more: 'Learn more',
   items: [
     {
       id: 'code-quality',
@@ -224,10 +156,9 @@ export const lpChecks = {
 /**
  * Work.
  *
- * All six are real clients with real marks, fetched from their own sites and
- * normalised to 128px squares in public/logos. They keep their own colours:
- * recolouring a client's logo to match a palette is the one thing a logo may
- * never do.
+ * All six are real products. Public marks keep their own colours; Alula uses
+ * the campaign's letter fallback because the repository already contains a
+ * current product capture but not a standalone, approved logo asset.
  *
  * SoloSuit replaced the Account Lookup Agent, which was the one entry with no
  * company behind it — an internal engineering piece, so no mark to fetch and
@@ -235,6 +166,9 @@ export const lpChecks = {
  * own brand and its own case study on the site; its copy here is condensed from
  * that entry rather than written fresh.
  *
+ * Project facts are deliberately product facts, not ENGISOLS performance
+ * claims. They are sourced from the products' current public sites and kept to
+ * the same three-item shape so cards and detail sheets scan consistently.
  * `initial` stays on every entry as the fallback for a mark that fails to load.
  */
 export const lpWork = {
@@ -257,6 +191,11 @@ export const lpWork = {
         'Retrieval built to be inspected, so an answer can be traced to its source',
         'Voice and chat sharing one conversation model rather than two codebases',
       ],
+      facts: [
+        { value: '3', label: 'Voice, chat & email channels' },
+        { value: 'Human', label: 'Handoff when AI is unsure' },
+        { value: 'Live', label: 'CRM & workflow integrations' },
+      ],
     },
     {
       name: 'PastPresent',
@@ -275,6 +214,7 @@ export const lpWork = {
       facts: [
         { value: '5', label: 'Occasion types supported' },
         { value: 'Zero', label: 'Apps for contributors' },
+        { value: 'AI', label: 'Writing coach for contributors' },
       ],
     },
     {
@@ -292,6 +232,11 @@ export const lpWork = {
         'Explicit boundaries on what personal context reaches a prompt',
         'Cost per active user treated as a design constraint, not a surprise',
       ],
+      facts: [
+        { value: '7', label: 'Context signals modelled' },
+        { value: 'iOS', label: 'Public TestFlight product' },
+        { value: 'Connected', label: 'Learns from linked apps' },
+      ],
     },
     {
       name: 'MeetCaregivers',
@@ -306,6 +251,11 @@ export const lpWork = {
         'Matching and scheduling across a nationwide caregiver network',
         'Ownership and access checks enforced server-side, not in the interface',
         'Workflows that survive the messy cases — cancellations, replacements, partial shifts',
+      ],
+      facts: [
+        { value: 'W-2', label: 'Employed caregiver network' },
+        { value: 'AI', label: 'Assisted caregiver matching' },
+        { value: 'Live', label: 'Shared family care portal' },
       ],
     },
     {
@@ -323,25 +273,28 @@ export const lpWork = {
         'Settlement tooling for what happens after the response is filed',
       ],
       facts: [
-        { value: '$2.99B', label: 'Debt protected on platform' },
-        { value: '393K', label: 'People helped' },
-        { value: '50', label: 'US states covered' },
+        { value: '$2.73B', label: 'Debt protected on platform' },
+        { value: '376K+', label: 'People helped' },
+        { value: '14–30', label: 'Days to answer a lawsuit' },
       ],
     },
     {
-      name: 'Retell AI + GHL',
-      initial: '◈',
-      logo: '/logos/retell.png',
-      logoSecondary: '/logos/ghl.png',
-      image: '/work-lp/retell.jpg',
-      blurb: 'Voice AI connected to real business workflows.',
-      tags: ['Voice AI', 'API', 'Automation', 'Integration'],
+      name: 'Alula',
+      initial: 'A',
+      image: '/work/alula.jpeg',
+      blurb: 'Family care coordination for complex care.',
+      tags: ['Care Tech', 'React', 'Node.js', 'AWS'],
       summary:
-        'Voice agents joined to a CRM, where the interesting engineering is never the call itself. It is the retry, the duplicate, the webhook that arrives twice, and the record that must not end up in two states.',
+        'A shared care platform for families managing complex conditions across relatives, professional caregivers, and clinicians. Care plans, medication, appointments, documents, and daily updates stay visible in one family circle instead of being scattered across group chats and folders.',
       built: [
-        'Call outcomes written back to the CRM idempotently',
-        'Webhook handling that survives redelivery and out-of-order events',
-        'Failure paths that hand back to a human instead of dropping the lead',
+        'One shared care space for plans, medications, appointments, documents, and daily updates',
+        'Role-aware coordination across family members, professional caregivers, and clinicians',
+        'Care workflows designed around complex conditions, changing routines, and backup coverage',
+      ],
+      facts: [
+        { value: '159', label: 'Safety-review categories' },
+        { value: '24h', label: 'Human follow-up target' },
+        { value: 'One', label: 'Shared family care view' },
       ],
     },
   ],
@@ -464,20 +417,19 @@ export const lpFooter = {
 /**
  * The booking dialog behind every CTA.
  *
- * Not drawn in the comp — the comp's buttons have no destination, and this page
- * may not send anyone to the site's /contact. A dialog keeps the page identical
- * to the comp until a visitor asks for it. Swap the whole thing for a calendar
- * embed the moment there is an account to embed.
+ * The same-route dialog behind every primary CTA. It qualifies the request with
+ * enough context for an engineer to respond usefully, without making visitors
+ * leave the campaign or open a local mail client.
  */
 export const lpForm = {
   heading: 'Book a free scoping call',
-  lead: 'Tell us what you built and what worries you. No deck, no pitch.',
+  lead: 'Tell us what you built and what you need to trust before launch. A senior engineer will read this before replying.',
   fields: {
     name: 'Your name',
     email: 'Work email',
-    app: 'What did you build it with?',
-    worry: 'What worries you most about it?',
+    app: 'App URL or product name',
+    worry: 'What should we investigate first?',
   },
-  submit: 'Request the call',
-  done: 'Thanks — we will reply from a real address, usually within a working day.',
+  submit: 'Send to an engineer',
+  done: 'Request received. A senior engineer will reply within one working day.',
 }

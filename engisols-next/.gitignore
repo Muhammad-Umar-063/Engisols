@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/.scanner-test-dist
+/tests/scanner/regression-results*.json
 
 # next.js
 /.next/
@@ -23,6 +25,8 @@
 # misc
 .DS_Store
 *.pem
+/.impeccable/
+/tmp/
 
 # debug
 npm-debug.log*

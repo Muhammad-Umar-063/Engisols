@@ -61,6 +61,63 @@
   --ease-micro: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Paid campaign funnels are the first routes moving onto the supplied Engisols
+   identity. The wider site keeps its incumbent palette until its later brand
+   migration. Aeronaut remains unavailable, so the approved Bricolage asset
+   carries display, body, and utility hierarchy on these focused surfaces. */
+.engisols-campaign-brand,
+.production-check-brand {
+  --color-vanilla: #f2f2f0;
+  --color-oat: #dededc;
+  --color-greige: #9b9b9b;
+  --color-cherry: #cb1037;
+  --color-bordeaux: #171717;
+  --color-scan-active: #72dfa2;
+  --font-display: var(--font-display-brand), system-ui, sans-serif;
+  --font-body: var(--font-display-brand), system-ui, sans-serif;
+  --font-mono: var(--font-display-brand), system-ui, sans-serif;
+  background: var(--color-vanilla);
+  color: var(--color-bordeaux);
+  font-family: var(--font-body);
+}
+
+.engisols-campaign-brand ::selection,
+.production-check-brand ::selection {
+  background: var(--color-cherry);
+  color: var(--color-vanilla);
+}
+
+/* Toasts are rendered beside the route tree, so they cannot inherit the
+   funnel variables directly. Keep their feedback in the same visual system
+   whenever the production-check surface is present. */
+html:has(:is(.engisols-campaign-brand, .production-check-brand)) [data-toast-stack] {
+  --color-vanilla: #f2f2f0;
+  --color-oat: #dededc;
+  --color-greige: #9b9b9b;
+  --color-cherry: #cb1037;
+  --color-bordeaux: #171717;
+  --font-mono: var(--font-display-brand), system-ui, sans-serif;
+  font-family: var(--font-display-brand), system-ui, sans-serif;
+}
+
+@media (max-width: 40rem) {
+  .engisols-campaign-brand .ticker {
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      black 24px,
+      black calc(100% - 24px),
+      transparent 100%
+    );
+  }
+}
+
+.production-check-hero {
+  background:
+    radial-gradient(circle at 78% 18%, rgb(203 16 55 / 0.2), transparent 30%),
+    linear-gradient(112deg, #171717 0%, #171717 30%, #5e0d20 70%, #cb1037 100%);
+}
+
 /* Trust-strip marquee. CSS rather than a Motion scene because this sits in the
    hero critical path, where spec section 12 forbids an animation library.
    Transform-only, so it stays off the main thread. */
@@ -259,6 +316,11 @@
 }
 
 @layer components {
+  .production-check-wrap {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   /* Max content width. Section grounds stay full-bleed; only the inner column
      is constrained, so colour cuts between sections run edge to edge. */
   .shell {
@@ -317,39 +379,81 @@
   animation-delay: calc(var(--i, 0) * 70ms);
 }
 
-/* The audit panel's status chips while the review is running. Opacity only —
-   the chips carry the finding counts, and a chip that moves is a chip a reader
-   has to re-find. */
-@keyframes lp-breathe {
+/* Audit preview signature: a restrained engineering grid and a single trace
+   pass whenever the visitor changes review lenses. The movement represents
+   navigating the sample, not a claim that their application is being scanned. */
+.lp-audit-console {
+  background:
+    radial-gradient(circle at 82% -8%, rgb(255 255 255 / 0.17), transparent 34%),
+    radial-gradient(
+      circle at 4% 105%,
+      color-mix(in srgb, var(--color-cherry) 52%, transparent),
+      transparent 42%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--color-bordeaux) 72%, var(--color-cherry)),
+      color-mix(in srgb, var(--color-cherry) 58%, var(--color-bordeaux)) 52%,
+      color-mix(in srgb, var(--color-bordeaux) 78%, var(--color-cherry))
+    );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    inset 0 -1px 0 rgb(0 0 0 / 0.18);
+  backdrop-filter: blur(18px) saturate(1.12);
+}
+
+.lp-console-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@keyframes lp-console-trace {
+  0% {
+    opacity: 0;
+    transform: translateY(5rem);
+  }
+  12% {
+    opacity: 0.7;
+  }
+  75% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(34rem);
+  }
+}
+
+.lp-console-trace {
+  animation: lp-console-trace 2100ms var(--ease-enter) both;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-scan-active) 55%, transparent) 14%,
+    var(--color-scan-active) 48%,
+    color-mix(in srgb, var(--color-scan-active) 55%, transparent) 82%,
+    transparent 100%
+  );
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--color-scan-active) 24%, transparent);
+  pointer-events: none;
+}
+
+@keyframes lp-console-pulse {
   0%,
   100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.45;
+    transform: scale(0.78);
   }
 }
 
-.lp-breathe {
-  animation: lp-breathe 1.8s var(--ease-micro) infinite;
-}
-
-/* The scan sweep down the audit panel, once, while the rows arrive. A gradient
-   band rather than a line: a hard edge reads as a rendering artefact, a soft
-   one reads as a pass over the code. `pointer-events: none` because it covers
-   the whole panel. */
-@keyframes lp-scan {
-  from {
-    transform: translateY(-60%);
-  }
-  to {
-    transform: translateY(560%);
-  }
-}
-
-.lp-scan {
-  animation: lp-scan 2.4s var(--ease-micro) both;
-  pointer-events: none;
+.lp-console-dot {
+  animation: lp-console-pulse 2.4s var(--ease-micro) infinite;
+  background: var(--color-scan-active);
 }
 
 /* Cards. A 2px lift and 1% of scale is the whole move: enough to answer the
@@ -371,8 +475,8 @@
   /* CSS-driven scenes stop; Motion scenes branch via useMotionPrefs. */
   .hero-h1 .w > span,
   .capacity-dot,
-  .lp-breathe,
-  .lp-scan {
+  .lp-console-dot,
+  .lp-console-trace {
     animation: none;
   }
 
@@ -383,10 +487,6 @@
     animation: none;
     opacity: 1;
     transform: none;
-  }
-
-  .lp-scan {
-    display: none;
   }
 
   .lp-card:hover {
