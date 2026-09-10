@@ -1,5 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto'
 
+import { createMetaEventId } from '../meta/event-id.server'
+import type { MetaRequestContext } from '../meta/request.server'
 import {
   LAUNCH_BLOCKER_FIX_PRICE_USD,
   LEAD_RECORD_LIFETIME_MS,
@@ -17,6 +19,7 @@ export function createProductionCheckLead(
   scan: PersistedScan,
   now: () => Date = () => new Date(),
   createId?: () => string,
+  meta?: { requestContext: MetaRequestContext; eventSourceUrl: string },
 ): ProductionCheckLead {
   if (!scan.result) throw new Error('A completed scan result is required to create a lead.')
 
@@ -31,9 +34,10 @@ export function createProductionCheckLead(
     review: report.counts.review,
     appUrl,
   })
+  const id = createId?.() ?? createLeadIdForSubmission(scan.publicId, submission)
 
   const lead: ProductionCheckLead = {
-    id: createId?.() ?? createLeadIdForSubmission(scan.publicId, submission),
+    id,
     scanId: scan.publicId,
     createdAt: createdAt.toISOString(),
     updatedAt: createdAt.toISOString(),
@@ -61,6 +65,23 @@ export function createProductionCheckLead(
       exposureBand: report.exposureBand,
     },
     notification: { status: 'pending' },
+    ...(meta
+      ? {
+          metaTracking: {
+            consent: meta.requestContext.consent,
+            identifiers: structuredClone(meta.requestContext.identifiers),
+            eventSourceUrl: meta.eventSourceUrl,
+            lead: { eventId: createMetaEventId('Lead', id) },
+            ...(qualification.segment === 'qualified'
+              ? {
+                  qualifiedLead: {
+                    eventId: createMetaEventId('QualifiedLead', id),
+                  },
+                }
+              : {}),
+          },
+        }
+      : {}),
   }
 
   if (containsCredentialLikeValue(lead)) {

@@ -30,6 +30,7 @@ interface ReviewSubmissionResult {
   nextStep: ProductionCheckLeadNextStep
   notification: 'sent' | 'delayed'
   message?: string
+  metaEvents?: { primary?: string; secondary?: string }
 }
 
 export function CodeReviewIntake({
@@ -110,15 +111,24 @@ export function CodeReviewIntake({
         nextStep: body.nextStep,
         notification: body.notification,
         ...(body.message ? { message: body.message } : {}),
+        ...(body.metaEvents ? { metaEvents: body.metaEvents } : {}),
       })
       setSubmissionState('sent')
       trackProductionCheck('review_request_sent', { reportId: reviewContext.reportId })
-      trackProductionCheck('lead_created', { reportId: reviewContext.reportId })
+      trackProductionCheck('lead_created', {
+        reportId: reviewContext.reportId,
+        ...(body.metaEvents?.primary ? { metaEventId: body.metaEvents.primary } : {}),
+      })
       trackProductionCheck('lead_segmented', {
         reportId: reviewContext.reportId,
         nextStep: body.nextStep,
       })
-      trackProductionCheck(leadEventFor(body.nextStep), { reportId: reviewContext.reportId })
+      trackProductionCheck(leadEventFor(body.nextStep), {
+        reportId: reviewContext.reportId,
+        ...(body.metaEvents?.secondary
+          ? { metaEventId: body.metaEvents.secondary }
+          : {}),
+      })
       push(body.notification === 'delayed' ? 'Engineering review request saved.' : 'Engineering review request sent.')
       requestAnimationFrame(() => {
         const status = document.getElementById('review-request-status')
@@ -412,6 +422,7 @@ async function readResponse(response: Response): Promise<{
   nextStep?: ProductionCheckLeadNextStep
   notification?: 'sent' | 'delayed'
   message?: string
+  metaEvents?: { primary?: string; secondary?: string }
   error?: { message?: string }
 }> {
   try {
@@ -421,6 +432,7 @@ async function readResponse(response: Response): Promise<{
       nextStep?: ProductionCheckLeadNextStep
       notification?: 'sent' | 'delayed'
       message?: string
+      metaEvents?: { primary?: string; secondary?: string }
       error?: { message?: string }
     }
   } catch {

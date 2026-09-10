@@ -1,5 +1,7 @@
 import { after } from 'next/server'
 
+import type { MetaConversionSender } from '../../../src/meta/capi.server'
+import { metaRequestContext } from '../../../src/meta/request.server'
 import { readScanCreationInput } from '../../../src/production-check/request'
 import { createScanRecord, runScanRecord, type ScanFunction } from '../../../src/production-check/service'
 import { getScanStore, ScanStoreConfigurationError } from '../../../src/production-check/store'
@@ -14,6 +16,8 @@ interface HandlerDependencies {
   schedule?: (task: () => Promise<void>) => void
   scan?: ScanFunction
   verifyAttributionToken?: (token: string) => ProductionCheckAttribution | null
+  sendMeta?: MetaConversionSender
+  now?: () => Date
 }
 
 export function createScansPostHandler({
@@ -21,6 +25,8 @@ export function createScansPostHandler({
   schedule = (task) => after(task),
   scan,
   verifyAttributionToken,
+  sendMeta,
+  now = () => new Date(),
 }: HandlerDependencies = {}) {
   let activeScans = 0
   return async function POST(request: Request): Promise<Response> {
@@ -36,11 +42,22 @@ export function createScansPostHandler({
         request,
         verifyAttributionToken,
       )
+      const requestContext = metaRequestContext(request, {
+        fbclid: attribution.fbclid,
+        receivedAt: now(),
+      })
       const activeStore = store ?? getScanStore()
-      const record = await createScanRecord(target, activeStore, undefined, attribution)
+      const record = await createScanRecord(target, activeStore, now, attribution, {
+        requestContext,
+        eventSourceUrl: new URL('/production-check', request.url).toString(),
+      })
       schedule(async () => {
         try {
-          await runScanRecord(record.publicId, target, activeStore, scan)
+          await runScanRecord(record.publicId, target, activeStore, scan, {
+            requestContext,
+            sendMeta,
+            now,
+          })
         } finally {
           activeScans -= 1
         }
@@ -50,6 +67,10 @@ export function createScansPostHandler({
         {
           ok: true,
           scanId: record.publicId,
+          metaEvents: {
+            scanStarted: record.metaTracking?.scanStartedEventId,
+            scanCompleted: record.metaTracking?.scanCompleted.eventId,
+          },
         },
         { status: 202, headers: { 'Cache-Control': 'no-store' } },
       )

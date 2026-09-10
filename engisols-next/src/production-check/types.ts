@@ -1,4 +1,8 @@
 import type { DetectedTechnology, ScanPhase, ScanProgressEvent, ScanResult } from '../scanner/types'
+import type {
+  ProductionCheckLeadMetaTracking,
+  ProductionCheckScanMetaTracking,
+} from '../meta/types'
 
 export const BUILDER_ANSWERS = [
   'lovable',
@@ -55,6 +59,11 @@ export interface PersistedScan {
   progress: ScanProgressSnapshot
   answers: ScanAnswers
   attribution: ProductionCheckAttribution
+  metaTracking?: ProductionCheckScanMetaTracking
+  metaEvents?: {
+    scanStarted?: string
+    scanCompleted?: string
+  }
   result?: ScanResult
   error?: {
     code: 'target_blocked' | 'target_unavailable' | 'scan_failed'
@@ -70,6 +79,10 @@ export interface ScanStore {
   updateProgress(publicId: string, progress: ScanProgressSnapshot): Promise<void>
   updateStatus(publicId: string, status: PersistedScanStatus): Promise<void>
   updateAnswers(publicId: string, answers: ScanAnswers): Promise<boolean>
+  updateMetaTracking(
+    publicId: string,
+    metaTracking: ProductionCheckScanMetaTracking,
+  ): Promise<boolean>
   complete(publicId: string, result: ScanResult): Promise<void>
   fail(publicId: string, error: NonNullable<PersistedScan['error']>): Promise<void>
 }
@@ -112,6 +125,7 @@ export interface ProductionCheckLead {
     status: 'pending' | 'sent' | 'failed'
     attemptedAt?: string
   }
+  metaTracking?: ProductionCheckLeadMetaTracking
 }
 
 export interface LeadStore {

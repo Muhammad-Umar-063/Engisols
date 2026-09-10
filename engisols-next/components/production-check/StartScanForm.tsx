@@ -39,12 +39,17 @@ export function StartScanForm({
       const body = (await response.json()) as {
         ok: boolean
         scanId?: string
+        metaEvents?: { scanStarted?: string }
         error?: { message?: string }
       }
       if (!response.ok || !body.ok || !body.scanId) {
         throw new Error(body.error?.message || 'The scan could not be started.')
       }
-      trackProductionCheck('scan_started')
+      trackProductionCheck('scan_started', {
+        ...(body.metaEvents?.scanStarted
+          ? { metaEventId: body.metaEvents.scanStarted }
+          : {}),
+      })
       await onStarted(body.scanId)
     } catch (cause) {
       setError(

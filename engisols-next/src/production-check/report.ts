@@ -31,7 +31,20 @@ export function isValidPublicScanId(value: string): boolean {
 }
 
 export function redactPersistedScanForPublic(scan: PersistedScan): PersistedScan {
-  return { ...scan, attribution: {} }
+  const publicScan = { ...scan }
+  delete publicScan.metaTracking
+  return {
+    ...publicScan,
+    attribution: {},
+    ...(scan.metaTracking
+      ? {
+          metaEvents: {
+            scanStarted: scan.metaTracking.scanStartedEventId,
+            scanCompleted: scan.metaTracking.scanCompleted.eventId,
+          },
+        }
+      : {}),
+  }
 }
 
 export function sanitizeResultForPersistence(result: ScanResult): ScanResult {

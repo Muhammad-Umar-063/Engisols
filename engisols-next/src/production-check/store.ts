@@ -1,3 +1,4 @@
+import type { ProductionCheckScanMetaTracking } from '../meta/types'
 import type {
   PersistedScan,
   PersistedScanStatus,
@@ -50,6 +51,16 @@ export class MemoryScanStore implements ScanStore {
     return this.update(publicId, (scan) => ({
       ...scan,
       answers: { ...scan.answers, ...answers },
+    }))
+  }
+
+  async updateMetaTracking(
+    publicId: string,
+    metaTracking: ProductionCheckScanMetaTracking,
+  ): Promise<boolean> {
+    return this.update(publicId, (scan) => ({
+      ...scan,
+      metaTracking: structuredClone(metaTracking),
     }))
   }
 
@@ -193,6 +204,7 @@ export class UpstashScanStore implements ScanStore {
       ...(scan.answers.builder ? { builder: scan.answers.builder } : {}),
       ...(scan.answers.launchStage ? { launchStage: scan.answers.launchStage } : {}),
       attribution: scan.attribution,
+      ...(scan.metaTracking ? { metaTracking: scan.metaTracking } : {}),
       createdAt: scan.createdAt,
       expiresAt: scan.expiresAt,
     })
@@ -227,6 +239,11 @@ export class UpstashScanStore implements ScanStore {
       attribution: fields.attribution
         ? JSON.parse(fields.attribution) as ProductionCheckAttribution
         : {},
+      ...(fields.metaTracking
+        ? {
+            metaTracking: JSON.parse(fields.metaTracking) as ProductionCheckScanMetaTracking,
+          }
+        : {}),
       ...(fields.result ? { result: JSON.parse(fields.result) as PersistedScan['result'] } : {}),
       ...(fields.error ? { error: JSON.parse(fields.error) as PersistedScan['error'] } : {}),
       createdAt: fields.createdAt,
@@ -259,6 +276,13 @@ export class UpstashScanStore implements ScanStore {
     return Number(result) === 1
   }
 
+  async updateMetaTracking(
+    publicId: string,
+    metaTracking: ProductionCheckScanMetaTracking,
+  ): Promise<boolean> {
+    return this.hsetExisting(publicId, { metaTracking })
+  }
+
   async complete(publicId: string, result: NonNullable<PersistedScan['result']>): Promise<void> {
     await this.hset(publicId, { status: result.status, result })
   }
@@ -268,13 +292,21 @@ export class UpstashScanStore implements ScanStore {
   }
 
   private async hset(publicId: string, fields: Record<string, unknown>): Promise<void> {
-    await this.client.command<number>([
+    await this.hsetExisting(publicId, fields)
+  }
+
+  private async hsetExisting(
+    publicId: string,
+    fields: Record<string, unknown>,
+  ): Promise<boolean> {
+    const result = await this.client.command<number | string>([
       'EVAL',
       "if redis.call('EXISTS', KEYS[1]) == 0 then return 0 end; for i = 1, #ARGV, 2 do redis.call('HSET', KEYS[1], ARGV[i], ARGV[i + 1]) end; return 1",
       '1',
       this.key(publicId),
       ...this.fieldArgs(fields),
     ])
+    return Number(result) === 1
   }
 
   private key(publicId: string): string {

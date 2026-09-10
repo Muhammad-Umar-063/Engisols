@@ -68,7 +68,14 @@ export function LiveScan({
     if (complete && report) {
       if (completionHandled.current) return
       completionHandled.current = true
-      trackProductionCheck(scanStatus === 'partial' ? 'scan_partial' : 'scan_completed')
+      trackProductionCheck(
+        scanStatus === 'partial' ? 'scan_partial' : 'scan_completed',
+        {
+          ...(scan.metaEvents?.scanCompleted
+            ? { metaEventId: scan.metaEvents.scanCompleted }
+            : {}),
+        },
+      )
       onComplete(scan, report)
       return
     }

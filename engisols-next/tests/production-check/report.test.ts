@@ -131,3 +131,30 @@ test('keeps persisted attribution server-side when scan data is made public', ()
   assert.deepEqual(publicScan.attribution, {})
   assert.deepEqual(scan.attribution, { source: 'meta', fbclid: 'private-click-id' })
 })
+
+test('exposes only browser event IDs from persisted Meta tracking state', () => {
+  const scan: PersistedScan = {
+    publicId: 'rpt_abcdefghijklmnopqrstuvwx',
+    status: 'completed',
+    requestedUrl: 'https://app.example/',
+    progress: { phase: 'complete', progress: 100, message: 'Complete', events: [] },
+    answers: {},
+    attribution: { fbclid: 'click_123' },
+    metaTracking: {
+      consent: 'granted',
+      identifiers: {
+        fbp: 'fb.1.1725969600000.browser123',
+        fbc: 'fb.1.1725969600000.click_123',
+      },
+      eventSourceUrl: 'https://engisols.com/production-check',
+      scanStartedEventId: 'scanstart_abcdefghijklmnopqrstuvwxyzABCDEF',
+      scanCompleted: { eventId: 'scancomplete_abcdefghijklmnopqrstuvwxyzABCDEF' },
+    },
+    result: scanResult(),
+    createdAt: '2026-09-09T10:00:00.000Z',
+    expiresAt: '2026-12-08T10:00:00.000Z',
+  }
+  const serialized = JSON.stringify(redactPersistedScanForPublic(scan))
+  assert.match(serialized, /scancomplete_/)
+  assert.doesNotMatch(serialized, /browser123|click_123|eventSourceUrl|metaTracking/)
+})

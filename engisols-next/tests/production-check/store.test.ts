@@ -101,8 +101,18 @@ test('sets the scan TTL once from expiresAt and never refreshes it on updates', 
     await store.create(scan)
     await store.updateStatus(scan.publicId, 'running')
     await store.updateAnswers(scan.publicId, { builder: 'cursor' })
+    await store.updateMetaTracking(scan.publicId, {
+      consent: 'granted',
+      identifiers: {},
+      eventSourceUrl: 'https://engisols.com/production-check',
+      scanStartedEventId: 'scanstart_abcdefghijklmnopqrstuvwxyzABCDEF',
+      scanCompleted: {
+        eventId: 'scancomplete_abcdefghijklmnopqrstuvwxyzABCDEF',
+        attemptedAt: now.toISOString(),
+      },
+    })
 
-    assert.equal(commands.length, 3)
+    assert.equal(commands.length, 4)
     assert.match(commands[0]?.[1] ?? '', /HSET.*EXPIRE/)
     assert.equal(
       commands[0]?.at(-1),
