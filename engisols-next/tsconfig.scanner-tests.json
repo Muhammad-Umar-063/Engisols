@@ -14,6 +14,7 @@
   "include": [
     "app/api/scan/route.ts",
     "app/api/scans/route.ts",
+    "app/api/meta/**/*.ts",
     "app/api/production-check/**/*.ts",
     "app/api/ai-app-audit/**/*.ts",
     "scripts/scanner-regression-policy.ts",

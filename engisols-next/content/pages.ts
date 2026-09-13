@@ -438,11 +438,11 @@ export const scanNextPage = {
 export const legalPages = {
   privacy: {
     title: 'Privacy',
-    updated: '1 September 2026',
+    updated: '10 September 2026',
     sections: [
       {
         heading: 'What we collect',
-        body: 'Anything you send us directly: your name, email, and whatever you write in a form or an email. Analytics on how the site is used, in aggregate. Nothing else.',
+        body: 'We collect information you send directly, such as your name, email, and form or email content. We also measure site visits and a small set of funnel actions with the Meta Pixel and server-side conversion measurement. Meta may provide or read the _fbp and _fbc identifiers used to connect those actions to an ad visit.',
       },
       {
         heading: 'Client code and data',
@@ -450,7 +450,11 @@ export const legalPages = {
       },
       {
         heading: 'What we do not do',
-        body: 'We do not sell data, we do not run advertising pixels that follow you off this site, and we do not enrich your email against third-party databases.',
+        body: 'We do not sell data or enrich your email against third-party databases. Meta conversion events do not include scanned app URLs, findings, source code, builder answers, shipping context, or report contents. For a saved review request, we may send Meta a normalized SHA-256 hash of the submitted email plus available browser, click, IP, and user-agent signals for measurement and attribution.',
+      },
+      {
+        heading: 'Advertising measurement choices',
+        body: 'The initial advertising program is limited to the United States. We respect Global Privacy Control and an Engisols tracking preference when present; a denied decision prevents both browser Pixel events and server-side Meta conversion events. Browser privacy tools may also block Meta requests. Meta processes measurement data under its own terms and privacy policy.',
       },
       {
         heading: 'Your rights',

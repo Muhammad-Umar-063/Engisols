@@ -1,6 +1,9 @@
 import { ScannerError, scanPublicUrl, toPublicScanError } from '../scanner'
 import type { ScanDependencies } from '../scanner/scan'
 import type { ScanProgressEvent, ScanResult } from '../scanner/types'
+import { sendMetaConversion, type MetaConversionSender } from '../meta/capi.server'
+import { createMetaEventId } from '../meta/event-id.server'
+import type { MetaRequestContext } from '../meta/request.server'
 import { SCAN_RECORD_LIFETIME_MS } from './config'
 import { createPublicScanId, sanitizeResultForPersistence } from './report'
 import { containsCredentialLikeValue } from './security'
@@ -18,19 +21,32 @@ export type ScanFunction = (
 
 const MAX_RECENT_EVENTS = 5
 
+interface ScanMetaOptions {
+  requestContext: MetaRequestContext
+  eventSourceUrl: string
+}
+
+interface RunScanOptions {
+  requestContext?: MetaRequestContext
+  sendMeta?: MetaConversionSender
+  now?: () => Date
+}
+
 export async function createScanRecord(
   input: string,
   store: ScanStore,
   now: () => Date = () => new Date(),
   attribution: ProductionCheckAttribution = {},
+  meta?: ScanMetaOptions,
 ): Promise<PersistedScan> {
   if (containsCredentialLikeValue(attribution)) {
     throw new ScannerError('invalid_request')
   }
   const requestedUrl = displayUrl(input)
   const createdAt = now()
+  const publicId = createPublicScanId()
   const scan: PersistedScan = {
-    publicId: createPublicScanId(),
+    publicId,
     status: 'queued',
     requestedUrl,
     progress: {
@@ -41,6 +57,19 @@ export async function createScanRecord(
     },
     answers: {},
     attribution: structuredClone(attribution),
+    ...(meta
+      ? {
+          metaTracking: {
+            consent: meta.requestContext.consent,
+            identifiers: structuredClone(meta.requestContext.identifiers),
+            eventSourceUrl: meta.eventSourceUrl,
+            scanStartedEventId: createMetaEventId('ScanStarted', publicId),
+            scanCompleted: {
+              eventId: createMetaEventId('ScanCompleted', publicId),
+            },
+          },
+        }
+      : {}),
     createdAt: createdAt.toISOString(),
     expiresAt: new Date(createdAt.getTime() + SCAN_RECORD_LIFETIME_MS).toISOString(),
   }
@@ -53,6 +82,7 @@ export async function runScanRecord(
   input: string,
   store: ScanStore,
   scan: ScanFunction = scanPublicUrl,
+  options: RunScanOptions = {},
 ): Promise<void> {
   await store.updateStatus(publicId, 'running')
   let snapshot: ScanProgressSnapshot = {
@@ -101,6 +131,7 @@ export async function runScanRecord(
     const result = await scan(input, { onProgress })
     await flushProgress()
     await store.complete(publicId, sanitizeResultForPersistence(result))
+    await trackScanCompletion(publicId, store, options)
   } catch (error) {
     await flushProgress()
     const publicError = toPublicScanError(error)
@@ -133,6 +164,43 @@ export async function runScanRecord(
             : 'scan_failed',
       message: failureMessage,
     })
+  }
+}
+
+async function trackScanCompletion(
+  publicId: string,
+  store: ScanStore,
+  options: RunScanOptions,
+): Promise<void> {
+  try {
+    const persisted = await store.get(publicId)
+    const tracking = persisted?.metaTracking
+    if (!persisted || !tracking || tracking.scanCompleted.attemptedAt) return
+    const attemptedAt = (options.now ?? (() => new Date()))()
+    const context = options.requestContext
+    const result = await (options.sendMeta ?? sendMetaConversion)({
+      eventName: 'ScanCompleted',
+      eventId: tracking.scanCompleted.eventId,
+      eventTime: attemptedAt,
+      eventSourceUrl: tracking.eventSourceUrl,
+      actionSource: 'website',
+      consent: tracking.consent,
+      userData: {
+        identifiers: tracking.identifiers,
+        ...(context?.clientIp ? { clientIp: context.clientIp } : {}),
+        ...(context?.clientUserAgent ? { clientUserAgent: context.clientUserAgent } : {}),
+      },
+    })
+    await store.updateMetaTracking(publicId, {
+      ...tracking,
+      scanCompleted: {
+        ...tracking.scanCompleted,
+        attemptedAt: attemptedAt.toISOString(),
+        ...(result.status === 'sent' ? { sentAt: attemptedAt.toISOString() } : {}),
+      },
+    })
+  } catch {
+    // Measurement must never change a completed scan into a failed scan.
   }
 }
 

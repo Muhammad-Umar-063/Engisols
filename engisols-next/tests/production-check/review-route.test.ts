@@ -105,6 +105,32 @@ test('persists the lead before attempting Resend', async () => {
   assert.deepEqual(events.slice(0, 2), ['save:pending', 'send'])
 })
 
+test('attempts Meta only after durable persistence and before Resend', async () => {
+  const events: string[] = []
+  const leads = new MemoryLeadStore()
+  const handler = createReviewRequestPostHandler({
+    load: async () => completedScan(),
+    leads: {
+      createOrGet: async (lead) => {
+        events.push('persist')
+        return leads.createOrGet(lead)
+      },
+      claimFailedNotification: (...args) => leads.claimFailedNotification(...args),
+      save: (lead) => leads.save(lead),
+      get: (id) => leads.get(id),
+    },
+    sendMeta: async ({ eventName }) => {
+      events.push(`meta:${eventName}`)
+      return { status: 'sent' }
+    },
+    send: async () => { events.push('resend') },
+  })
+
+  const response = await handler(request(validBody))
+  assert.equal(response.status, 200)
+  assert.deepEqual(events, ['persist', 'meta:Lead', 'meta:QualifiedLead', 'resend'])
+})
+
 test('rejects malformed, unexpected, and cross-origin submissions without sending', async () => {
   let sends = 0
   const handler = createReviewRequestPostHandler({
@@ -175,6 +201,7 @@ test('does not lose the lead when Resend rejects delivery', async () => {
 
 test('never sends when durable lead persistence fails', async () => {
   let sends = 0
+  let metaSends = 0
   const leads: LeadStore = {
     createOrGet: async () => { throw new Error('kv unavailable') },
     claimFailedNotification: async () => null,
@@ -185,10 +212,90 @@ test('never sends when durable lead persistence fails', async () => {
     load: async () => completedScan(),
     leads,
     send: async () => { sends += 1 },
+    sendMeta: async () => { metaSends += 1; return { status: 'sent' } },
   })
   const response = await handler(request(validBody))
   assert.equal(response.status, 503)
   assert.equal(sends, 0)
+  assert.equal(metaSends, 0)
+})
+
+test('sends QualifiedLead only for the qualified segment', async () => {
+  async function metaEventsFor(scan: PersistedScan, body: typeof validBody) {
+    const names: string[] = []
+    await createReviewRequestPostHandler({
+      load: async () => scan,
+      leads: new MemoryLeadStore(),
+      sendMeta: async ({ eventName }) => {
+        names.push(eventName)
+        return { status: 'sent' }
+      },
+      send: async () => undefined,
+    })(request(body))
+    return names
+  }
+
+  const nurture = await metaEventsFor(completedScan({
+    result: { ...scanResult(), target: { requestedUrl: 'https://demo.vercel.app/', finalUrl: 'https://demo.vercel.app/', httpStatus: 200 } },
+    answers: { launchStage: 'experimenting' },
+  }), { ...validBody, timeline: 'exploring' })
+  const maybe = await metaEventsFor(completedScan({
+    result: scanResult([finding({ ruleId: 'credential.public', classification: 'actually_bad' })]),
+    answers: { launchStage: 'experimenting' },
+  }), { ...validBody, timeline: 'exploring' })
+  const qualified = await metaEventsFor(completedScan(), validBody)
+
+  assert.deepEqual(nurture, ['Lead'])
+  assert.deepEqual(maybe, ['Lead'])
+  assert.deepEqual(qualified, ['Lead', 'QualifiedLead'])
+})
+
+test('browser response and server Lead reuse the same event ID across retries', async () => {
+  const leads = new MemoryLeadStore()
+  const serverIds: string[] = []
+  const handler = createReviewRequestPostHandler({
+    load: async () => completedScan(),
+    leads,
+    sendMeta: async ({ eventName, eventId }) => {
+      if (eventName === 'Lead') serverIds.push(eventId)
+      return { status: 'sent' }
+    },
+    send: async () => undefined,
+  })
+  const first = await handler(request(validBody))
+  const second = await handler(request(validBody))
+  const firstBody = await first.json() as { metaEvents: { primary: string } }
+  const secondBody = await second.json() as { metaEvents: { primary: string } }
+
+  assert.equal(serverIds.length, 1)
+  assert.equal(firstBody.metaEvents.primary, serverIds[0])
+  assert.equal(secondBody.metaEvents.primary, serverIds[0])
+})
+
+test('Meta failure keeps one durable lead and does not prevent Resend', async () => {
+  const leads = new MemoryLeadStore()
+  let metaAttempts = 0
+  let resendAttempts = 0
+  const handler = createReviewRequestPostHandler({
+    load: async () => completedScan(),
+    leads,
+    sendMeta: async () => {
+      metaAttempts += 1
+      throw new Error('Meta unavailable')
+    },
+    send: async () => { resendAttempts += 1 },
+  })
+  const first = await handler(request(validBody))
+  const firstBody = await first.json() as { requestId: string }
+  const retry = await handler(request(validBody))
+  const retryBody = await retry.json() as { requestId: string }
+
+  assert.equal(first.status, 200)
+  assert.equal(retry.status, 200)
+  assert.equal(firstBody.requestId, retryBody.requestId)
+  assert.ok(await leads.get(firstBody.requestId))
+  assert.equal(metaAttempts, 2)
+  assert.equal(resendAttempts, 1)
 })
 
 test('rejects credential-like shipping context before lead persistence', async () => {

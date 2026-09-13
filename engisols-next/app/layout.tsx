@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { DM_Sans, Geist_Mono } from 'next/font/google'
 import localFont from 'next/font/local'
+import { Suspense } from 'react'
+import { MetaPixel } from '@/components/meta/MetaPixel'
 import { MotionProvider } from '@/components/motion/MotionProvider'
 import { SmoothScroll } from '@/components/motion/SmoothScroll'
 import { ToastProvider } from '@/components/motion/Toast'
@@ -55,6 +57,9 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const metaPixelId = /^\d{5,32}$/.test(process.env.NEXT_PUBLIC_META_PIXEL_ID ?? '')
+    ? process.env.NEXT_PUBLIC_META_PIXEL_ID
+    : undefined
   return (
     <html
       lang="en"
@@ -79,6 +84,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SmoothScroll />
           <ToastProvider>{children}</ToastProvider>
         </MotionProvider>
+        <Suspense fallback={null}>
+          <MetaPixel pixelId={metaPixelId} />
+        </Suspense>
+        {metaPixelId ? (
+          <noscript>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt=""
+              height="1"
+              width="1"
+              className="absolute size-px overflow-hidden opacity-0"
+              src="/api/meta/page-view"
+            />
+          </noscript>
+        ) : null}
       </body>
     </html>
   )

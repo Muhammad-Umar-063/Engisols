@@ -11,10 +11,10 @@ import { scanResult } from './fixtures'
 
 const attributionSecret = 'production-check-route-test-secret-0123456789'
 
-function request(body: string): Request {
+function request(body: string, headers: HeadersInit = {}): Request {
   return new Request('https://engisols.com/api/scans', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body,
   })
 }
@@ -38,7 +38,7 @@ test('creates one high-entropy scan and schedules the scanner exactly once', asy
   assert.equal(response.status, 202)
   assert.equal(body.ok, true)
   assert.match(body.scanId, /^rpt_[A-Za-z0-9_-]{24}$/)
-  assert.deepEqual(Object.keys(body).sort(), ['ok', 'scanId'])
+  assert.deepEqual(Object.keys(body).sort(), ['metaEvents', 'ok', 'scanId'])
   assert.equal(tasks.length, 1)
   assert.equal(scanCalls, 0)
   assert.equal((await store.get(body.scanId))?.requestedUrl, 'https://app.example/path')
@@ -47,6 +47,70 @@ test('creates one high-entropy scan and schedules the scanner exactly once', asy
   await tasks[0]?.()
   assert.equal(scanCalls, 1)
   assert.equal((await store.get(body.scanId))?.status, 'completed')
+})
+
+test('shares the persisted ScanCompleted ID with CAPI and sends it only once', async () => {
+  const store = new MemoryScanStore()
+  const tasks: Array<() => Promise<void>> = []
+  const metaEvents: Array<{ eventName: string; eventId: string }> = []
+  const handler = createScansPostHandler({
+    store,
+    schedule: (task) => tasks.push(task),
+    scan: async () => scanResult(),
+    now: () => new Date('2026-09-10T10:00:00.000Z'),
+    sendMeta: async ({ eventName, eventId }) => {
+      metaEvents.push({ eventName, eventId })
+      return { status: 'sent' }
+    },
+  })
+
+  const response = await handler(request('{"url":"https://app.example"}', {
+    cookie: '_fbp=fb.1.1725969600000.browser123',
+    'user-agent': 'Test Browser',
+  }))
+  const body = await response.json() as {
+    scanId: string
+    metaEvents: { scanCompleted: string }
+  }
+  await tasks[0]?.()
+  await store.get(body.scanId)
+  await store.get(body.scanId)
+
+  assert.deepEqual(metaEvents, [{
+    eventName: 'ScanCompleted',
+    eventId: body.metaEvents.scanCompleted,
+  }])
+  assert.equal((await store.get(body.scanId))?.metaTracking?.scanCompleted.sentAt, '2026-09-10T10:00:00.000Z')
+})
+
+test('captures fbp and derives fbc without changing persisted attribution', async () => {
+  const store = new MemoryScanStore()
+  const tasks: Array<() => Promise<void>> = []
+  const handler = createScansPostHandler({
+    store,
+    schedule: (task) => tasks.push(task),
+    verifyAttributionToken: (token) => verifyAttributionToken(token, {
+      secret: attributionSecret,
+      now: new Date('2026-09-10T10:00:00.000Z'),
+    }),
+    now: () => new Date('2026-09-10T10:00:00.000Z'),
+  })
+  const attributionToken = signAttributionToken(
+    { source: 'meta', fbclid: 'click_123' },
+    { secret: attributionSecret, now: new Date('2026-09-10T09:00:00.000Z') },
+  )
+  const response = await handler(request(JSON.stringify({
+    url: 'https://app.example/',
+    attributionToken,
+  }), { cookie: '_fbp=fb.1.1725969600000.browser123' }))
+  const body = await response.json() as { scanId: string }
+  const scan = await store.get(body.scanId)
+
+  assert.deepEqual(scan?.attribution, { source: 'meta', fbclid: 'click_123' })
+  assert.deepEqual(scan?.metaTracking?.identifiers, {
+    fbp: 'fb.1.1725969600000.browser123',
+    fbc: 'fb.1.1789034400000.click_123',
+  })
 })
 
 test('persists validated attribution with the scan record', async () => {

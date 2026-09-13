@@ -1,4 +1,9 @@
 import {
+  sendMetaConversion,
+  type MetaConversionSender,
+} from '../../../../src/meta/capi.server'
+import { metaRequestContext, type MetaRequestContext } from '../../../../src/meta/request.server'
+import {
   buildLeadNotificationText,
   createProductionCheckLead,
   markLeadNotification,
@@ -22,6 +27,7 @@ import type {
   LeadStore,
   PersistedScan,
   ProductionCheckLeadNextStep,
+  ProductionCheckLead,
 } from '../../../../src/production-check/types'
 
 export const runtime = 'nodejs'
@@ -34,6 +40,7 @@ interface HandlerDependencies {
   send?: ReviewEmailSender
   now?: () => Date
   createId?: () => string
+  sendMeta?: MetaConversionSender
 }
 
 export function createReviewRequestPostHandler({
@@ -42,6 +49,7 @@ export function createReviewRequestPostHandler({
   send = sendReviewEmail,
   now = () => new Date(),
   createId,
+  sendMeta = sendMetaConversion,
 }: HandlerDependencies = {}) {
   return async function POST(request: Request): Promise<Response> {
     if (!isSameOrigin(request)) {
@@ -86,7 +94,15 @@ export function createReviewRequestPostHandler({
 
     let candidateLead
     try {
-      candidateLead = createProductionCheckLead(submission, scan, now, createId)
+      const requestContext = metaRequestContext(request, {
+        fbclid: scan.attribution.fbclid,
+        receivedAt: now(),
+        fallbackIdentifiers: scan.metaTracking?.identifiers,
+      })
+      candidateLead = createProductionCheckLead(submission, scan, now, createId, {
+        requestContext,
+        eventSourceUrl: new URL('/production-check', request.url).toString(),
+      })
     } catch (error) {
       if (error instanceof UnsafeLeadContentError) {
         return errorResponse(400, 'sensitive_content', error.message)
@@ -113,10 +129,10 @@ export function createReviewRequestPostHandler({
     const nextStep = nextStepForLeadSegment(lead.segment)
     if (!created) {
       if (lead.notification.status === 'sent') {
-        return leadResponse(200, lead.id, nextStep, 'sent')
+        return leadResponse(200, lead, nextStep, 'sent')
       }
       if (lead.notification.status === 'pending') {
-        return delayedLeadResponse(lead.id, nextStep)
+        return delayedLeadResponse(lead, nextStep)
       }
 
       try {
@@ -126,12 +142,12 @@ export function createReviewRequestPostHandler({
           if (current?.notification.status === 'sent') {
             return leadResponse(
               200,
-              current.id,
+              current,
               nextStepForLeadSegment(current.segment),
               'sent',
             )
           }
-          return delayedLeadResponse(lead.id, nextStep)
+          return delayedLeadResponse(lead, nextStep)
         }
         lead = claimed
       } catch {
@@ -142,6 +158,8 @@ export function createReviewRequestPostHandler({
         )
       }
     }
+
+    lead = await attemptMetaLeadEvents(lead, sendMeta, request, now)
 
     const reportUrl = new URL(productionReportPath(scan.publicId), request.url).toString()
     const text = buildLeadNotificationText(lead, reportUrl)
@@ -154,21 +172,21 @@ export function createReviewRequestPostHandler({
         idempotencyKey: `production-check/${lead.id}`,
       })
       await leadStore.save(markLeadNotification(lead, 'sent', now())).catch(() => undefined)
-      return leadResponse(200, lead.id, nextStep, 'sent')
+      return leadResponse(200, lead, nextStep, 'sent')
     } catch {
       await leadStore.save(markLeadNotification(lead, 'failed', now())).catch(() => undefined)
-      return delayedLeadResponse(lead.id, nextStep)
+      return delayedLeadResponse(lead, nextStep)
     }
   }
 }
 
 function delayedLeadResponse(
-  requestId: string,
+  lead: ProductionCheckLead,
   nextStep: ProductionCheckLeadNextStep,
 ): Response {
   return leadResponse(
     202,
-    requestId,
+    lead,
     nextStep,
     'delayed',
     'Your request is saved. Email notification is delayed, but your details were not lost.',
@@ -191,15 +209,110 @@ function successResponse(): Response {
 
 function leadResponse(
   status: number,
-  requestId: string,
+  lead: ProductionCheckLead,
   nextStep: ProductionCheckLeadNextStep,
   notification: 'sent' | 'delayed',
   message?: string,
 ): Response {
   return Response.json(
-    { ok: true, requestId, nextStep, notification, ...(message ? { message } : {}) },
+    {
+      ok: true,
+      requestId: lead.id,
+      nextStep,
+      notification,
+      ...(lead.metaTracking
+        ? {
+            metaEvents: {
+              primary: lead.metaTracking.lead.eventId,
+              ...(lead.metaTracking.qualifiedLead
+                ? { secondary: lead.metaTracking.qualifiedLead.eventId }
+                : {}),
+            },
+          }
+        : {}),
+      ...(message ? { message } : {}),
+    },
     { status, headers: { 'Cache-Control': 'no-store' } },
   )
+}
+
+async function attemptMetaLeadEvents(
+  lead: ProductionCheckLead,
+  sendMeta: MetaConversionSender,
+  request: Request,
+  now: () => Date,
+): Promise<ProductionCheckLead> {
+  const tracking = lead.metaTracking
+  if (!tracking) return lead
+  const requestContext = metaRequestContext(request, {
+    fallbackIdentifiers: tracking.identifiers,
+  })
+  let updatedTracking = tracking
+  updatedTracking = {
+    ...updatedTracking,
+    lead: await attemptMetaEvent(
+      'Lead',
+      updatedTracking.lead,
+      lead,
+      requestContext,
+      updatedTracking,
+      sendMeta,
+      now,
+    ),
+  }
+  if (lead.segment === 'qualified' && updatedTracking.qualifiedLead) {
+    updatedTracking = {
+      ...updatedTracking,
+      qualifiedLead: await attemptMetaEvent(
+        'QualifiedLead',
+        updatedTracking.qualifiedLead,
+        lead,
+        requestContext,
+        updatedTracking,
+        sendMeta,
+        now,
+      ),
+    }
+  }
+  return { ...lead, metaTracking: updatedTracking }
+}
+
+async function attemptMetaEvent(
+  eventName: 'Lead' | 'QualifiedLead',
+  delivery: NonNullable<ProductionCheckLead['metaTracking']>['lead'],
+  lead: ProductionCheckLead,
+  requestContext: MetaRequestContext,
+  tracking: NonNullable<ProductionCheckLead['metaTracking']>,
+  sendMeta: MetaConversionSender,
+  now: () => Date,
+) {
+  if (delivery.attemptedAt) return delivery
+  const attemptedAt = now()
+  try {
+    const result = await sendMeta({
+      eventName,
+      eventId: delivery.eventId,
+      eventTime: attemptedAt,
+      eventSourceUrl: tracking.eventSourceUrl,
+      actionSource: 'website',
+      consent: requestContext.consent,
+      userData: {
+        email: lead.email,
+        identifiers: requestContext.identifiers,
+        ...(requestContext.clientIp ? { clientIp: requestContext.clientIp } : {}),
+        ...(requestContext.clientUserAgent
+          ? { clientUserAgent: requestContext.clientUserAgent }
+          : {}),
+      },
+    })
+    return {
+      ...delivery,
+      attemptedAt: attemptedAt.toISOString(),
+      ...(result.status === 'sent' ? { sentAt: attemptedAt.toISOString() } : {}),
+    }
+  } catch {
+    return { ...delivery, attemptedAt: attemptedAt.toISOString() }
+  }
 }
 
 function errorResponse(status: number, code: string, message: string): Response {
