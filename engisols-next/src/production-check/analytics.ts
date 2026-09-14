@@ -1,3 +1,10 @@
+import posthog from 'posthog-js'
+
+const posthogConfigured = Boolean(
+  process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+    process.env.NEXT_PUBLIC_POSTHOG_HOST,
+)
+
 export const PRODUCTION_CHECK_EVENTS = [
   'scan_started',
   'scan_completed',
@@ -33,6 +40,7 @@ export function trackProductionCheck(
   detail: Readonly<Record<string, string | number | boolean>> = {},
 ): void {
   if (typeof window === 'undefined') return
+  if (posthogConfigured) posthog.capture(event, detail)
   window.dispatchEvent(
     new CustomEvent('engisols:production-check', { detail: { event, ...detail } }),
   )
