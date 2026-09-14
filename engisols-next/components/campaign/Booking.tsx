@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import posthog from 'posthog-js'
 import { Magnetic } from '@/components/motion/Magnetic'
 import { SheetModal } from '@/components/motion/SheetModal'
 import { DotsMorphButton } from '@/components/motion/DotsMorphButton'
@@ -11,6 +12,11 @@ import {
   type AuditInquiryErrors,
   type AuditInquiryInput,
 } from '@/src/campaign/audit-inquiry'
+
+const posthogConfigured = Boolean(
+  process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+    process.env.NEXT_PUBLIC_POSTHOG_HOST,
+)
 
 /**
  * Every CTA on the page, and the dialog behind them.
@@ -41,7 +47,10 @@ export function useBooking() {
 export function BookingProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
   const [showMobileDock, setShowMobileDock] = useState(false)
-  const show = useCallback(() => setOpen(true), [])
+  const show = useCallback(() => {
+    if (posthogConfigured) posthog.capture('ai_audit_inquiry_opened')
+    setOpen(true)
+  }, [])
 
   useEffect(() => {
     const update = () => setShowMobileDock(window.scrollY > 520)
@@ -202,10 +211,12 @@ function BookingForm({ onDone }: { onDone: () => void }) {
         throw new Error(body.error?.message || 'We could not send your request. Please try again.')
       }
       setState('sent')
+      if (posthogConfigured) posthog.capture('ai_audit_inquiry_sent')
       push(lpForm.done)
       requestAnimationFrame(() => document.getElementById('lp-inquiry-status')?.focus())
     } catch (error) {
       setState('error')
+      if (posthogConfigured) posthog.capture('ai_audit_inquiry_failed')
       setSubmissionError(error instanceof Error ? error.message : 'We could not send your request. Please try again.')
       requestAnimationFrame(() => document.getElementById('lp-inquiry-submit')?.focus())
     }
