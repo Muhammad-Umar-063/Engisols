@@ -2,8 +2,8 @@ import posthog from 'posthog-js'
 
 import {
   PRODUCTION_CHECK_OFFER_URL_PATTERN,
-  protectProductionCheckPostHogEvent,
-  redactProductionCheckOfferCapabilities,
+  protectPostHogEvent,
+  sanitizePostHogUrl,
 } from './src/production-check/analytics-privacy'
 
 const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
@@ -26,12 +26,15 @@ if (!projectToken || !host) {
     autocapture: {
       url_ignorelist: [PRODUCTION_CHECK_OFFER_URL_PATTERN],
     },
-    before_send: (event) => protectProductionCheckPostHogEvent(
+    session_recording: {
+      maskAllInputs: true,
+    },
+    before_send: (event) => protectPostHogEvent(
       event,
       globalThis.location?.href ?? '',
     ),
     capture_exceptions: true,
     debug: process.env.NODE_ENV === 'development',
-    get_current_url: redactProductionCheckOfferCapabilities,
+    get_current_url: sanitizePostHogUrl,
   })
 }

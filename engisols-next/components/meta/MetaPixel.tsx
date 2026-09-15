@@ -5,12 +5,14 @@ import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useSyncExternalStore } from 'react'
 
 import {
+  bridgeAiAppAuditEvent,
   bridgeProductionCheckEvent,
   browserMetaConsent,
   metaPixel,
 } from '@/src/meta/browser'
 import { META_CONSENT_EVENT } from '@/src/meta/consent'
 import type { MetaConsentDecision } from '@/src/meta/types'
+import { AI_APP_AUDIT_META_EVENT } from '@/src/campaign/analytics'
 import { isProductionCheckOfferUrl } from '@/src/production-check/analytics-privacy'
 
 export function MetaPixel({ pixelId }: { pixelId?: string }) {
@@ -33,6 +35,9 @@ export function MetaPixel({ pixelId }: { pixelId?: string }) {
   }, [initializePixel])
 
   useEffect(() => {
+    function onAiAppAudit(event: Event) {
+      bridgeAiAppAuditEvent((event as CustomEvent<unknown>).detail)
+    }
     function onProductionCheck(event: Event) {
       bridgeProductionCheckEvent((event as CustomEvent<unknown>).detail)
     }
@@ -41,9 +46,11 @@ export function MetaPixel({ pixelId }: { pixelId?: string }) {
       if (decision !== 'granted' && decision !== 'denied') return
       metaPixel.setConsent(decision)
     }
+    window.addEventListener(AI_APP_AUDIT_META_EVENT, onAiAppAudit)
     window.addEventListener('engisols:production-check', onProductionCheck)
     window.addEventListener(META_CONSENT_EVENT, onConsent)
     return () => {
+      window.removeEventListener(AI_APP_AUDIT_META_EVENT, onAiAppAudit)
       window.removeEventListener('engisols:production-check', onProductionCheck)
       window.removeEventListener(META_CONSENT_EVENT, onConsent)
     }

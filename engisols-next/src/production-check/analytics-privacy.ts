@@ -13,7 +13,31 @@ export function redactProductionCheckOfferCapabilities(value: string): string {
   )
 }
 
-export function protectProductionCheckPostHogEvent(
+export function sanitizePostHogUrl(value: string): string {
+  const redactedValue = redactProductionCheckOfferCapabilities(value)
+  const queryIndex = redactedValue.indexOf('?')
+  const fragmentIndex = redactedValue.indexOf('#')
+  const suffixIndex = [queryIndex, fragmentIndex]
+    .filter((index) => index >= 0)
+    .reduce((first, index) => Math.min(first, index), redactedValue.length)
+
+  if (suffixIndex === redactedValue.length) return redactedValue
+
+  const cleanUrl = redactedValue.slice(0, suffixIndex)
+
+  try {
+    const pathname = new URL(cleanUrl, 'https://analytics.invalid').pathname
+    if (pathname === '/ai-app-audit' || pathname === '/ai-app-audit/') {
+      return cleanUrl
+    }
+  } catch {
+    // Leave non-URL strings unchanged after offer capability redaction.
+  }
+
+  return redactedValue
+}
+
+export function protectPostHogEvent(
   event: CaptureResult | null,
   currentUrl: string,
 ): CaptureResult | null {
@@ -37,6 +61,8 @@ export function protectProductionCheckPostHogEvent(
   }
 }
 
+export const protectProductionCheckPostHogEvent = protectPostHogEvent
+
 function redactRecord<T extends Record<string, unknown>>(record: T): T {
   return Object.fromEntries(
     Object.entries(record).map(([key, value]) => [key, redactValue(value)]),
@@ -44,7 +70,7 @@ function redactRecord<T extends Record<string, unknown>>(record: T): T {
 }
 
 function redactValue(value: unknown): unknown {
-  if (typeof value === 'string') return redactProductionCheckOfferCapabilities(value)
+  if (typeof value === 'string') return sanitizePostHogUrl(value)
   if (Array.isArray(value)) return value.map(redactValue)
   if (!isPlainRecord(value)) return value
   return redactRecord(value)

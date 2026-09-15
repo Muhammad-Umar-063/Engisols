@@ -1,6 +1,6 @@
 # Production Check Meta measurement
 
-This integration adds one global Meta Pixel and a production-check-only event bridge. Lead and QualifiedLead server events use the Conversions API (CAPI) after the lead is durably saved. Scanner output and lead delivery do not depend on Meta.
+This integration adds one global Meta Pixel plus allowlisted event bridges for Production Check and AI App Audit. Lead and QualifiedLead server events use the Conversions API (CAPI) after the corresponding lead is durably saved. Scanner output, lead persistence, and notification delivery do not depend on Meta.
 
 ## Environment configuration
 
@@ -32,11 +32,12 @@ The server omits the test code whenever `NODE_ENV=production`, even if the varia
 | Successful scan creation | `ScanStarted` | — | Never fires on input or validation alone. |
 | Persisted completed or partial scan | `ScanCompleted` | `ScanCompleted` | Browser and server share one stored event ID. |
 | Durable review lead | standard `Lead` | standard `Lead` | Primary campaign conversion; persistence happens first. |
+| Durable AI App Audit inquiry | standard `Lead` | standard `Lead` | Sent and delayed-notification inquiries count after persistence, with no form context in Meta. |
 | Durable qualified lead | `QualifiedLead` | `QualifiedLead` | Separate event ID; never sent for maybe/nurture leads. |
 | Booking | interface only | interface only | Use standard `Schedule` after a real booking integration exists. |
 | Payment | interface only | interface only | Use standard `Purchase` after a successful payment exists. Reserved values are USD 499 and USD 1999. |
 
-The bridge listens to `engisols:production-check` but accepts only `scan_started`, `scan_completed`, `scan_partial`, `lead_created`, and `lead_qualified`. It requires a server-issued, event-specific ID and does not forward event details or arbitrary internal analytics.
+The Production Check bridge listens to `engisols:production-check` but accepts only `scan_started`, `scan_completed`, `scan_partial`, `lead_created`, and `lead_qualified`. The AI App Audit bridge listens to `engisols:ai-app-audit` and accepts only `inquiry_sent` and `inquiry_delayed`. Both require a server-issued, event-specific ID and do not forward event details or arbitrary internal analytics.
 
 ## Deduplication and retry behavior
 

@@ -91,9 +91,9 @@ test('PostHog offer redaction leaves ordinary URLs unchanged', () => {
 
 test('PostHog initialization applies offer privacy at the SDK boundary', () => {
   const instrumentation = readFileSync('instrumentation-client.ts', 'utf8')
-  assert.match(instrumentation, /before_send:\s*\(event\)[\s\S]*protectProductionCheckPostHogEvent/)
+  assert.match(instrumentation, /before_send:\s*\(event\)[\s\S]*protectPostHogEvent/)
   assert.match(instrumentation, /url_ignorelist:\s*\[PRODUCTION_CHECK_OFFER_URL_PATTERN\]/)
-  assert.match(instrumentation, /get_current_url:\s*redactProductionCheckOfferCapabilities/)
+  assert.match(instrumentation, /get_current_url:\s*sanitizePostHogUrl/)
 })
 
 test('offer decision code has no checkout or Meta commerce event', () => {

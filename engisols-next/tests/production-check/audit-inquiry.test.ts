@@ -3,7 +3,6 @@ import test from 'node:test'
 
 import {
   auditInquirySubject,
-  buildAuditInquiryText,
   parseAuditInquirySubmission,
   validateAuditInquiry,
 } from '../../src/campaign/audit-inquiry'
@@ -14,23 +13,21 @@ const valid = {
   app: 'https://app.example.com',
   worry: 'I need confidence in authentication and payments.',
 }
+const attributionToken = 'signed-attribution-token'
 
 test('validates and normalizes a qualified app audit inquiry', () => {
   assert.deepEqual(validateAuditInquiry(valid), {})
-  assert.deepEqual(parseAuditInquirySubmission({ ...valid, website: '' }), { ...valid, website: '' })
+  assert.deepEqual(
+    parseAuditInquirySubmission({ ...valid, website: '', attributionToken }),
+    { ...valid, website: '', attributionToken },
+  )
   assert.equal(auditInquirySubject(valid.app), 'AI app audit request — app.example.com')
-  assert.match(buildAuditInquiryText(valid), /authentication and payments/)
 })
 
 test('rejects missing, malformed, oversized, and unexpected inquiry values', () => {
   assert.deepEqual(Object.keys(validateAuditInquiry({ name: '', email: 'bad', app: '', worry: '' })).sort(), ['app', 'email', 'name', 'worry'])
-  assert.equal(parseAuditInquirySubmission({ ...valid, privileged: true }), null)
-  assert.equal(parseAuditInquirySubmission({ ...valid, email: 'not-an-email' }), null)
-  assert.equal(parseAuditInquirySubmission({ ...valid, worry: 'x'.repeat(1_001) }), null)
-})
-
-test('normalizes line endings in the email body', () => {
-  const text = buildAuditInquiryText({ ...valid, worry: 'First\r\nSecond' })
-  assert.match(text, /First\nSecond/)
-  assert.doesNotMatch(text, /\r/)
+  assert.equal(parseAuditInquirySubmission({ ...valid, attributionToken, privileged: true }), null)
+  assert.equal(parseAuditInquirySubmission({ ...valid, attributionToken, email: 'not-an-email' }), null)
+  assert.equal(parseAuditInquirySubmission({ ...valid, attributionToken, worry: 'x'.repeat(1_001) }), null)
+  assert.equal(parseAuditInquirySubmission({ ...valid }), null)
 })

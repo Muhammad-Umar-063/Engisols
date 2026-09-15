@@ -19,11 +19,14 @@ export interface ProductionCheckScanMetaTracking {
   scanCompleted: MetaEventDelivery
 }
 
-export interface ProductionCheckLeadMetaTracking {
+export interface MetaLeadTracking {
   consent: MetaConsentDecision
   identifiers: MetaIdentifiers
   eventSourceUrl: string
   lead: MetaEventDelivery
+}
+
+export interface ProductionCheckLeadMetaTracking extends MetaLeadTracking {
   qualifiedLead?: MetaEventDelivery
 }
 
