@@ -552,10 +552,6 @@ export const legalPages = {
       { label: 'Open Production Check', href: '/production-check' },
       { label: 'Learn about the AI App Audit', href: '/ai-app-audit' },
     ],
-    blocker: {
-      marker: '{{TODO: LEGAL}}',
-      need: 'Attorney review is still required before launch. This operational draft has not been reviewed by a lawyer and is not legal advice.',
-    },
   },
   terms: {
     title: 'Website terms',
@@ -663,9 +659,5 @@ export const legalPages = {
       { label: 'Open Production Check', href: '/production-check' },
       { label: 'Learn about the AI App Audit', href: '/ai-app-audit' },
     ],
-    blocker: {
-      marker: '{{TODO: LEGAL}}',
-      need: 'Attorney review is still required before launch. This operational draft has not been reviewed by a lawyer and is not legal advice.',
-    },
   },
 }
