@@ -76,10 +76,9 @@ test('privacy copy names actual data, providers, controls, and verified retentio
   assert.doesNotMatch(providerSection, /Stripe|PayPal|Paddle|checkout provider/i)
 })
 
-test('the manual attorney-review blocker and update date stay visible', () => {
+test('the legal update date remains visible without internal review placeholders', () => {
   assert.equal((legalContent.match(/updated: '15 September 2026'/g) ?? []).length, 2)
-  assert.equal((legalContent.match(/not legal advice/g) ?? []).length, 2)
-  assert.equal((legalContent.match(/attorney review/gi) ?? []).length >= 2, true)
+  assert.doesNotMatch(legalContent, /TODO: LEGAL|attorney review|operational draft|not legal advice/i)
 })
 
 test('legacy campaign legal routes permanently redirect to the global documents', () => {
