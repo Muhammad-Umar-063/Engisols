@@ -1,5 +1,7 @@
 import { resolveMetaConsent } from '../../../../src/meta/consent'
-import { isProductionCheckOfferUrl } from '../../../../src/production-check/analytics-privacy'
+import {
+  isProductionCheckCapabilityUrl,
+} from '../../../../src/production-check/analytics-privacy'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +16,7 @@ export function GET(request: Request): Response {
     !pixelId ||
     !/^\d{5,32}$/.test(pixelId) ||
     consent === 'denied' ||
-    isProductionCheckOfferUrl(sourceUrl)
+    isProductionCheckCapabilityUrl(sourceUrl)
   ) {
     return new Response(null, {
       status: 204,

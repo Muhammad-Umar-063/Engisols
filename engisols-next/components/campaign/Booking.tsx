@@ -285,14 +285,14 @@ function BookingForm({
     const delayed = state === 'delayed' || state === 'retrying'
     const acknowledged = state === 'acknowledged'
     return (
-      <section id="lp-inquiry-status" tabIndex={-1} role="status" aria-live="polite" className="ph-no-capture space-y-step-3 text-bordeaux outline-none">
+      <section id="lp-inquiry-status" tabIndex={-1} role="status" aria-live="polite" className="space-y-step-3 text-bordeaux outline-none">
         <p className="font-mono text-[0.68rem] font-semibold tracking-[0.08em] text-cherry">{delayed ? 'REQUEST SAVED' : 'REQUEST RECEIVED'}</p>
         <h3 className="max-w-[22ch] text-[clamp(1.65rem,5vw,2.5rem)]">
           {acknowledged ? 'Thanks for getting in touch.' : delayed ? 'Your details are safe, but the notification is delayed.' : 'A senior engineer will review the context before replying.'}
         </h3>
         <p className="max-w-[58ch] leading-relaxed text-bordeaux/75">
           {state === 'sent' ? (
-            <>We sent your app details and concern to Engisols. Expect a reply to <strong className="font-medium text-bordeaux">{values.email}</strong> within one working day.</>
+            <>We sent your app details and concern to Engisols. Expect a reply to <strong data-ph-sensitive-evidence className="font-medium text-bordeaux">{values.email}</strong> within one working day.</>
           ) : acknowledged ? (
             <>If this request is a fit, Engisols will follow up with the next step.</>
           ) : (
@@ -333,7 +333,7 @@ function BookingForm({
   }
 
   return (
-    <form onSubmit={submit} noValidate className="ph-no-capture space-y-step-3 text-bordeaux">
+    <form onSubmit={submit} noValidate className="space-y-step-3 text-bordeaux">
       <p className="max-w-[58ch] text-sm leading-relaxed text-bordeaux/75 sm:text-base">{lpForm.lead}</p>
 
       <div className="grid grid-cols-3 divide-x divide-greige/50 border-y border-greige/50 py-step-2 text-center">
@@ -377,6 +377,9 @@ function BookingForm({
         <DotsMorphButton id="lp-inquiry-submit" label={state === 'error' ? 'Try sending again' : lpForm.submit} state={state === 'pending' ? 'pending' : 'idle'} />
         <p className="font-mono text-[0.65rem] leading-relaxed text-bordeaux/60">Your details go directly to Engisols. No repository access is requested.</p>
       </div>
+      <p className="text-xs leading-relaxed text-bordeaux/55">
+        By sending, you agree to our <a href="/terms" className="underline underline-offset-2">Terms</a> and acknowledge our <a href="/privacy" className="underline underline-offset-2">Privacy Policy</a>.
+      </p>
     </form>
   )
 }

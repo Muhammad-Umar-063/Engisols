@@ -37,8 +37,8 @@ export function ReportContent({ scan, report, showSummary = true }: { scan: Pers
               <span>PUBLIC SURFACE ONLY</span>
             </div>
 
-            <p className="production-check-wrap mt-step-2 font-mono text-xs text-bordeaux/70">{result.target.finalUrl}</p>
-            <h1 className="mt-step-2 max-w-[30ch] text-[clamp(2.2rem,4vw,3.6rem)]">{report.verdict}</h1>
+            <p data-ph-sensitive-evidence className="production-check-wrap mt-step-2 font-mono text-xs text-bordeaux/70">{result.target.finalUrl}</p>
+            <h1 data-ph-sensitive-evidence className="mt-step-2 max-w-[30ch] text-[clamp(2.2rem,4vw,3.6rem)]">{report.verdict}</h1>
 
             <div className="mt-step-4 grid gap-step-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,.85fr)] lg:items-stretch">
               <section className="rounded-2xl border border-greige/55 bg-oat p-step-3" aria-labelledby="finding-summary-title">
@@ -78,8 +78,8 @@ export function ReportContent({ scan, report, showSummary = true }: { scan: Pers
                   </div>
                   <span className="rounded-full border border-cherry/35 bg-vanilla px-step-2 py-1 font-mono text-[0.62rem] text-bordeaux">START HERE</span>
                 </div>
-                <h2 id="start-here-title" className="mt-step-2 max-w-[30ch] text-[clamp(1.55rem,2.5vw,2.05rem)]">{report.startHere.title}</h2>
-                <p className="mt-step-2 text-sm leading-relaxed text-bordeaux/80 sm:text-base">{report.startHere.action}</p>
+                <h2 data-ph-sensitive-evidence id="start-here-title" className="mt-step-2 max-w-[30ch] text-[clamp(1.55rem,2.5vw,2.05rem)]">{report.startHere.title}</h2>
+                <p data-ph-sensitive-evidence className="mt-step-2 text-sm leading-relaxed text-bordeaux/80 sm:text-base">{report.startHere.action}</p>
                 <div className="mt-auto pt-step-3">
                   <ReportActions
                     reportId={scan.publicId}
@@ -147,7 +147,7 @@ export function InlineReportPanel({ scan, report }: { scan: PersistedScan; repor
         <span className="rounded-full bg-oat px-step-2 py-1 font-mono text-[0.65rem] tabular-nums">100%</span>
       </div>
 
-      <p className="production-check-wrap mt-step-3 font-mono text-[0.68rem] text-bordeaux/60">{result.target.finalUrl}</p>
+      <p data-ph-sensitive-evidence className="production-check-wrap mt-step-3 font-mono text-[0.68rem] text-bordeaux/60">{result.target.finalUrl}</p>
       <p role="status" className="mt-step-2 text-xl font-medium">
         {scan.status === 'partial' ? 'Check complete with limited coverage' : 'Check complete'}
       </p>
@@ -168,7 +168,7 @@ export function InlineReportPanel({ scan, report }: { scan: PersistedScan; repor
           <p className="font-mono text-[0.65rem] tracking-[0.06em] text-bordeaux/60">YOUR REPORT</p>
           <span className="rounded-full border border-bordeaux/20 px-step-2 py-1 font-mono text-[0.65rem] tabular-nums text-bordeaux/70">PUBLIC RISK {report.publicSurfaceRisk}/100</span>
         </div>
-        <h2 id="inline-report-title" className="mt-step-2 text-[clamp(1.55rem,2.4vw,2rem)]">{report.verdict}</h2>
+        <h2 data-ph-sensitive-evidence id="inline-report-title" className="mt-step-2 text-[clamp(1.55rem,2.4vw,2rem)]">{report.verdict}</h2>
 
         <div className="mt-step-2 grid grid-cols-3 divide-x divide-greige/60 border-y border-greige/60 py-step-1" aria-label="Finding summary">
           <SummaryStat label="FIX NOW" count={report.counts.fixNow} urgent compact />
@@ -181,8 +181,8 @@ export function InlineReportPanel({ scan, report }: { scan: PersistedScan; repor
 
         <div className="mt-step-2 border-t border-greige/60 pt-step-2">
           <p className="font-mono text-[0.65rem] tracking-[0.06em] text-bordeaux/60">FIRST ACTION</p>
-          <h3 className="mt-step-1 text-lg">{report.startHere.title}</h3>
-          <p className="mt-step-1 text-sm leading-relaxed text-bordeaux/80">{report.startHere.action}</p>
+          <h3 data-ph-sensitive-evidence className="mt-step-1 text-lg">{report.startHere.title}</h3>
+          <p data-ph-sensitive-evidence className="mt-step-1 text-sm leading-relaxed text-bordeaux/80">{report.startHere.action}</p>
         </div>
 
         <div className="mt-step-1">

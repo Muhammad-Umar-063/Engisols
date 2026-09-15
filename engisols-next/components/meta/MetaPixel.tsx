@@ -1,7 +1,7 @@
 'use client'
 
 import Script from 'next/script'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useSyncExternalStore } from 'react'
 
 import {
@@ -13,11 +13,16 @@ import {
 import { META_CONSENT_EVENT } from '@/src/meta/consent'
 import type { MetaConsentDecision } from '@/src/meta/types'
 import { AI_APP_AUDIT_META_EVENT } from '@/src/campaign/analytics'
-import { isProductionCheckOfferUrl } from '@/src/production-check/analytics-privacy'
+import {
+  isProductionCheckCapabilityUrl,
+} from '@/src/production-check/analytics-privacy'
 
 export function MetaPixel({ pixelId }: { pixelId?: string }) {
   const pathname = usePathname()
-  const suppressPageView = isProductionCheckOfferUrl(pathname)
+  const searchParams = useSearchParams()
+  const query = searchParams.toString()
+  const route = query ? `${pathname}?${query}` : pathname
+  const suppressPageView = isProductionCheckCapabilityUrl(route)
   const consent = useSyncExternalStore(
     subscribeToConsent,
     browserMetaConsent,
@@ -27,8 +32,8 @@ export function MetaPixel({ pixelId }: { pixelId?: string }) {
   const initializePixel = useCallback(() => {
     if (suppressPageView) return
     if (consent !== 'granted' || !metaPixel.init(pixelId)) return
-    metaPixel.pageView(pathname)
-  }, [consent, pathname, pixelId, suppressPageView])
+    metaPixel.pageView(route)
+  }, [consent, pixelId, route, suppressPageView])
 
   useEffect(() => {
     initializePixel()

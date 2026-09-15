@@ -13,11 +13,11 @@ export function ProductionCheckFooter() {
         <p className="font-mono text-xs text-bordeaux/70">
           AI APP CHECKS · PRODUCT ENGINEERING · BUILD RESCUE
         </p>
-        <div className="flex flex-wrap gap-step-3 font-mono text-xs">
+        <nav aria-label="Production Check legal and contact links" className="flex flex-wrap gap-step-3 font-mono text-xs">
           <a href={`mailto:${SITE.email}`} className="underline underline-offset-4">{SITE.email}</a>
           <Link href="/privacy" className="underline underline-offset-4">Privacy</Link>
           <Link href="/terms" className="underline underline-offset-4">Terms</Link>
-        </div>
+        </nav>
       </div>
     </footer>
   )

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRef, useState, type FormEvent } from 'react'
 
 import { trackProductionCheck } from '@/src/production-check/analytics'
@@ -118,6 +119,17 @@ export function StartScanForm({
           {submitting ? 'STARTING CHECK…' : <>CHECK MY APP <span aria-hidden className="ml-2">→</span></>}
         </button>
       </div>
+      <p className="mt-step-2 text-center text-xs leading-relaxed text-bordeaux/65">
+        By starting a check, you confirm you own or operate this app, or have permission to assess it, and agree to the{' '}
+        <Link href="/terms" className="underline decoration-bordeaux/35 underline-offset-4 hover:decoration-bordeaux">
+          Terms
+        </Link>{' '}
+        and{' '}
+        <Link href="/privacy" className="underline decoration-bordeaux/35 underline-offset-4 hover:decoration-bordeaux">
+          Privacy Policy
+        </Link>
+        .
+      </p>
       {error ? (
         <p id="production-check-url-error" role="alert" className="mt-step-2 border-l-2 border-bordeaux pl-step-2 text-sm">
           {error}

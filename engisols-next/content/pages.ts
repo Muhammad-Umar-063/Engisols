@@ -432,58 +432,240 @@ export const scanNextPage = {
 }
 
 /* ------------------------------------------------------------------ */
-/* Legal shells                                                         */
+/* Legal pages                                                          */
 /* ------------------------------------------------------------------ */
 
 export const legalPages = {
   privacy: {
-    title: 'Privacy',
+    title: 'Privacy policy',
     updated: '15 September 2026',
+    intro:
+      'This policy explains what Engisols collects through this website, the AI App Audit inquiry, Production Check, Engineer Scope Review, and scoped offers, and how that information is handled.',
     sections: [
       {
-        heading: 'What we collect',
-        body: 'We collect information you send directly, such as your name, email, and form or email content. We use PostHog to measure site visits, funnel actions, and session interactions, and use the Meta Pixel and server-side conversion measurement for advertising performance. Meta may provide or read the _fbp and _fbc identifiers used to connect those actions to an ad visit.',
+        heading: 'Information you provide',
+        paragraphs: [
+          'We collect information you choose to send to us. Depending on the form or conversation, that can include your name, work email, optional company details, an app URL or product name, what you want reviewed, timelines, and other context you enter.',
+          'Please do not put passwords, private keys, API tokens, production credentials, health information, or other unnecessary sensitive data into a general website form. Forms used for audit and review inquiries reject common credential-like patterns, but that check is not a substitute for your own care.',
+        ],
       },
       {
-        heading: 'Client code and data',
-        body: 'Code shared with us for a scan or an audit is read-only, stored encrypted, deleted on the schedule stated on the relevant page, and never used to train anything. It is never shared or quoted without written permission.',
+        heading: 'Production Check data',
+        paragraphs: [
+          'When you start a Production Check, we store the submitted URL, builder and launch-stage answers you choose, campaign attribution associated with the visit, scan progress, and a sanitized result. The result can include public-risk scores, finding counts and classifications, detected technologies, coverage information, evidence labels, and a public report-share identifier.',
+          'The scanner makes bounded requests to public pages and public browser assets. Its persistence layer is designed not to retain fetched raw HTML or JavaScript bundles, discovered raw credentials, query strings, URL fragments, or unnecessary page content. Credential-like values cause a report to be rejected instead of stored. A report may still identify the scanned public origin and describe the kind of public evidence observed.',
+          'Production Check reports use hard-to-guess links, but anyone with a report link may be able to view it until it expires. Share the link only with people you trust.',
+        ],
       },
       {
-        heading: 'What we do not do',
-        body: 'We do not sell data or enrich your email against third-party databases. PostHog funnel events do not include names, emails, app details, inquiry text, attribution tokens, or Meta event identifiers. Meta conversion events do not include scanned app URLs, inquiry details, findings, source code, builder answers, shipping context, UTM values, or report contents. For a saved request, we may send Meta a normalized SHA-256 hash of the submitted email plus available browser, click, IP, and user-agent signals for measurement and attribution.',
+        heading: 'Engineer Scope Review and offers',
+        paragraphs: [
+          'If you request an Engineer Scope Review, we store your contact details, sanitized app URL and scan summary, builder and launch answers, the type and timing of help requested, optional shipping context, your main concern, your willingness to provide limited evidence or access later, and the review status.',
+          'If Engisols prepares a scoped offer, we also store its recommendation, inclusions, exclusions, price, billing basis, delivery window, status, and any approval or decline. Approval records your decision about the proposed scope; it does not record a payment. Payment and onboarding are handled separately.',
+          'An AI App Audit inquiry stores the name, work email, app or product, review concern, and attribution you submit. Any repository access or client code later shared for a paid engagement is governed by the relevant NDA or signed engagement terms, not by the public Production Check retention schedule.',
+        ],
       },
       {
-        heading: 'Advertising measurement choices',
-        body: 'The initial advertising program is limited to the United States. We respect Global Privacy Control and an Engisols tracking preference when present; a denied decision prevents both browser Pixel events and server-side Meta conversion events. Browser privacy tools may also block Meta requests. Meta processes measurement data under its own terms and privacy policy.',
+        heading: 'Analytics, session replay, and advertising measurement',
+        paragraphs: [
+          'We use PostHog for product analytics, error capture, and session replay. Depending on your use of the site, it may record pages visited, navigation, clicks, scrolls, browser and device information, performance information, and other page interactions. Input values are masked in session replay, while sensitive rendered evidence is blocked. Replay and PostHog events are disabled on internal Production Check operator pages, and automatic capture is disabled on capability-bearing offer pages.',
+          'We use the Meta Pixel and Meta Conversions API to understand advertising and conversions. Meta may receive page-view or conversion events, Meta cookie identifiers such as _fbp and _fbc, a hashed version of a submitted email for saved lead events, IP address, browser user agent, event time, and the page where an event happened. We do not send Meta scanned app URLs, inquiry text, findings, source code, builder answers, shipping context, UTM values, or report contents as conversion-event data.',
+          'We respect Global Privacy Control and any stored Engisols Meta tracking preference. A denied decision prevents browser Pixel events and server-side Meta conversion events. Browser privacy tools may also block provider requests.',
+        ],
       },
       {
-        heading: 'Your rights',
-        body: 'Ask us what we hold and we will tell you. Ask us to delete it and we will, within thirty days, unless a contract requires otherwise.',
+        heading: 'Attribution and technical data',
+        paragraphs: [
+          'We may collect UTM campaign fields and a Facebook click identifier from the page address. Analytics and advertising providers may also process referrer, browser, device, operating-system, IP-address, cookie, and event information. Engisols uses those signals to understand traffic, attribute inquiries, prevent duplicate conversion events, protect the service, and diagnose failures.',
+          'PostHog event properties are restricted at the application boundary for the AI App Audit and Production Check funnels. Names, emails, app details, free-text inquiry content, attribution tokens, and Meta event identifiers are not included in PostHog funnel-event properties.',
+        ],
+      },
+      {
+        heading: 'How we use information',
+        items: [
+          'Provide, secure, maintain, and troubleshoot the website and public tools.',
+          'Run a requested scan and make its sanitized report available.',
+          'Respond to inquiries and perform an Engineer Scope Review.',
+          'Prepare, send, and administer a scoped offer or engagement.',
+          'Measure site use, improve funnels, and understand advertising performance.',
+          'Prevent abuse, enforce these terms, and meet applicable legal obligations.',
+        ],
+      },
+      {
+        heading: 'Service providers',
+        paragraphs: [
+          'We use Vercel for website hosting and request processing, Upstash for retained application records, Resend for transactional email delivery, PostHog for analytics, error capture, and session replay, and Meta for advertising and conversion measurement. These providers process information for the functions described above under their own service and privacy terms.',
+          'We may also disclose information when required by law, to protect users or the service, or as part of a business reorganization where appropriate safeguards apply. We do not sell personal information for money. Some laws may classify advertising measurement with Meta as “sharing” or targeted advertising; the tracking choice described above controls Engisols-initiated Meta events.',
+        ],
+      },
+      {
+        heading: 'Retention',
+        paragraphs: [
+          'Production Check scan records, including sanitized reports, expire 90 days after creation. AI App Audit inquiries and Production Check lead records expire after 365 days. Engineer Scope Review records and scoped-offer records are also retained for up to 365 days; an offer itself is normally open for 30 days unless it says otherwise.',
+          'The Engisols Meta preference cookie lasts 180 days. Browser storage may keep a conversion-event identifier to avoid sending the same event twice. PostHog and Meta apply their own retention periods under Engisols account settings and their terms; those periods are not defined in this application code.',
+          'These application retention periods do not automatically delete transactional email copies held by Resend or message recipients. Provider, inbox, backup, and account-retention settings may apply separately.',
+          'We may delete data sooner when it is no longer needed, and may keep limited records longer where a signed contract, dispute, security investigation, or legal obligation requires it.',
+        ],
+      },
+      {
+        heading: 'Security',
+        paragraphs: [
+          'We use access controls, bounded inputs, credential-pattern checks, sanitized persistence, expiring records, and provider security features intended to reduce risk. No internet service or storage system is completely secure, so we cannot guarantee absolute security.',
+          'If you believe sensitive information has been exposed through an Engisols service, contact us promptly and do not submit the information again through a general form.',
+        ],
+      },
+      {
+        heading: 'Your data rights',
+        paragraphs: [
+          'Depending on where you live, you may have rights to ask for access, correction, deletion, restriction, portability, or information about how personal data is used, and to object to or opt out of certain processing. You may also withdraw a consent choice for future processing.',
+          'Email us using the address below. We may need to verify your identity and authority before acting. We will respond within the period required by applicable law and explain if an exception applies. You may also have the right to complain to your local data-protection authority.',
+        ],
+      },
+      {
+        heading: 'International processing',
+        paragraphs: [
+          'Engisols and its service providers may process information in countries other than the one where you live. Privacy protections can differ between countries. Where applicable law requires it, we use contractual or other safeguards for those transfers.',
+        ],
+      },
+      {
+        heading: 'Children',
+        paragraphs: [
+          'This website and its business services are not directed to children, and we do not knowingly collect personal information from children through these tools. If you believe a child has submitted information, contact us so we can review and remove it where appropriate.',
+        ],
+      },
+      {
+        heading: 'Changes to this policy',
+        paragraphs: [
+          'We may update this policy as the website, tools, or providers change. We will publish the revised version here and change the “Last updated” date. Material changes may also be highlighted in the service where practical.',
+        ],
+      },
+      {
+        heading: 'Contact',
+        paragraphs: [
+          'For privacy questions or requests, contact Engisols using the email link on this page. Engisols does not currently publish a separate privacy-office address or company registration identifier on this site.',
+        ],
+        contact: true,
       },
     ],
-    blocker: '{{TODO: LEGAL}} — this is a plain-language draft, not reviewed by a lawyer. It must be before launch.',
+    related: [
+      { label: 'Read the Terms', href: '/terms' },
+      { label: 'Open Production Check', href: '/production-check' },
+      { label: 'Learn about the AI App Audit', href: '/ai-app-audit' },
+    ],
+    blocker: {
+      marker: '{{TODO: LEGAL}}',
+      need: 'Attorney review is still required before launch. This operational draft has not been reviewed by a lawyer and is not legal advice.',
+    },
   },
   terms: {
-    title: 'Terms',
-    updated: '1 September 2026',
+    title: 'Website terms',
+    updated: '15 September 2026',
+    intro:
+      'These terms govern use of the Engisols website, the AI App Audit inquiry, Production Check, Engineer Scope Review, and scoped offers. A signed client agreement governs paid delivery and takes precedence if it conflicts with these website terms.',
     sections: [
       {
-        heading: 'What this covers',
-        body: 'Use of this website. Client engagements are governed by the signed contract for that engagement, which takes precedence over anything here.',
+        heading: 'Using the Engisols website',
+        paragraphs: [
+          'By using this website or submitting a request, you agree to these terms. If you use the site for an organization, you confirm that you have authority to act for it. If you do not agree, do not use the tools or submit information.',
+          'Website content is general information. Project advice, deliverables, fees, ownership, confidentiality, acceptance, support, and other engagement terms are set by the applicable signed agreement or expressly accepted scoped offer.',
+        ],
       },
       {
-        heading: 'Ownership of work',
-        body: 'For client engagements, IP assignment is signed before work begins and everything produced is the client’s outright, with no licence-back.',
+        heading: 'AI App Audit',
+        paragraphs: [
+          'The AI App Audit is advisory and limited to the scope, access, evidence, and time agreed for that review. Findings reflect professional judgment on the material available; they are not a promise that every defect, vulnerability, cost, or operational risk will be found.',
+          'Unless the signed scope expressly says otherwise, an audit is not a penetration test, legal opinion, compliance certification, financial audit, or guarantee that an application is secure, lawful, reliable, or ready to launch. You remain responsible for business, legal, security, and launch decisions.',
+        ],
       },
       {
-        heading: 'Content on this site',
-        body: 'Case studies are published with client permission. Metrics are stated as measured, with attribution where a figure belongs to a client platform rather than to our work.',
+        heading: 'Production Check',
+        paragraphs: [
+          'Production Check is a passive, bounded review of a submitted public web surface. It may inspect publicly available response headers, HTML, browser JavaScript, linked public assets, public routes, and configuration signals. It does not request a login or repository access and is not intended to exploit, disrupt, or bypass controls.',
+          'The check samples a limited surface. It cannot prove private authentication, authorization, Row Level Security, or server-side behavior, and it cannot see every route, dependency, data flow, or production condition. A missing finding is not proof of total security, compliance, production readiness, or absence of defects.',
+          'Production Check is not a penetration test, certification, legal or compliance review, or substitute for source-level engineering and security review. Findings may be incomplete, time-sensitive, false positive, or safe by design and should be validated before action.',
+        ],
       },
       {
-        heading: 'Liability',
-        body: 'This site is provided as is. Engagement liability is defined in the engagement contract, not here.',
+        heading: 'Authorization to scan',
+        paragraphs: [
+          'Only submit a website or application that you own or operate, or that you are authorized to assess. Do not intentionally use Production Check to examine a third party without permission, test private systems, bypass access controls, or conduct aggressive security testing.',
+          'You are responsible for the submitted target and your authorization. Engisols may refuse, limit, or stop a check where a target appears unauthorized, unsafe, unavailable, abusive, or outside the tool’s public-surface scope.',
+        ],
+      },
+      {
+        heading: 'Engineer Scope Review',
+        paragraphs: [
+          'Automated findings need human validation. A free Production Check or Engineer Scope Review creates no purchase obligation, and Engisols may conclude that there is no suitable paid work to recommend.',
+          'To validate a private control, Engisols may ask for limited screenshots, configuration evidence, or time-bound technical access after explaining what is needed. Do not send passwords, private keys, API tokens, production credentials, or sensitive customer data in a general form. Any deeper access must be agreed separately and provided through an appropriate channel.',
+        ],
+      },
+      {
+        heading: 'Scoped offers and paid work',
+        paragraphs: [
+          'A scoped offer describes the work Engisols is prepared to perform. Its stated inclusions, exclusions, price, billing basis, and delivery window apply to that offer, subject to any conditions it states and any later signed agreement.',
+          'Scope approval is not payment and does not by itself start work. Payment and onboarding instructions are provided separately. Work begins only after the stated commercial requirements are met. Work outside the agreed scope requires a separate written agreement or change.',
+        ],
+      },
+      {
+        heading: 'Acceptable use',
+        items: [
+          'Do not use the website or tools unlawfully, fraudulently, or to harm another person or system.',
+          'Do not submit a target you are not authorized to assess or try to use the service for aggressive scanning, exploitation, credential testing, or access-control bypass.',
+          'Do not interfere with service operation, evade rate or access limits, introduce malware, or overload the service.',
+          'Do not scrape, copy, reverse engineer, or republish the tool or its content except where applicable law does not allow that restriction.',
+          'Do not submit secrets, credentials, unlawful content, or personal data that is unnecessary for the request.',
+        ],
+      },
+      {
+        heading: 'Intellectual property',
+        paragraphs: [
+          'Engisols and its licensors retain rights in this website, its design, copy, software, tools, methods, and branding. You may use the site and a report generated for your authorized target for your own internal evaluation, but these terms do not transfer ownership of the service or its underlying materials.',
+          'You retain rights in information you submit and in the application you are authorized to assess. You give Engisols a limited permission to process submitted information only as needed to operate the requested service, protect it, and administer the relationship.',
+          'Ownership of paid client deliverables is governed by the signed engagement terms. Case studies, client marks, and metrics are published only under the permissions applicable to them.',
+        ],
+      },
+      {
+        heading: 'Third-party services and links',
+        paragraphs: [
+          'The website relies on service providers and may link to third-party sites. Their services, content, availability, and data practices are governed by their own terms. Engisols does not control third-party services and is not responsible for changes or failures outside its reasonable control.',
+        ],
+      },
+      {
+        heading: 'Disclaimers and warranties',
+        paragraphs: [
+          'To the fullest extent permitted by law, the website and free tools are provided “as is” and “as available.” Engisols does not promise uninterrupted availability, error-free output, complete findings, a particular business result, or that acting on a finding will resolve every related risk.',
+          'Nothing here excludes a warranty or responsibility that applicable law says cannot be excluded. Any express warranty for paid work must appear in the applicable signed agreement or offer.',
+        ],
+      },
+      {
+        heading: 'Limits on liability',
+        paragraphs: [
+          'To the fullest extent permitted by law, Engisols is not liable under these website terms for indirect, incidental, special, punitive, or consequential loss, or for lost profits, revenue, data, goodwill, or opportunity arising from use of a free website tool or reliance on its output.',
+          'For a paid website service governed only by these terms, Engisols’ total liability is limited to the amount you paid for that specific service during the twelve months before the event giving rise to the claim. Liability for a signed client engagement is governed by that agreement. These limits do not apply where applicable law does not allow them.',
+        ],
+      },
+      {
+        heading: 'Changes to these terms',
+        paragraphs: [
+          'We may update these terms as the website, tools, or commercial flow changes. We will publish the revised terms here and change the “Last updated” date. Continued use after an update means the updated terms apply to later use; an existing signed engagement remains governed by its own agreement.',
+        ],
+      },
+      {
+        heading: 'Contact',
+        paragraphs: [
+          'Questions about these terms can be sent to Engisols using the email link on this page. Engisols does not currently publish a company registration identifier, postal address, or governing-law jurisdiction on this site.',
+        ],
+        contact: true,
       },
     ],
-    blocker: '{{TODO: LEGAL}} — this is a plain-language draft, not reviewed by a lawyer. It must be before launch.',
+    related: [
+      { label: 'Read the Privacy Policy', href: '/privacy' },
+      { label: 'Open Production Check', href: '/production-check' },
+      { label: 'Learn about the AI App Audit', href: '/ai-app-audit' },
+    ],
+    blocker: {
+      marker: '{{TODO: LEGAL}}',
+      need: 'Attorney review is still required before launch. This operational draft has not been reviewed by a lawyer and is not legal advice.',
+    },
   },
 }

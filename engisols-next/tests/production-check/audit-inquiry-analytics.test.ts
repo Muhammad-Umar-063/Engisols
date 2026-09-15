@@ -27,10 +27,12 @@ test('campaign PostHog properties retain funnel context and drop customer data',
   })
 })
 
-test('session replay blocks the inquiry subtree and explicitly masks every input', () => {
+test('autocapture masks text while replay preserves UI structure and masks input values', () => {
   const booking = readFileSync('components/campaign/Booking.tsx', 'utf8')
   const instrumentation = readFileSync('instrumentation-client.ts', 'utf8')
-  assert.ok((booking.match(/ph-no-capture/g) ?? []).length >= 2)
+  assert.doesNotMatch(booking, /ph-no-capture/)
+  assert.match(instrumentation, /mask_all_text:\s*true/)
+  assert.match(instrumentation, /capture_copied_text:\s*false/)
   assert.match(instrumentation, /session_recording:\s*{\s*maskAllInputs:\s*true/)
 })
 
