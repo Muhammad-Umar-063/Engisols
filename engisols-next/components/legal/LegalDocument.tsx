@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { Band, Blocked } from '@/components/layout/Band'
+import { Band } from '@/components/layout/Band'
 import { PageHero } from '@/components/sections/shared'
 import { SITE } from '@/lib/site'
 
@@ -15,10 +15,6 @@ export interface LegalDocumentData {
     contact?: boolean
   }>
   related: Array<{ label: string; href: string }>
-  blocker: {
-    marker: string
-    need: string
-  }
 }
 
 export function LegalDocument({ page }: { page: LegalDocumentData }) {
@@ -96,10 +92,6 @@ export function LegalDocument({ page }: { page: LegalDocumentData }) {
                 ) : null}
               </section>
             ))}
-
-            <div className="mt-step-4 border-t border-current/20 pt-step-4">
-              <Blocked marker={page.blocker.marker} need={page.blocker.need} />
-            </div>
           </article>
         </div>
       </Band>
