@@ -1,9 +1,48 @@
 import type { CaptureResult } from 'posthog-js'
 
 export const PRODUCTION_CHECK_OFFER_URL_PATTERN = /\/production-check\/offer\/[^/?#\s]+/
+export const PRODUCTION_CHECK_REPORT_URL_PATTERN = /\/production-check\/report\/[^/?#\s]+/
+export const INTERNAL_PRODUCTION_CHECK_URL_PATTERN = /\/internal\/production-check(?:\/|$)/
+export const POSTHOG_REPLAY_BLOCK_SELECTOR = '[data-ph-sensitive-evidence]'
+export const POSTHOG_ROUTER_COMMIT_EVENT = 'engisols:router-commit'
 
 export function isProductionCheckOfferUrl(value: string): boolean {
   return PRODUCTION_CHECK_OFFER_URL_PATTERN.test(value)
+}
+
+export function isProductionCheckReportUrl(value: string): boolean {
+  return PRODUCTION_CHECK_REPORT_URL_PATTERN.test(value)
+}
+
+export function isProductionCheckActiveScanUrl(value: string): boolean {
+  try {
+    const url = new URL(value, 'https://analytics.invalid')
+    return (
+      (url.pathname === '/production-check' || url.pathname === '/production-check/') &&
+      url.searchParams.has('scanId')
+    )
+  } catch {
+    return /\/production-check\/?\?[^#\s]*\bscanId=/i.test(value)
+  }
+}
+
+export function isInternalProductionCheckUrl(value: string): boolean {
+  try {
+    return INTERNAL_PRODUCTION_CHECK_URL_PATTERN.test(
+      new URL(value, 'https://analytics.invalid').pathname,
+    )
+  } catch {
+    return INTERNAL_PRODUCTION_CHECK_URL_PATTERN.test(value)
+  }
+}
+
+export function isProductionCheckCapabilityUrl(value: string): boolean {
+  return (
+    isProductionCheckOfferUrl(value) ||
+    isProductionCheckReportUrl(value) ||
+    isProductionCheckActiveScanUrl(value) ||
+    isInternalProductionCheckUrl(value)
+  )
 }
 
 export function redactProductionCheckOfferCapabilities(value: string): string {
@@ -13,8 +52,32 @@ export function redactProductionCheckOfferCapabilities(value: string): string {
   )
 }
 
+export function redactProductionCheckReportCapabilities(value: string): string {
+  return value.replace(
+    /\/production-check\/report\/[^/?#\s]+/g,
+    '/production-check/report/redacted',
+  )
+}
+
+export function redactProductionCheckScanCapabilities(value: string): string {
+  return value.replace(/([?&]scanId=)[^&#\s]*/gi, '$1redacted')
+}
+
+export function redactInternalProductionCheckCapabilities(value: string): string {
+  return value.replace(
+    /\/internal\/production-check(?:\/[^/?#\s]+)*(?:\?[^#\s]*)?(?:#[^\s]*)?/g,
+    '/internal/production-check/redacted',
+  )
+}
+
 export function sanitizePostHogUrl(value: string): string {
-  const redactedValue = redactProductionCheckOfferCapabilities(value)
+  const redactedValue = redactProductionCheckScanCapabilities(
+    redactProductionCheckReportCapabilities(
+      redactProductionCheckOfferCapabilities(
+        redactInternalProductionCheckCapabilities(value),
+      ),
+    ),
+  )
   const queryIndex = redactedValue.indexOf('?')
   const fragmentIndex = redactedValue.indexOf('#')
   const suffixIndex = [queryIndex, fragmentIndex]
@@ -44,8 +107,16 @@ export function protectPostHogEvent(
   if (!event) return null
   const currentEventUrl = event.properties.$current_url
   const currentEventPath = event.properties.$pathname
+  const onInternalRoute = [currentUrl, currentEventUrl, currentEventPath]
+    .some((value) => typeof value === 'string' && isInternalProductionCheckUrl(value))
   const onOfferRoute = [currentUrl, currentEventUrl, currentEventPath]
     .some((value) => typeof value === 'string' && isProductionCheckOfferUrl(value))
+
+  // Operator review pages contain customer evidence and authorization context.
+  // Nothing from those pages, including explicit events, is allowed to reach
+  // PostHog. URL redaction below remains defense in depth for referrers captured
+  // after the visitor has returned to a public route.
+  if (onInternalRoute) return null
 
   // PostHog's built-in events cover page views, autocapture, exceptions, heatmaps,
   // web vitals, and session replay snapshots. None should be collected on an

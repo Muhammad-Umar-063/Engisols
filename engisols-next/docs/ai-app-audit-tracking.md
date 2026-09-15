@@ -15,7 +15,7 @@ PostHog receives these explicit events in addition to its configured pageview, a
 | `ai_audit_inquiry_delayed` | The lead is durable but inbox notification is delayed | `cta_location`, `notification`, `http_status` |
 | `ai_audit_inquiry_failed` | Validation-independent request, attribution, or persistence delivery fails | `cta_location`, `http_status`, `error_code` |
 
-The property allowlist drops names, emails, app details, concerns, attribution tokens, Meta event IDs, and any other unexpected values before PostHog capture. The inquiry and confirmation subtrees use PostHog's `ph-no-capture` boundary so autocapture and session replay cannot record the form or the rendered confirmation email; global replay configuration also explicitly masks all input values.
+The property allowlist drops names, emails, app details, concerns, attribution tokens, Meta event IDs, and any other unexpected values before PostHog capture. The form and confirmation-dialog structure remains replay-visible, while global replay configuration uses `maskAllInputs` to mask input values and targeted `data-ph-sensitive-evidence` markers to block rendered personal or client-specific evidence. Autocapture text privacy is globally masked, and the explicit allowlisted events above preserve funnel measurement. See [the legal and replay implementation review](./legal-and-replay-review.md) for the rationale and full privacy boundary.
 
 ## Attribution and durable leads
 

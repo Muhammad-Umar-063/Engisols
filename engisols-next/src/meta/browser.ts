@@ -1,7 +1,9 @@
 'use client'
 
 import { META_CONSENT_COOKIE, META_CONSENT_EVENT } from './consent'
-import { isProductionCheckOfferUrl } from '../production-check/analytics-privacy'
+import {
+  isProductionCheckCapabilityUrl,
+} from '../production-check/analytics-privacy'
 import type {
   MetaBrowserCustomEvent,
   MetaBrowserStandardEvent,
@@ -59,7 +61,7 @@ export const metaPixel = {
   },
 
   pageView(pathname: string): boolean {
-    if (isProductionCheckOfferUrl(pathname)) return false
+    if (isProductionCheckCapabilityUrl(pathname)) return false
     const key = metaPageViewKey(pathname)
     if (!key || key === lastPageViewKey || !canTrack()) return false
     lastPageViewKey = key

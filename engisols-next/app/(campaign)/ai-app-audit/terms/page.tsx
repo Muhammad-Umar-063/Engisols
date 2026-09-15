@@ -1,11 +1,5 @@
-import { LpLegal } from '@/components/campaign/LpLegal'
-import { legalPages } from '@/content/pages'
+import { permanentRedirect } from 'next/navigation'
 
-export const metadata = {
-  title: 'Terms — AI app audit',
-  robots: { index: false, follow: false },
-}
-
-export default function CampaignTermsPage() {
-  return <LpLegal page={legalPages.terms} />
+export default function LegacyCampaignTermsPage() {
+  permanentRedirect('/terms')
 }

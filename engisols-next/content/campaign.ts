@@ -408,8 +408,8 @@ export const lpFinal = {
 export const lpFooter = {
   services: ['AI App Audits', 'AI Product Engineering', 'Product Rescue'],
   legal: [
-    { label: 'Privacy', href: '/ai-app-audit/privacy' },
-    { label: 'Terms', href: '/ai-app-audit/terms' },
+    { label: 'Privacy', href: '/privacy' },
+    { label: 'Terms', href: '/terms' },
   ],
   copyright: '© ENGISOLS',
 }

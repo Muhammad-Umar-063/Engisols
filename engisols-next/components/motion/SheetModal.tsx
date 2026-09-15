@@ -128,11 +128,12 @@ export function SheetModal({
   }, [open, onClose])
 
   const modal = (
-    <div className={themeClassName}>
+    <div className={themeClassName} data-ph-replay-visible="dialog-portal">
       <AnimatePresence>
       {open ? (
         <>
           <m.div
+            data-ph-replay-visible="dialog-overlay"
             className="fixed inset-0 z-80 bg-bordeaux/55 supports-[backdrop-filter]:backdrop-blur-[3px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -143,6 +144,7 @@ export function SheetModal({
           {centred ? (
             <div className="pointer-events-none fixed inset-0 z-90 grid place-items-center p-step-3">
               <m.div
+                data-ph-replay-visible="dialog"
                 ref={sheetRef}
                 tabIndex={-1}
                 role="dialog"
@@ -170,6 +172,7 @@ export function SheetModal({
             </div>
           ) : (
             <m.div
+              data-ph-replay-visible="dialog"
               ref={sheetRef}
               tabIndex={-1}
               role="dialog"

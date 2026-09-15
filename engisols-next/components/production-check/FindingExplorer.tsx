@@ -132,7 +132,7 @@ function FindingChoice({ finding, index, active, controls, onClick, mobile = fal
         <FindingLabel label={finding.label} />
         <span className={`font-mono text-[0.65rem] ${active ? 'text-bordeaux' : 'text-bordeaux/50'}`}>{String(index + 1).padStart(2, '0')}</span>
       </span>
-      <span className="mt-step-1 block pr-step-2 text-base font-medium leading-snug text-bordeaux">{finding.title}</span>
+      <span data-ph-sensitive-evidence className="mt-step-1 block pr-step-2 text-base font-medium leading-snug text-bordeaux">{finding.title}</span>
       <span className="mt-step-1 flex items-center justify-between gap-step-2 font-mono text-[0.62rem] text-bordeaux/55">
         {finding.label === 'EXPECTED' ? 'NORMAL PUBLIC CONFIG' : `${finding.riskPoints} RISK POINTS`}
         <ArrowIcon active={active} mobile={mobile} />
@@ -143,7 +143,7 @@ function FindingChoice({ finding, index, active, controls, onClick, mobile = fal
 
 function FindingDetail({ finding, id, compact = false }: { finding: FounderFinding; id: string; compact?: boolean }) {
   return (
-    <article id={id} key={finding.id} className={`lp-in min-w-0 bg-vanilla ${compact ? 'border-t border-greige/60 px-step-2 pb-step-4 pt-step-3' : 'p-step-4'}`} aria-live="polite" aria-label={`Details for ${finding.title}`}>
+    <article data-ph-sensitive-evidence id={id} key={finding.id} className={`lp-in min-w-0 bg-vanilla ${compact ? 'border-t border-greige/60 px-step-2 pb-step-4 pt-step-3' : 'p-step-4'}`} aria-live="polite" aria-label="Selected finding details">
       <div className="flex flex-wrap items-center gap-step-2">
         <FindingLabel label={finding.label} />
         <span className="production-check-wrap font-mono text-[0.65rem] text-bordeaux/55">RULE {finding.ruleId}</span>

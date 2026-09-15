@@ -57,7 +57,7 @@ export function ReportEvidenceExplorer({
 
   return (
     <div className="mt-step-4 overflow-hidden rounded-2xl border border-greige/70 bg-oat/35">
-      <div className="grid gap-step-3 border-b border-greige/60 p-step-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:p-step-4">
+      <div data-ph-sensitive-evidence className="grid gap-step-3 border-b border-greige/60 p-step-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:p-step-4">
         <div>
           <div className="flex items-end gap-step-2">
             <span className="font-display text-[clamp(3rem,7vw,5.5rem)] leading-none tabular-nums">{coverageScore}</span>
@@ -93,15 +93,15 @@ export function ReportEvidenceExplorer({
       </div>
 
       <div className="hidden min-h-[22rem] bg-vanilla p-step-4 md:block">
-        <div id="surface-evidence" role="tabpanel" hidden={lens !== 'surface'}>
+        <div data-ph-sensitive-evidence id="surface-evidence" role="tabpanel" hidden={lens !== 'surface'}>
           <SurfaceEvidence coverage={coverage} coverageReasons={coverageReasons} technologies={technologies} />
         </div>
 
-        <div id="source-evidence" role="tabpanel" hidden={lens !== 'source'}>
+        <div data-ph-sensitive-evidence id="source-evidence" role="tabpanel" hidden={lens !== 'source'}>
           <SourceEvidence needsSourceReview={needsSourceReview} observedChecks={observedChecks} />
         </div>
 
-        <div id="handoff-evidence" role="tabpanel" hidden={lens !== 'handoff'}>
+        <div data-ph-sensitive-evidence id="handoff-evidence" role="tabpanel" hidden={lens !== 'handoff'}>
           <HandoffEvidence builderPrompt={builderPrompt} copied={copied} onCopy={copyPrompt} />
         </div>
       </div>
@@ -126,7 +126,7 @@ function MobileEvidenceSection({ label, count, lens, reportId, defaultOpen = fal
         <span>{label.toUpperCase()} <span className="text-bordeaux/50">{count}</span></span>
         <ChevronIcon />
       </summary>
-      <div className="border-t border-greige/60 px-step-3 pb-step-4 pt-step-3">{children}</div>
+      <div data-ph-sensitive-evidence className="border-t border-greige/60 px-step-3 pb-step-4 pt-step-3">{children}</div>
     </details>
   )
 }

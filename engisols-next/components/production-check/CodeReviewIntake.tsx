@@ -303,12 +303,12 @@ function LeadRoutingConfirmation({
       <p className="font-mono text-[0.68rem] tracking-[0.08em] text-cherry">ENGINEER REVIEW REQUESTED</p>
       <h2 className="max-w-[24ch] text-[clamp(1.8rem,4vw,2.8rem)]">We have your Production Check and context.</h2>
       <p className="max-w-[58ch] leading-relaxed text-bordeaux/75">A senior engineer will review the uncertain areas and determine whether anything actually needs paid work. If everything looks reasonable, we’ll tell you that too.</p>
-      <p className="max-w-[58ch] text-sm leading-relaxed text-bordeaux/65">If there is a small, clear implementation scope, we’ll send the exact fixes and fixed price before you pay. We’ll follow up by email at {email}.</p>
+      <p className="max-w-[58ch] text-sm leading-relaxed text-bordeaux/65">If there is a small, clear implementation scope, we’ll send the exact fixes and fixed price before you pay. We’ll follow up by email at <span data-ph-sensitive-evidence>{email}</span>.</p>
 
       {result.notification === 'delayed' ? (
         <div className="rounded-xl border border-bordeaux/25 bg-oat/55 p-step-2 text-sm leading-relaxed">
           <p className="font-medium text-bordeaux">You do not need to submit again.</p>
-          <p className="mt-1 text-bordeaux/70">{result.message}</p>
+          <p className="mt-1 text-bordeaux/70"><span data-ph-sensitive-evidence>{result.message}</span></p>
         </div>
       ) : null}
 
@@ -317,7 +317,7 @@ function LeadRoutingConfirmation({
         <button type="button" onClick={onClose} className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-cherry px-step-4 font-mono text-xs font-medium text-vanilla transition-opacity hover:opacity-90">
           RETURN TO REPORT <span aria-hidden className="ml-2">→</span>
         </button>
-        <p className="font-mono text-[0.62rem] text-bordeaux/50">REQUEST {result.scopeReviewId}</p>
+        <p className="font-mono text-[0.62rem] text-bordeaux/50">REQUEST <span data-ph-sensitive-evidence>{result.scopeReviewId}</span></p>
       </div>
     </section>
   )
@@ -335,8 +335,8 @@ function ReportAttachment({ context }: { context: ReviewRequestContext }) {
         <p className="font-mono text-[0.65rem] font-semibold tracking-[0.08em] text-cherry">REPORT ATTACHED</p>
         <p className="font-mono text-[0.65rem] font-semibold text-bordeaux/60">{summary}</p>
       </div>
-      <p className="production-check-wrap mt-step-1 font-mono text-[0.68rem] text-bordeaux/55">{context.targetUrl}</p>
-      <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-bordeaux">{context.verdict}</p>
+      <p className="production-check-wrap mt-step-1 font-mono text-[0.68rem] text-bordeaux/55"><span data-ph-sensitive-evidence>{context.targetUrl}</span></p>
+      <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-bordeaux"><span data-ph-sensitive-evidence>{context.verdict}</span></p>
     </section>
   )
 }
@@ -363,8 +363,8 @@ function ReviewReportSummary({
       </div>
 
       <div className="p-step-3">
-        <p className="production-check-wrap font-mono text-[0.68rem] text-bordeaux/55">{context.targetUrl}</p>
-        <p className={`mt-step-2 max-w-[46ch] font-display font-semibold leading-snug ${compact ? 'text-lg' : 'text-[clamp(1.25rem,2.4vw,1.75rem)]'}`}>{context.verdict}</p>
+        <p className="production-check-wrap font-mono text-[0.68rem] text-bordeaux/55"><span data-ph-sensitive-evidence>{context.targetUrl}</span></p>
+        <p className={`mt-step-2 max-w-[46ch] font-display font-semibold leading-snug ${compact ? 'text-lg' : 'text-[clamp(1.25rem,2.4vw,1.75rem)]'}`}><span data-ph-sensitive-evidence>{context.verdict}</span></p>
         <p className="mt-step-1 max-w-[68ch] text-sm leading-relaxed text-bordeaux/70">{summary}</p>
 
         {!compact ? (
@@ -377,7 +377,7 @@ function ReviewReportSummary({
 
         <div className={`${compact ? 'mt-step-2' : 'mt-step-3'} rounded-lg bg-oat/55 px-step-2 py-step-2`}>
           <p className="font-mono text-[0.62rem] font-semibold tracking-[0.07em] text-cherry">FIRST ENGINEERING ACTION</p>
-          <p className="production-check-wrap mt-1 text-sm font-medium leading-relaxed text-bordeaux">{context.recommendedAction}</p>
+          <p className="production-check-wrap mt-1 text-sm font-medium leading-relaxed text-bordeaux"><span data-ph-sensitive-evidence>{context.recommendedAction}</span></p>
         </div>
       </div>
     </section>

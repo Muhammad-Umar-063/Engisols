@@ -4,7 +4,7 @@ import test from 'node:test'
 
 import {
   protectProductionCheckPostHogEvent,
-  redactProductionCheckOfferCapabilities,
+  sanitizePostHogUrl,
 } from '../../src/production-check/analytics-privacy'
 import { productionCheckPostHogProperties } from '../../src/production-check/analytics-properties'
 
@@ -38,8 +38,6 @@ test('PostHog scope properties keep only the approved non-sensitive fields', () 
     operator_token: 'private token',
   })
   assert.deepEqual(properties, {
-    reportId: 'rpt_abcdefghijklmnopqrstuvwx',
-    scan_id: 'rpt_abcdefghijklmnopqrstuvwx',
     scope_review_id: 'scope_abcdefghijklmnopqrstuvwx',
     offer_type: 'launch_blocker_fix',
     offer_amount: 499,
@@ -56,7 +54,6 @@ test('PostHog scope properties keep only the approved non-sensitive fields', () 
     layout: 'mobile_accordion',
     urgent: true,
     location: 'evidence_lens',
-    metaEventId: 'lead_abcdefghijklmnopqrstuvwx',
     nextStep: 'engineer_scope_check',
   })
   assert.doesNotMatch(
@@ -84,15 +81,38 @@ test('PostHog suppresses automatic events and redacts manual events on offer cap
   assert.doesNotMatch(JSON.stringify(manual), new RegExp(offerId))
 })
 
-test('PostHog offer redaction leaves ordinary URLs unchanged', () => {
-  const safeUrl = 'https://www.engisols.com/production-check/report/rpt_abc?view=source'
-  assert.equal(redactProductionCheckOfferCapabilities(safeUrl), safeUrl)
+test('PostHog redacts report and active-scan capabilities from URLs and nested properties', () => {
+  const reportId = 'rpt_abcdefghijklmnopqrstuvwx'
+  const reportUrl = `https://www.engisols.com/production-check/report/${reportId}?view=source`
+  const scanUrl = `https://www.engisols.com/production-check?scanId=${reportId}&view=summary`
+
+  assert.equal(
+    sanitizePostHogUrl(reportUrl),
+    'https://www.engisols.com/production-check/report/redacted?view=source',
+  )
+  assert.equal(
+    sanitizePostHogUrl(scanUrl),
+    'https://www.engisols.com/production-check?scanId=redacted&view=summary',
+  )
+
+  const protectedEvent = protectProductionCheckPostHogEvent(
+    {
+      ...postHogEvent('report_viewed', reportUrl, reportId),
+      properties: {
+        ...postHogEvent('report_viewed', reportUrl, reportId).properties,
+        activeScan: scanUrl,
+      },
+    },
+    reportUrl,
+  )
+  assert.ok(protectedEvent)
+  assert.doesNotMatch(JSON.stringify(protectedEvent), new RegExp(reportId))
 })
 
 test('PostHog initialization applies offer privacy at the SDK boundary', () => {
   const instrumentation = readFileSync('instrumentation-client.ts', 'utf8')
   assert.match(instrumentation, /before_send:\s*\(event\)[\s\S]*protectPostHogEvent/)
-  assert.match(instrumentation, /url_ignorelist:\s*\[PRODUCTION_CHECK_OFFER_URL_PATTERN\]/)
+  assert.match(instrumentation, /url_ignorelist:\s*\[[\s\S]*PRODUCTION_CHECK_OFFER_URL_PATTERN[\s\S]*INTERNAL_PRODUCTION_CHECK_URL_PATTERN/)
   assert.match(instrumentation, /get_current_url:\s*sanitizePostHogUrl/)
 })
 

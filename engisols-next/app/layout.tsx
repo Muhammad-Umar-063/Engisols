@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { DM_Sans, Geist_Mono } from 'next/font/google'
 import localFont from 'next/font/local'
 import { Suspense } from 'react'
+import { PostHogRouteCommit } from '@/components/analytics/PostHogRouteCommit'
 import { MetaPixel } from '@/components/meta/MetaPixel'
 import { MotionProvider } from '@/components/motion/MotionProvider'
 import { SmoothScroll } from '@/components/motion/SmoothScroll'
@@ -87,6 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense fallback={null}>
           <MetaPixel pixelId={metaPixelId} />
         </Suspense>
+        <PostHogRouteCommit />
         {metaPixelId ? (
           <noscript>
             {/* eslint-disable-next-line @next/next/no-img-element */}

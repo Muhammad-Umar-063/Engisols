@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
-import { LegalPage } from '@/components/sections/LegalPage'
+import { LegalDocument } from '@/components/legal/LegalDocument'
 import { legalPages } from '@/content/pages'
 
 export const metadata: Metadata = {
-  title: 'Privacy',
-  description: 'What we collect, what happens to client code, and what we do not do.',
+  title: 'Privacy policy',
+  description: 'How Engisols handles website, AI App Audit, Production Check, review, analytics, and advertising data.',
   alternates: { canonical: '/privacy' },
 }
 
 export default function PrivacyPage() {
-  return <LegalPage page={legalPages.privacy} />
+  return <LegalDocument page={legalPages.privacy} />
 }
