@@ -91,13 +91,14 @@ function resolveSigningSecret(options: AttributionTokenOptions): string {
   const env = options.env ?? process.env
   const secret =
     options.secret ??
+    env.ENGISOLS_ATTRIBUTION_SECRET ??
     env.PRODUCTION_CHECK_ATTRIBUTION_SECRET ??
     env.UPSTASH_REDIS_REST_TOKEN ??
     env.KV_REST_API_TOKEN
   if (secret) return secret
   if (env.NODE_ENV === 'production') {
     throw new Error(
-      'Production attribution signing requires PRODUCTION_CHECK_ATTRIBUTION_SECRET or the configured REST persistence token.',
+      'Campaign attribution signing requires ENGISOLS_ATTRIBUTION_SECRET, PRODUCTION_CHECK_ATTRIBUTION_SECRET, or the configured REST persistence token.',
     )
   }
   return DEVELOPMENT_ONLY_SECRET

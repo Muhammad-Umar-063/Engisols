@@ -7,6 +7,7 @@ export interface AuditInquiryInput {
 
 export interface AuditInquirySubmission extends AuditInquiryInput {
   website: string
+  attributionToken: string
 }
 
 export type AuditInquiryErrors = Partial<Record<keyof AuditInquiryInput, string>>
@@ -37,7 +38,7 @@ export function validateAuditInquiry(input: AuditInquiryInput): AuditInquiryErro
 
 export function parseAuditInquirySubmission(value: unknown): AuditInquirySubmission | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
-  const allowedKeys = new Set(['name', 'email', 'app', 'worry', 'website'])
+  const allowedKeys = new Set(['name', 'email', 'app', 'worry', 'website', 'attributionToken'])
   if (Object.keys(value).some((key) => !allowedKeys.has(key))) return null
 
   const input = value as Record<string, unknown>
@@ -46,7 +47,10 @@ export function parseAuditInquirySubmission(value: unknown): AuditInquirySubmiss
     typeof input.email !== 'string' ||
     typeof input.app !== 'string' ||
     typeof input.worry !== 'string' ||
-    (input.website !== undefined && typeof input.website !== 'string')
+    (input.website !== undefined && typeof input.website !== 'string') ||
+    typeof input.attributionToken !== 'string' ||
+    !input.attributionToken ||
+    input.attributionToken.length > 4_096
   ) return null
 
   const submission: AuditInquirySubmission = {
@@ -55,23 +59,9 @@ export function parseAuditInquirySubmission(value: unknown): AuditInquirySubmiss
     app: input.app.trim(),
     worry: input.worry.trim(),
     website: input.website ?? '',
+    attributionToken: input.attributionToken,
   }
   return Object.keys(validateAuditInquiry(submission)).length === 0 ? submission : null
-}
-
-export function buildAuditInquiryText(input: AuditInquiryInput): string {
-  return [
-    'AI app audit scoping request',
-    '',
-    `Name: ${cleanLineBreaks(input.name)}`,
-    `Reply email: ${cleanLineBreaks(input.email)}`,
-    `App or product: ${cleanLineBreaks(input.app)}`,
-    '',
-    'What they want investigated:',
-    cleanLineBreaks(input.worry),
-    '',
-    'Source: /ai-app-audit',
-  ].join('\n')
 }
 
 export function auditInquirySubject(app: string): string {

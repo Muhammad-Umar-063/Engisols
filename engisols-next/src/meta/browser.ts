@@ -131,6 +131,14 @@ export function bridgeProductionCheckEvent(detail: unknown): boolean {
   }
 }
 
+export function bridgeAiAppAuditEvent(detail: unknown): boolean {
+  if (!detail || typeof detail !== 'object' || Array.isArray(detail)) return false
+  const input = detail as Record<string, unknown>
+  if (typeof input.event !== 'string' || typeof input.metaEventId !== 'string') return false
+  if (input.event !== 'inquiry_sent' && input.event !== 'inquiry_delayed') return false
+  return metaPixel.track('Lead', undefined, input.metaEventId)
+}
+
 export function resetMetaBrowserStateForTests(): void {
   initializedPixelId = undefined
   lastPageViewKey = undefined

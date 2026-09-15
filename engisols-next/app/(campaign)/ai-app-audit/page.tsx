@@ -11,6 +11,8 @@ import { WorkGrid } from '@/components/campaign/WorkGrid'
 import { Card, Eyebrow, LpSection, Tick, TickItem } from '@/components/campaign/ui'
 import { Logo } from '@/components/layout/Logo'
 import { SITE } from '@/lib/site'
+import { attributionFromSearchParams } from '@/src/production-check/attribution'
+import { signAttributionToken } from '@/src/production-check/attribution-token.server'
 import {
   lpChecks,
   lpFaq,
@@ -64,9 +66,23 @@ export const metadata = {
   robots: { index: false, follow: false },
 }
 
-export default function AiAppAuditPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function AiAppAuditPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const resolvedSearchParams = await searchParams
+  const attribution = attributionFromSearchParams({
+    get: (key) => {
+      const value = resolvedSearchParams[key]
+      return typeof value === 'string' ? value : null
+    },
+  })
+  const attributionToken = signAttributionToken(attribution)
   return (
-    <BookingProvider>
+    <BookingProvider attributionToken={attributionToken}>
       <LpHeader />
 
       {/* 1 Hero */}
@@ -97,7 +113,7 @@ export default function AiAppAuditPage() {
             className="lp-in order-2 flex flex-wrap items-center gap-step-2 lg:col-start-1 lg:row-start-3"
             style={{ '--i': 4 } as CSSProperties}
           >
-            <BookButton label={lpHero.primary} shortLabel="BOOK A FREE CALL" className="w-full justify-center sm:w-auto" />
+            <BookButton label={lpHero.primary} shortLabel="BOOK A FREE CALL" location="hero" className="w-full justify-center sm:w-auto" />
             <a
               href="#sample"
               data-cursor="link"
@@ -277,7 +293,7 @@ export default function AiAppAuditPage() {
             </ul>
           </Reveal>
           <Reveal y={8} delay={0.16}>
-            <BookButton label={lpFinal.cta} shortLabel="BOOK A FREE CALL" variant="inverse" className="w-full justify-center sm:w-auto" />
+            <BookButton label={lpFinal.cta} shortLabel="BOOK A FREE CALL" variant="inverse" location="final" className="w-full justify-center sm:w-auto" />
           </Reveal>
         </div>
       </section>

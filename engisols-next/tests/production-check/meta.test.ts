@@ -12,6 +12,7 @@ import {
   type MetaConversionEvent,
 } from '../../src/meta/capi.server'
 import {
+  bridgeAiAppAuditEvent,
   bridgeProductionCheckEvent,
   metaPageViewKey,
   metaPixel,
@@ -260,6 +261,17 @@ test('production-check bridge allowlists events and sends each business event ID
   assert.equal(calls.filter(([command]) => command === 'trackCustom').length, 2)
   const browserLead = calls.find(([command, eventName]) => command === 'track' && eventName === 'Lead')
   assert.deepEqual(browserLead?.[3], { eventID: leadId })
+})
+
+test('AI app audit bridge sends one Lead for sent or delayed durable inquiries only', () => {
+  const calls = installBrowser()
+  const sentId = createMetaEventId('Lead', 'audit_lead_abcdefghijklmnopqrstuvwx')
+  const delayedId = createMetaEventId('Lead', 'audit_lead_zyxwvutsrqponmlkjihgfedc')
+  assert.equal(bridgeAiAppAuditEvent({ event: 'inquiry_sent', metaEventId: sentId }), true)
+  assert.equal(bridgeAiAppAuditEvent({ event: 'inquiry_sent', metaEventId: sentId }), false)
+  assert.equal(bridgeAiAppAuditEvent({ event: 'inquiry_delayed', metaEventId: delayedId }), true)
+  assert.equal(bridgeAiAppAuditEvent({ event: 'inquiry_opened', metaEventId: delayedId }), false)
+  assert.equal(calls.filter(([command, event]) => command === 'track' && event === 'Lead').length, 2)
 })
 
 test('business event IDs are stable, high entropy, and distinct by event name', () => {

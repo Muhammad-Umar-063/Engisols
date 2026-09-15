@@ -1,7 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState, type FormEvent, type ReactNode } from 'react'
-import posthog from 'posthog-js'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Magnetic } from '@/components/motion/Magnetic'
 import { SheetModal } from '@/components/motion/SheetModal'
 import { DotsMorphButton } from '@/components/motion/DotsMorphButton'
@@ -12,11 +11,8 @@ import {
   type AuditInquiryErrors,
   type AuditInquiryInput,
 } from '@/src/campaign/audit-inquiry'
-
-const posthogConfigured = Boolean(
-  process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
-    process.env.NEXT_PUBLIC_POSTHOG_HOST,
-)
+import { parseAuditInquirySuccess } from '@/src/campaign/audit-inquiry-response'
+import { trackAiAppAudit } from '@/src/campaign/analytics'
 
 /**
  * Every CTA on the page, and the dialog behind them.
@@ -35,7 +31,9 @@ const posthogConfigured = Boolean(
  * campaign inquiry route. Provider credentials never enter the client bundle.
  */
 
-const BookingCtx = createContext<(() => void) | null>(null)
+export type AuditCtaLocation = 'header' | 'hero' | 'final' | 'mobile_dock'
+
+const BookingCtx = createContext<((location: AuditCtaLocation) => void) | null>(null)
 
 /** Opens the dialog. Any client component under the provider may call it. */
 export function useBooking() {
@@ -44,15 +42,28 @@ export function useBooking() {
   return open
 }
 
-export function BookingProvider({ children }: { children: ReactNode }) {
+export function BookingProvider({
+  children,
+  attributionToken,
+}: {
+  children: ReactNode
+  attributionToken: string
+}) {
   const [open, setOpen] = useState(false)
   const [showMobileDock, setShowMobileDock] = useState(false)
-  const show = useCallback(() => {
-    if (posthogConfigured) posthog.capture('ai_audit_inquiry_opened')
+  const [ctaLocation, setCtaLocation] = useState<AuditCtaLocation>('hero')
+  const trackedView = useRef(false)
+  const show = useCallback((location: AuditCtaLocation) => {
+    trackAiAppAudit('inquiry_opened', { cta_location: location })
+    setCtaLocation(location)
     setOpen(true)
   }, [])
 
   useEffect(() => {
+    if (!trackedView.current) {
+      trackedView.current = true
+      trackAiAppAudit('viewed')
+    }
     const update = () => setShowMobileDock(window.scrollY > 520)
     update()
     window.addEventListener('scroll', update, { passive: true })
@@ -76,7 +87,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       >
         <button
           type="button"
-          onClick={show}
+          onClick={() => show('mobile_dock')}
           tabIndex={showMobileDock && !open ? 0 : -1}
           className="flex min-h-12 w-full items-center justify-between gap-step-2 rounded-xl bg-cherry px-step-3 text-left text-vanilla"
         >
@@ -93,7 +104,11 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         title={lpForm.heading}
         themeClassName="engisols-campaign-brand"
       >
-        <BookingForm onDone={() => setOpen(false)} />
+        <BookingForm
+          attributionToken={attributionToken}
+          ctaLocation={ctaLocation}
+          onDone={() => setOpen(false)}
+        />
       </SheetModal>
     </BookingCtx.Provider>
   )
@@ -113,11 +128,13 @@ export function BookButton({
   label,
   shortLabel,
   variant = 'primary',
+  location,
   className = '',
 }: {
   label: string
   shortLabel?: string
   variant?: 'primary' | 'inverse' | 'compact'
+  location: AuditCtaLocation
   className?: string
 }) {
   const open = useBooking()
@@ -135,7 +152,7 @@ export function BookButton({
     <Magnetic className="-m-6" snap={false}>
       <button
         type="button"
-        onClick={open}
+        onClick={() => open(location)}
         aria-label={label}
       // The cursor takes its fill from the nearest `[data-ground]`, and a
       // button is a surface of its own: a cherry fill sitting on a light page
@@ -163,9 +180,17 @@ export function BookButton({
   )
 }
 
-type SubmissionState = 'idle' | 'pending' | 'sent' | 'error'
+type SubmissionState = 'idle' | 'pending' | 'sent' | 'delayed' | 'retrying' | 'acknowledged' | 'error'
 
-function BookingForm({ onDone }: { onDone: () => void }) {
+function BookingForm({
+  attributionToken,
+  ctaLocation,
+  onDone,
+}: {
+  attributionToken: string
+  ctaLocation: AuditCtaLocation
+  onDone: () => void
+}) {
   const [values, setValues] = useState<AuditInquiryInput>({ name: '', email: '', app: '', worry: '' })
   const [website, setWebsite] = useState('')
   const [errors, setErrors] = useState<AuditInquiryErrors>({})
@@ -195,54 +220,120 @@ function BookingForm({ onDone }: { onDone: () => void }) {
     return true
   }
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!validate()) return
-    setState('pending')
+  const sendInquiry = async (attempt: 'initial' | 'retry') => {
+    if (attempt === 'initial' && !website) {
+      trackAiAppAudit('inquiry_submitted', { cta_location: ctaLocation })
+    }
+    setState(attempt === 'retry' ? 'retrying' : 'pending')
     setSubmissionError('')
     try {
       const response = await fetch('/api/ai-app-audit/inquiry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...values, website }),
+        body: JSON.stringify({ ...values, website, attributionToken }),
       })
       const body = await readResponse(response)
-      if (!response.ok || !body.ok) {
-        throw new Error(body.error?.message || 'We could not send your request. Please try again.')
+      const result = response.ok ? parseAuditInquirySuccess(body) : null
+      if (!response.ok || !result) {
+        const failure = responseError(body)
+        throw new InquirySubmissionError(
+          failure?.message || 'We could not send your request. Please try again.',
+          response.status,
+          failure?.code ?? 'request_failed',
+        )
       }
-      setState('sent')
-      if (posthogConfigured) posthog.capture('ai_audit_inquiry_sent')
-      push(lpForm.done)
+
+      // Honeypot submissions receive an intentionally generic acknowledgement.
+      // They must never become PostHog or Meta conversions in the browser.
+      if (result.kind === 'generic') {
+        setState('acknowledged')
+        push('Thanks. Your request was received.')
+        requestAnimationFrame(() => document.getElementById('lp-inquiry-status')?.focus())
+        return
+      }
+
+      const delivery = result.notification
+      setState(delivery)
+      trackAiAppAudit(delivery === 'delayed' ? 'inquiry_delayed' : 'inquiry_sent', {
+        cta_location: ctaLocation,
+        notification: delivery,
+        http_status: response.status,
+        metaEventId: result.metaEventId,
+      })
+      push(result.message ?? lpForm.done)
       requestAnimationFrame(() => document.getElementById('lp-inquiry-status')?.focus())
     } catch (error) {
-      setState('error')
-      if (posthogConfigured) posthog.capture('ai_audit_inquiry_failed')
+      setState(attempt === 'retry' ? 'delayed' : 'error')
+      const failure = error instanceof InquirySubmissionError ? error : undefined
+      trackAiAppAudit('inquiry_failed', {
+        cta_location: ctaLocation,
+        http_status: failure?.status ?? 0,
+        error_code: failure?.code ?? 'network_error',
+      })
       setSubmissionError(error instanceof Error ? error.message : 'We could not send your request. Please try again.')
-      requestAnimationFrame(() => document.getElementById('lp-inquiry-submit')?.focus())
+      requestAnimationFrame(() => document.getElementById(attempt === 'retry' ? 'lp-inquiry-retry' : 'lp-inquiry-submit')?.focus())
     }
   }
 
-  if (state === 'sent') {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!validate()) return
+    await sendInquiry('initial')
+  }
+
+  if (state === 'sent' || state === 'delayed' || state === 'retrying' || state === 'acknowledged') {
+    const delayed = state === 'delayed' || state === 'retrying'
+    const acknowledged = state === 'acknowledged'
     return (
-      <section id="lp-inquiry-status" tabIndex={-1} role="status" aria-live="polite" className="space-y-step-3 text-bordeaux outline-none">
-        <p className="font-mono text-[0.68rem] font-semibold tracking-[0.08em] text-cherry">REQUEST RECEIVED</p>
-        <h3 className="max-w-[22ch] text-[clamp(1.65rem,5vw,2.5rem)]">A senior engineer will review the context before replying.</h3>
+      <section id="lp-inquiry-status" tabIndex={-1} role="status" aria-live="polite" className="ph-no-capture space-y-step-3 text-bordeaux outline-none">
+        <p className="font-mono text-[0.68rem] font-semibold tracking-[0.08em] text-cherry">{delayed ? 'REQUEST SAVED' : 'REQUEST RECEIVED'}</p>
+        <h3 className="max-w-[22ch] text-[clamp(1.65rem,5vw,2.5rem)]">
+          {acknowledged ? 'Thanks for getting in touch.' : delayed ? 'Your details are safe, but the notification is delayed.' : 'A senior engineer will review the context before replying.'}
+        </h3>
         <p className="max-w-[58ch] leading-relaxed text-bordeaux/75">
-          We sent your app details and concern to Engisols. Expect a reply to <strong className="font-medium text-bordeaux">{values.email}</strong> within one working day.
+          {state === 'sent' ? (
+            <>We sent your app details and concern to Engisols. Expect a reply to <strong className="font-medium text-bordeaux">{values.email}</strong> within one working day.</>
+          ) : acknowledged ? (
+            <>If this request is a fit, Engisols will follow up with the next step.</>
+          ) : (
+            <>Your request is safely saved, but the notification to our team did not go through. Retry it now without re-entering your details.</>
+          )}
         </p>
-        <div className="rounded-xl border border-greige/50 bg-oat/60 p-step-3">
-          <p className="font-mono text-[0.65rem] font-semibold tracking-[0.08em] text-cherry">WHAT HAPPENS NEXT</p>
-          <p className="mt-step-1 text-sm leading-relaxed text-bordeaux/75">We first decide whether a codebase audit is justified. If it is, you receive scope and price before sharing repository access.</p>
+        {!acknowledged ? (
+          <div className="rounded-xl border border-greige/50 bg-oat/60 p-step-3">
+            <p className="font-mono text-[0.65rem] font-semibold tracking-[0.08em] text-cherry">WHAT HAPPENS NEXT</p>
+            <p className="mt-step-1 text-sm leading-relaxed text-bordeaux/75">We first decide whether a codebase audit is justified. If it is, you receive scope and price before sharing repository access.</p>
+          </div>
+        ) : null}
+        {delayed && submissionError ? (
+          <div role="alert" className="rounded-xl border border-cherry/45 bg-oat/65 p-step-2 text-sm leading-relaxed">
+            <p className="font-semibold">The notification is still delayed.</p>
+            <p className="mt-1 text-bordeaux/75">{submissionError}</p>
+          </div>
+        ) : null}
+        <div className="flex flex-col gap-step-2 sm:flex-row">
+          {delayed ? (
+            <button
+              id="lp-inquiry-retry"
+              type="button"
+              disabled={state === 'retrying'}
+              aria-busy={state === 'retrying'}
+              onClick={() => void sendInquiry('retry')}
+              className="inline-flex min-h-12 items-center justify-center rounded-full bg-cherry px-step-4 font-mono text-xs font-semibold text-vanilla transition-opacity hover:opacity-90 disabled:opacity-70"
+            >
+              {state === 'retrying' ? 'RETRYING…' : 'RETRY NOTIFICATION'}
+            </button>
+          ) : null}
+          <button type="button" onClick={onDone} className={`inline-flex min-h-12 items-center justify-center rounded-full px-step-4 font-mono text-xs font-semibold transition-opacity hover:opacity-90 ${delayed ? 'border border-cherry text-cherry' : 'bg-cherry text-vanilla'}`}>
+            RETURN TO THE AUDIT <span aria-hidden className="ml-2">→</span>
+          </button>
         </div>
-        <button type="button" onClick={onDone} className="inline-flex min-h-12 items-center justify-center rounded-full bg-cherry px-step-4 font-mono text-xs font-semibold text-vanilla transition-opacity hover:opacity-90">
-          RETURN TO THE AUDIT <span aria-hidden className="ml-2">→</span>
-        </button>
       </section>
     )
   }
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-step-3 text-bordeaux">
+    <form onSubmit={submit} noValidate className="ph-no-capture space-y-step-3 text-bordeaux">
       <p className="max-w-[58ch] text-sm leading-relaxed text-bordeaux/75 sm:text-base">{lpForm.lead}</p>
 
       <div className="grid grid-cols-3 divide-x divide-greige/50 border-y border-greige/50 py-step-2 text-center">
@@ -315,15 +406,27 @@ function Field({
 
 const fieldClass = 'mt-step-1 min-h-11 w-full rounded-lg border border-greige/60 bg-vanilla px-step-2 py-step-1 text-base outline-none transition-colors placeholder:text-bordeaux/40 focus-visible:border-cherry focus-visible:ring-2 focus-visible:ring-cherry/20 disabled:opacity-60 aria-invalid:border-cherry'
 
-interface InquiryResponse {
-  ok: boolean
-  error?: { message?: string }
+class InquirySubmissionError extends Error {
+  constructor(message: string, readonly status: number, readonly code: string) {
+    super(message)
+  }
 }
 
-async function readResponse(response: Response): Promise<InquiryResponse> {
+async function readResponse(response: Response): Promise<unknown> {
   try {
-    return await response.json() as InquiryResponse
+    return await response.json() as unknown
   } catch {
     return { ok: false }
+  }
+}
+
+function responseError(value: unknown): { code?: string; message?: string } | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const error = (value as Record<string, unknown>).error
+  if (!error || typeof error !== 'object' || Array.isArray(error)) return undefined
+  const record = error as Record<string, unknown>
+  return {
+    ...(typeof record.code === 'string' ? { code: record.code } : {}),
+    ...(typeof record.message === 'string' ? { message: record.message } : {}),
   }
 }

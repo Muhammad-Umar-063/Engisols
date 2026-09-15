@@ -438,11 +438,11 @@ export const scanNextPage = {
 export const legalPages = {
   privacy: {
     title: 'Privacy',
-    updated: '10 September 2026',
+    updated: '15 September 2026',
     sections: [
       {
         heading: 'What we collect',
-        body: 'We collect information you send directly, such as your name, email, and form or email content. We also measure site visits and a small set of funnel actions with the Meta Pixel and server-side conversion measurement. Meta may provide or read the _fbp and _fbc identifiers used to connect those actions to an ad visit.',
+        body: 'We collect information you send directly, such as your name, email, and form or email content. We use PostHog to measure site visits, funnel actions, and session interactions, and use the Meta Pixel and server-side conversion measurement for advertising performance. Meta may provide or read the _fbp and _fbc identifiers used to connect those actions to an ad visit.',
       },
       {
         heading: 'Client code and data',
@@ -450,7 +450,7 @@ export const legalPages = {
       },
       {
         heading: 'What we do not do',
-        body: 'We do not sell data or enrich your email against third-party databases. Meta conversion events do not include scanned app URLs, findings, source code, builder answers, shipping context, or report contents. For a saved review request, we may send Meta a normalized SHA-256 hash of the submitted email plus available browser, click, IP, and user-agent signals for measurement and attribution.',
+        body: 'We do not sell data or enrich your email against third-party databases. PostHog funnel events do not include names, emails, app details, inquiry text, attribution tokens, or Meta event identifiers. Meta conversion events do not include scanned app URLs, inquiry details, findings, source code, builder answers, shipping context, UTM values, or report contents. For a saved request, we may send Meta a normalized SHA-256 hash of the submitted email plus available browser, click, IP, and user-agent signals for measurement and attribution.',
       },
       {
         heading: 'Advertising measurement choices',
