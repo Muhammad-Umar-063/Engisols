@@ -216,8 +216,12 @@ test('noscript fallback uses the configured Pixel ID and respects denial', () =>
       headers: { cookie: 'engisols_meta_consent=denied' },
     }))
     const granted = metaNoscriptPageView(new Request('https://engisols.com/api/meta/page-view'))
+    const offerRoute = metaNoscriptPageView(new Request('https://engisols.com/api/meta/page-view', {
+      headers: { referer: 'https://engisols.com/production-check/offer/offer_abcdefghijklmnopqrstuvwx' },
+    }))
     assert.equal(denied.status, 204)
     assert.equal(granted.status, 307)
+    assert.equal(offerRoute.status, 204)
     assert.equal(new URL(granted.headers.get('location') ?? '').searchParams.get('id'), pixelId)
   } finally {
     if (previous === undefined) delete process.env.NEXT_PUBLIC_META_PIXEL_ID
@@ -235,6 +239,8 @@ test('PageView uses pathname semantics and never duplicates on rerender or query
   assert.equal(metaPixel.pageView('/production-check'), true)
   assert.equal(metaPixel.pageView('/production-check?scanId=abc'), false)
   assert.equal(metaPixel.pageView('/production-check/report/rpt_abc'), true)
+  assert.equal(metaPixel.pageView('/production-check/offer/offer_abcdefghijklmnopqrstuvwx'), false)
+  assert.equal(metaPixel.pageView('https://engisols.com/production-check/offer/offer_zyxwvutsrqponmlkjihgfedc'), false)
   assert.equal(calls.filter(([command, event]) => command === 'track' && event === 'PageView').length, 4)
   assert.equal(metaPageViewKey('/ai-app-audit?utm_source=meta'), '/ai-app-audit')
 })

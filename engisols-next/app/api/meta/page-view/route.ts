@@ -1,4 +1,5 @@
 import { resolveMetaConsent } from '../../../../src/meta/consent'
+import { isProductionCheckOfferUrl } from '../../../../src/production-check/analytics-privacy'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,7 +9,13 @@ export function GET(request: Request): Response {
     cookieHeader: request.headers.get('cookie'),
     globalPrivacyControl: request.headers.get('sec-gpc') === '1',
   })
-  if (!pixelId || !/^\d{5,32}$/.test(pixelId) || consent === 'denied') {
+  const sourceUrl = request.headers.get('referer') ?? ''
+  if (
+    !pixelId ||
+    !/^\d{5,32}$/.test(pixelId) ||
+    consent === 'denied' ||
+    isProductionCheckOfferUrl(sourceUrl)
+  ) {
     return new Response(null, {
       status: 204,
       headers: { 'Cache-Control': 'private, no-store' },

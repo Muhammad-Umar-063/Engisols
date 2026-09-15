@@ -24,6 +24,9 @@ test('derives a stable high-entropy id from normalized submission identity', () 
     help: 'verify',
     timeline: 'month',
     context: 'Preparing a release.\r\nSoon.',
+    concern: 'launch_readiness',
+    concernDetail: '',
+    accessWillingness: 'yes_after_review',
     website: '',
   }
   const normalized: ReviewRequestSubmission = {
@@ -64,6 +67,9 @@ test('builds a one-year lead from sanitized server-side scan context only', () =
       help: 'fix',
       timeline: 'quarter',
       context: 'Preparing a production release.',
+      concern: 'launch_readiness',
+      concernDetail: '',
+      accessWillingness: 'not_yet',
       website: '',
     },
     scan,

@@ -21,4 +21,4 @@ Lead records contain contact and qualification fields, the server-owned campaign
 
 Set `PRODUCTION_CHECK_ATTRIBUTION_SECRET` to a dedicated high-entropy value in production. If it is absent, the server uses the configured Upstash/KV REST token as the signing secret; development and tests use a local-only fallback.
 
-Internal segments are stored as `nurture`, `maybe`, or `qualified`. Public API responses expose only the corresponding next-step contract: `report_guidance`, `launch_blocker_fix`, or `senior_engineer_review`.
+Internal segments are stored as `nurture`, `maybe`, or `qualified`. Public API responses expose only `report_guidance` or `engineer_scope_check`. A segment is never a paid offer; see `production-check-scope-review.md` for the human decision layer.

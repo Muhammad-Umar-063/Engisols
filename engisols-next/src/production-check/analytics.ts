@@ -1,5 +1,7 @@
 import posthog from 'posthog-js'
 
+import { productionCheckPostHogProperties } from './analytics-properties'
+
 const posthogConfigured = Boolean(
   process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
     process.env.NEXT_PUBLIC_POSTHOG_HOST,
@@ -31,6 +33,13 @@ export const PRODUCTION_CHECK_EVENTS = [
   'lead_nurture',
   'lead_maybe',
   'lead_qualified',
+  'scope_review_cta_clicked',
+  'scope_review_requested',
+  'scope_review_confirmation_viewed',
+  'scope_offer_viewed',
+  'scope_offer_approved',
+  'scope_offer_declined',
+  'scope_more_info_requested',
 ] as const
 
 export type ProductionCheckEvent = (typeof PRODUCTION_CHECK_EVENTS)[number]
@@ -40,7 +49,7 @@ export function trackProductionCheck(
   detail: Readonly<Record<string, string | number | boolean>> = {},
 ): void {
   if (typeof window === 'undefined') return
-  if (posthogConfigured) posthog.capture(event, detail)
+  if (posthogConfigured) posthog.capture(event, productionCheckPostHogProperties(detail))
   window.dispatchEvent(
     new CustomEvent('engisols:production-check', { detail: { event, ...detail } }),
   )

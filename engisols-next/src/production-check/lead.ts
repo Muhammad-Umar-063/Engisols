@@ -2,10 +2,7 @@ import { createHash, randomBytes } from 'node:crypto'
 
 import { createMetaEventId } from '../meta/event-id.server'
 import type { MetaRequestContext } from '../meta/request.server'
-import {
-  LAUNCH_BLOCKER_FIX_PRICE_USD,
-  LEAD_RECORD_LIFETIME_MS,
-} from './config'
+import { LEAD_RECORD_LIFETIME_MS } from './config'
 import { buildFounderReport } from './report'
 import type { ReviewRequestSubmission } from './review-intake'
 import { containsCredentialLikeValue } from './security'
@@ -54,9 +51,6 @@ export function createProductionCheckLead(
     score: qualification.score,
     segment: qualification.segment,
     status: 'new',
-    ...(qualification.segment === 'maybe'
-      ? { estimatedValue: LAUNCH_BLOCKER_FIX_PRICE_USD }
-      : {}),
     scanSummary: {
       publicRisk: report.publicSurfaceRisk,
       fixNow: report.counts.fixNow,

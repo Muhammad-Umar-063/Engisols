@@ -6,8 +6,10 @@ import {
   MemoryScanStore,
   UpstashLeadStore,
   UpstashScanStore,
+  UpstashScopeOfferStore,
 } from '../../src/production-check/store'
 import type { PersistedScan, ProductionCheckLead } from '../../src/production-check/types'
+import { createProductionScopeOffer, createProductionScopeReview } from '../../src/production-check/scope-review'
 
 function queuedScan(): PersistedScan {
   return {
@@ -226,4 +228,43 @@ test('does not downgrade a sent in-memory lead back to pending', async () => {
   await store.save(sent)
   await store.save({ ...sent, notification: { status: 'pending' } })
   assert.equal((await store.get(sent.id))?.notification.status, 'sent')
+})
+
+test('claims an Upstash offer with one atomic review-and-offer operation', async () => {
+  const originalFetch = globalThis.fetch
+  const commands: string[][] = []
+  globalThis.fetch = async (_input, init) => {
+    const command = JSON.parse(String(init?.body)) as string[]
+    commands.push(command)
+    return Response.json({ result: [1, command[5]] })
+  }
+
+  try {
+    const claimedAt = new Date('2026-12-01T10:00:00.000Z')
+    const review = createProductionScopeReview({
+      lead: lead(),
+      concern: 'payments',
+      accessWillingness: 'yes_after_review',
+    }, () => claimedAt)
+    const offer = createProductionScopeOffer({
+      review,
+      type: 'launch_blocker_fix',
+      summary: 'A bounded production scope.',
+      includedItems: ['Correct authorization'],
+      exclusions: [],
+    }, () => claimedAt)
+    const store = new UpstashScopeOfferStore('https://redis.example', 'secret', () => claimedAt)
+    const result = await store.claimForReview(offer)
+
+    assert.equal(result.created, true)
+    assert.equal(result.offer.id, offer.id)
+    assert.equal(commands.length, 1)
+    assert.equal(commands[0]?.[0], 'EVAL')
+    assert.equal(commands[0]?.[2], '2')
+    assert.match(commands[0]?.[3] ?? '', /scope-offer-review:/)
+    assert.match(commands[0]?.[4] ?? '', /scope-offer:/)
+    assert.match(commands[0]?.[1] ?? '', /claimedId.*SET.*KEYS\[2\].*SET.*KEYS\[1\]/)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
 })

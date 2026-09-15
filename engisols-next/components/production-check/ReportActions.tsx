@@ -54,27 +54,25 @@ export function ReportActions({
     return copy(reportUrl, 'report', 'report_link_copied', 'Shareable report link copied.')
   }
 
-  const primaryEvent = hasUrgentFindings ? 'fix_cta_clicked' : 'senior_cta_clicked'
   const light = tone === 'light'
 
   function openIntake() {
-    trackProductionCheck(primaryEvent, { reportId })
+    trackProductionCheck('scope_review_cta_clicked', { scan_id: reportId })
     trackProductionCheck('review_intake_opened', { reportId, urgent: hasUrgentFindings })
     setIntakeOpen(true)
   }
 
   return (
     <div id="next-step" className={`scroll-mt-28 border-t ${light ? 'border-greige/60 pt-step-2' : 'border-vanilla/25 pt-step-3'}`}>
-      <div className="grid grid-cols-2 gap-step-1 sm:flex sm:flex-wrap">
+      <div className="flex flex-col gap-step-1 sm:flex-row sm:flex-wrap">
         <button
           type="button"
           aria-haspopup="dialog"
           data-production-review-trigger
           onClick={openIntake}
-          className={`inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-full px-step-2 font-mono text-[0.68rem] font-medium no-underline transition-opacity hover:opacity-90 sm:px-step-4 sm:text-xs ${light ? 'bg-cherry text-vanilla' : 'bg-vanilla text-cherry'}`}
+          className={`inline-flex min-h-12 items-center justify-center rounded-full px-step-3 text-center font-mono text-[0.65rem] font-medium leading-snug no-underline transition-opacity hover:opacity-90 sm:px-step-4 sm:text-xs ${light ? 'bg-cherry text-vanilla' : 'bg-vanilla text-cherry'}`}
         >
-          <span className="sm:hidden">{hasUrgentFindings ? 'REVIEW FIX PLAN' : 'ENGINEERING REVIEW'}</span>
-          <span className="hidden sm:inline">{hasUrgentFindings ? 'REVIEW THE FIX PLAN' : 'REVIEW WITH AN ENGINEER'}</span>
+          <span>REQUEST FREE ENGINEER SCOPE CHECK</span>
         </button>
         <button
           type="button"
@@ -85,7 +83,11 @@ export function ReportActions({
         </button>
       </div>
       <p className={`mt-step-1 font-mono text-[0.65rem] leading-relaxed ${light ? 'text-bordeaux/60' : 'text-vanilla/65'}`}>
-        FREE INITIAL REVIEW · NO REPOSITORY ACCESS REQUIRED
+        FREE · NO OBLIGATION · NO REPOSITORY ACCESS REQUIRED
+      </p>
+
+      <p className={`mt-step-2 max-w-[62ch] text-sm leading-relaxed ${light ? 'text-bordeaux/70' : 'text-vanilla/70'}`}>
+        Automated checks can only see the public surface. The scanner gives a fast diagnosis; an engineer can verify whether uncertain database, authorization, API, deployment, or architecture items actually matter for your application.
       </p>
 
       <details className="group mt-step-1">
