@@ -5,18 +5,27 @@ import type {
   LeadStore,
   ProductionCheckAttribution,
   ProductionCheckLead,
+  ProductionScopeOffer,
+  ProductionScopeReview,
   ScanAnswers,
   ScanProgressSnapshot,
   ScanStore,
+  ScopeOfferStore,
+  ScopeReviewStore,
 } from './types'
 import {
   LEAD_RECORD_TTL_SECONDS,
   SCAN_RECORD_TTL_SECONDS,
   SCAN_STORE_TIMEOUT_MS,
+  SCOPE_OFFER_RETENTION_SECONDS,
+  SCOPE_REVIEW_RECORD_TTL_SECONDS,
 } from './config'
 
 const KEY_PREFIX = 'engisols:production-check:'
 const LEAD_KEY_PREFIX = 'engisols:production-check:lead:'
+const SCOPE_REVIEW_KEY_PREFIX = 'engisols:production-check:scope-review:'
+const SCOPE_OFFER_KEY_PREFIX = 'engisols:production-check:scope-offer:'
+const SCOPE_OFFER_REVIEW_KEY_PREFIX = 'engisols:production-check:scope-offer-review:'
 
 export class ScanStoreConfigurationError extends Error {}
 
@@ -143,6 +152,160 @@ export class MemoryLeadStore implements LeadStore {
     const now = this.now().getTime()
     for (const [id, existing] of this.leads) {
       if (new Date(existing.expiresAt).getTime() <= now) this.leads.delete(id)
+    }
+  }
+}
+
+export class MemoryScopeReviewStore implements ScopeReviewStore {
+  private readonly reviews = new Map<string, ProductionScopeReview>()
+
+  constructor(private readonly now: () => Date = () => new Date()) {}
+
+  async createOrGet(review: ProductionScopeReview) {
+    this.evictExpired()
+    const existing = this.reviews.get(review.id)
+    if (existing) return { review: structuredClone(existing), created: false }
+    this.reviews.set(review.id, structuredClone(review))
+    return { review: structuredClone(review), created: true }
+  }
+
+  async save(review: ProductionScopeReview): Promise<void> {
+    this.evictExpired()
+    this.reviews.set(review.id, structuredClone(review))
+  }
+
+  async get(id: string): Promise<ProductionScopeReview | null> {
+    this.evictExpired()
+    const review = this.reviews.get(id)
+    return review ? structuredClone(review) : null
+  }
+
+  private evictExpired(): void {
+    const current = this.now().getTime()
+    for (const [id, review] of this.reviews) {
+      if (new Date(review.expiresAt).getTime() <= current) this.reviews.delete(id)
+    }
+  }
+}
+
+export class MemoryScopeOfferStore implements ScopeOfferStore {
+  private readonly offers = new Map<string, ProductionScopeOffer>()
+  private readonly offerIdsByReview = new Map<string, string>()
+
+  constructor(private readonly now: () => Date = () => new Date()) {}
+
+  async claimForReview(offer: ProductionScopeOffer) {
+    this.evictExpired()
+    const claimedId = this.offerIdsByReview.get(offer.scopeReviewId)
+    const claimed = claimedId ? this.offers.get(claimedId) : undefined
+    if (claimed) return { offer: structuredClone(claimed), created: false }
+    const existing = this.offers.get(offer.id)
+    if (existing) {
+      this.offerIdsByReview.set(existing.scopeReviewId, existing.id)
+      return { offer: structuredClone(existing), created: false }
+    }
+    this.offers.set(offer.id, structuredClone(offer))
+    this.offerIdsByReview.set(offer.scopeReviewId, offer.id)
+    return { offer: structuredClone(offer), created: true }
+  }
+
+  async markSent(id: string, sentAt: string): Promise<ProductionScopeOffer | null> {
+    this.evictExpired()
+    const existing = this.offers.get(id)
+    if (!existing) return null
+    if (existing.status !== 'draft') return structuredClone(existing)
+    const sent: ProductionScopeOffer = {
+      ...existing,
+      status: 'sent',
+      sentAt,
+      notification: { status: 'sent', attemptedAt: sentAt },
+    }
+    this.offers.set(id, structuredClone(sent))
+    return structuredClone(sent)
+  }
+
+  async markSendFailed(id: string, attemptedAt: string): Promise<ProductionScopeOffer | null> {
+    this.evictExpired()
+    const existing = this.offers.get(id)
+    if (!existing) return null
+    if (existing.status !== 'draft') return structuredClone(existing)
+    const failed: ProductionScopeOffer = {
+      ...existing,
+      notification: { status: 'failed', attemptedAt },
+    }
+    this.offers.set(id, structuredClone(failed))
+    return structuredClone(failed)
+  }
+
+  async get(id: string): Promise<ProductionScopeOffer | null> {
+    this.evictExpired()
+    const offer = this.offers.get(id)
+    return offer ? structuredClone(offer) : null
+  }
+
+  async transitionDecision(
+    id: string,
+    decision: 'accepted' | 'declined',
+    decidedAt: string,
+  ): Promise<ProductionScopeOffer | null> {
+    this.evictExpired()
+    const existing = this.offers.get(id)
+    if (!existing) return null
+    if (existing.status === 'accepted' || existing.status === 'declined' || existing.status === 'expired') {
+      return structuredClone(existing)
+    }
+    if (new Date(existing.expiresAt).getTime() <= new Date(decidedAt).getTime()) {
+      const expired = { ...existing, status: 'expired' as const }
+      this.offers.set(id, expired)
+      return structuredClone(expired)
+    }
+    if (existing.status !== 'sent') return structuredClone(existing)
+    const updated: ProductionScopeOffer = {
+      ...existing,
+      status: decision,
+      ...(decision === 'accepted' ? { acceptedAt: decidedAt } : { declinedAt: decidedAt }),
+      decisionReviewSync: { status: 'pending' },
+      decisionNotification: { status: 'pending' },
+    }
+    this.offers.set(id, structuredClone(updated))
+    return structuredClone(updated)
+  }
+
+  async recordDecisionReconciliation(
+    id: string,
+    update: {
+      reviewSync?: 'synced' | 'failed'
+      notification?: 'sent' | 'failed'
+    },
+    attemptedAt: string,
+  ): Promise<ProductionScopeOffer | null> {
+    this.evictExpired()
+    const existing = this.offers.get(id)
+    if (!existing || (existing.status !== 'accepted' && existing.status !== 'declined')) return existing ? structuredClone(existing) : null
+    const reviewSync = update.reviewSync && existing.decisionReviewSync?.status !== 'synced'
+      ? { status: update.reviewSync, attemptedAt } as const
+      : existing.decisionReviewSync
+    const notification = update.notification && existing.decisionNotification?.status !== 'sent'
+      ? { status: update.notification, attemptedAt } as const
+      : existing.decisionNotification
+    const reconciled: ProductionScopeOffer = {
+      ...existing,
+      ...(reviewSync ? { decisionReviewSync: reviewSync } : {}),
+      ...(notification ? { decisionNotification: notification } : {}),
+    }
+    this.offers.set(id, structuredClone(reconciled))
+    return structuredClone(reconciled)
+  }
+
+  private evictExpired(): void {
+    const current = this.now().getTime()
+    for (const [id, offer] of this.offers) {
+      if (new Date(offer.retainedUntil).getTime() <= current) {
+        this.offers.delete(id)
+        if (this.offerIdsByReview.get(offer.scopeReviewId) === id) {
+          this.offerIdsByReview.delete(offer.scopeReviewId)
+        }
+      }
     }
   }
 }
@@ -412,11 +575,182 @@ export class UpstashLeadStore implements LeadStore {
   }
 }
 
+abstract class UpstashJsonStore<T extends { id: string }> {
+  protected readonly client: UpstashRestClient
+
+  constructor(
+    url: string,
+    token: string,
+    unavailableMessage: string,
+    private readonly keyPrefix: string,
+    private readonly maximumTtlSeconds: number,
+    private readonly now: () => Date = () => new Date(),
+  ) {
+    this.client = new UpstashRestClient(url, token, unavailableMessage)
+  }
+
+  protected async createOrGetRecord(record: T, retainedUntil: string) {
+    const serialized = JSON.stringify(record)
+    const result = await this.client.command<[number | string, string]>([
+      'EVAL',
+      "local existing = redis.call('GET', KEYS[1]); if existing then return {0, existing} end; redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[2]); return {1, ARGV[1]}",
+      '1',
+      this.key(record.id),
+      serialized,
+      String(this.remainingTtlSeconds(retainedUntil)),
+    ])
+    return { record: JSON.parse(result[1]) as T, created: Number(result[0]) === 1 }
+  }
+
+  protected async saveRecord(record: T, retainedUntil: string): Promise<void> {
+    await this.client.command<string>([
+      'SET',
+      this.key(record.id),
+      JSON.stringify(record),
+      'EX',
+      String(this.remainingTtlSeconds(retainedUntil)),
+    ])
+  }
+
+  protected async getRecord(id: string): Promise<T | null> {
+    const value = await this.client.command<string | null>(['GET', this.key(id)])
+    return value ? JSON.parse(value) as T : null
+  }
+
+  protected key(id: string): string {
+    return `${this.keyPrefix}${id}`
+  }
+
+  protected remainingTtlSeconds(retainedUntil: string): number {
+    const seconds = Math.ceil((new Date(retainedUntil).getTime() - this.now().getTime()) / 1_000)
+    if (!Number.isFinite(seconds) || seconds <= 0) throw new Error('Cannot persist an expired record.')
+    return Math.min(seconds, this.maximumTtlSeconds)
+  }
+}
+
+export class UpstashScopeReviewStore
+  extends UpstashJsonStore<ProductionScopeReview>
+  implements ScopeReviewStore {
+  constructor(url: string, token: string, now: () => Date = () => new Date()) {
+    super(url, token, 'Scope review persistence is temporarily unavailable.', SCOPE_REVIEW_KEY_PREFIX, SCOPE_REVIEW_RECORD_TTL_SECONDS, now)
+  }
+
+  async createOrGet(review: ProductionScopeReview) {
+    const result = await this.createOrGetRecord(review, review.expiresAt)
+    return { review: result.record, created: result.created }
+  }
+
+  async save(review: ProductionScopeReview): Promise<void> {
+    await this.saveRecord(review, review.expiresAt)
+  }
+
+  get(id: string): Promise<ProductionScopeReview | null> {
+    return this.getRecord(id)
+  }
+}
+
+export class UpstashScopeOfferStore
+  extends UpstashJsonStore<ProductionScopeOffer>
+  implements ScopeOfferStore {
+  constructor(url: string, token: string, now: () => Date = () => new Date()) {
+    super(url, token, 'Scope offer persistence is temporarily unavailable.', SCOPE_OFFER_KEY_PREFIX, SCOPE_OFFER_RETENTION_SECONDS, now)
+  }
+
+  async claimForReview(offer: ProductionScopeOffer) {
+    const serialized = JSON.stringify(offer)
+    const ttl = String(this.remainingTtlSeconds(offer.retainedUntil))
+    const result = await this.client.command<[number | string, string]>([
+      'EVAL',
+      "local claimedId = redis.call('GET', KEYS[1]); if claimedId then local claimed = redis.call('GET', ARGV[3] .. claimedId); if claimed then return {0, claimed} end; redis.call('DEL', KEYS[1]) end; local byId = redis.call('GET', KEYS[2]); if byId then local existing = cjson.decode(byId); if existing.scopeReviewId == ARGV[4] then redis.call('SET', KEYS[1], existing.id, 'EX', ARGV[2]) end; return {0, byId} end; redis.call('SET', KEYS[2], ARGV[1], 'EX', ARGV[2]); redis.call('SET', KEYS[1], ARGV[5], 'EX', ARGV[2]); return {1, ARGV[1]}",
+      '2',
+      this.reviewKey(offer.scopeReviewId),
+      this.key(offer.id),
+      serialized,
+      ttl,
+      SCOPE_OFFER_KEY_PREFIX,
+      offer.scopeReviewId,
+      offer.id,
+    ])
+    return {
+      offer: JSON.parse(result[1]) as ProductionScopeOffer,
+      created: Number(result[0]) === 1,
+    }
+  }
+
+  async markSent(id: string, sentAt: string): Promise<ProductionScopeOffer | null> {
+    const result = await this.client.command<string | null>([
+      'EVAL',
+      "local existing = redis.call('GET', KEYS[1]); if not existing then return nil end; local offer = cjson.decode(existing); if offer.status ~= 'draft' then return existing end; offer.status = 'sent'; offer.sentAt = ARGV[1]; offer.notification = {status = 'sent', attemptedAt = ARGV[1]}; local updated = cjson.encode(offer); redis.call('SET', KEYS[1], updated, 'KEEPTTL'); return updated",
+      '1',
+      this.key(id),
+      sentAt,
+    ])
+    return result ? JSON.parse(result) as ProductionScopeOffer : null
+  }
+
+  async markSendFailed(id: string, attemptedAt: string): Promise<ProductionScopeOffer | null> {
+    const result = await this.client.command<string | null>([
+      'EVAL',
+      "local existing = redis.call('GET', KEYS[1]); if not existing then return nil end; local offer = cjson.decode(existing); if offer.status ~= 'draft' then return existing end; offer.notification = {status = 'failed', attemptedAt = ARGV[1]}; local updated = cjson.encode(offer); redis.call('SET', KEYS[1], updated, 'KEEPTTL'); return updated",
+      '1',
+      this.key(id),
+      attemptedAt,
+    ])
+    return result ? JSON.parse(result) as ProductionScopeOffer : null
+  }
+
+  get(id: string): Promise<ProductionScopeOffer | null> {
+    return this.getRecord(id)
+  }
+
+  async transitionDecision(
+    id: string,
+    decision: 'accepted' | 'declined',
+    decidedAt: string,
+  ): Promise<ProductionScopeOffer | null> {
+    const result = await this.client.command<string | null>([
+      'EVAL',
+      "local existing = redis.call('GET', KEYS[1]); if not existing then return nil end; local offer = cjson.decode(existing); if offer.status == 'accepted' or offer.status == 'declined' or offer.status == 'expired' then return existing end; if offer.expiresAt <= ARGV[2] then offer.status = 'expired'; local expired = cjson.encode(offer); redis.call('SET', KEYS[1], expired, 'KEEPTTL'); return expired end; if offer.status ~= 'sent' then return existing end; offer.status = ARGV[1]; if ARGV[1] == 'accepted' then offer.acceptedAt = ARGV[2] else offer.declinedAt = ARGV[2] end; offer.decisionReviewSync = {status = 'pending'}; offer.decisionNotification = {status = 'pending'}; local updated = cjson.encode(offer); redis.call('SET', KEYS[1], updated, 'KEEPTTL'); return updated",
+      '1',
+      this.key(id),
+      decision,
+      decidedAt,
+    ])
+    return result ? JSON.parse(result) as ProductionScopeOffer : null
+  }
+
+  async recordDecisionReconciliation(
+    id: string,
+    update: {
+      reviewSync?: 'synced' | 'failed'
+      notification?: 'sent' | 'failed'
+    },
+    attemptedAt: string,
+  ): Promise<ProductionScopeOffer | null> {
+    const result = await this.client.command<string | null>([
+      'EVAL',
+      "local existing = redis.call('GET', KEYS[1]); if not existing then return nil end; local offer = cjson.decode(existing); if offer.status ~= 'accepted' and offer.status ~= 'declined' then return existing end; if ARGV[1] ~= '' and (not offer.decisionReviewSync or offer.decisionReviewSync.status ~= 'synced') then offer.decisionReviewSync = {status = ARGV[1], attemptedAt = ARGV[3]} end; if ARGV[2] ~= '' and (not offer.decisionNotification or offer.decisionNotification.status ~= 'sent') then offer.decisionNotification = {status = ARGV[2], attemptedAt = ARGV[3]} end; local updated = cjson.encode(offer); redis.call('SET', KEYS[1], updated, 'KEEPTTL'); return updated",
+      '1',
+      this.key(id),
+      update.reviewSync ?? '',
+      update.notification ?? '',
+      attemptedAt,
+    ])
+    return result ? JSON.parse(result) as ProductionScopeOffer : null
+  }
+
+  private reviewKey(scopeReviewId: string): string {
+    return `${SCOPE_OFFER_REVIEW_KEY_PREFIX}${scopeReviewId}`
+  }
+}
+
 declare global {
   // Next.js may evaluate route modules in separate bundles during development.
   // Keeping the fallback on globalThis makes those bundles share one store.
   var __engisolsProductionCheckStore: MemoryScanStore | undefined
   var __engisolsProductionCheckLeadStore: MemoryLeadStore | undefined
+  var __engisolsProductionCheckScopeReviewStore: MemoryScopeReviewStore | undefined
+  var __engisolsProductionCheckScopeOfferStore: MemoryScopeOfferStore | undefined
 }
 
 const memoryStore =
@@ -425,8 +759,14 @@ globalThis.__engisolsProductionCheckStore = memoryStore
 const memoryLeadStore =
   globalThis.__engisolsProductionCheckLeadStore ?? new MemoryLeadStore()
 globalThis.__engisolsProductionCheckLeadStore = memoryLeadStore
+const memoryScopeReviewStore = globalThis.__engisolsProductionCheckScopeReviewStore ?? new MemoryScopeReviewStore()
+globalThis.__engisolsProductionCheckScopeReviewStore = memoryScopeReviewStore
+const memoryScopeOfferStore = globalThis.__engisolsProductionCheckScopeOfferStore ?? new MemoryScopeOfferStore()
+globalThis.__engisolsProductionCheckScopeOfferStore = memoryScopeOfferStore
 let configuredStore: ScanStore | undefined
 let configuredLeadStore: LeadStore | undefined
+let configuredScopeReviewStore: ScopeReviewStore | undefined
+let configuredScopeOfferStore: ScopeOfferStore | undefined
 
 export function getScanStore(): ScanStore {
   if (configuredStore) return configuredStore
@@ -460,10 +800,46 @@ export function getLeadStore(): LeadStore {
   return memoryLeadStore
 }
 
+export function getScopeReviewStore(): ScopeReviewStore {
+  if (configuredScopeReviewStore) return configuredScopeReviewStore
+  const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN
+  if (url && token) {
+    configuredScopeReviewStore = new UpstashScopeReviewStore(url, token)
+    return configuredScopeReviewStore
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new ScanStoreConfigurationError('Production scope review persistence requires Upstash Redis REST configuration.')
+  }
+  return memoryScopeReviewStore
+}
+
+export function getScopeOfferStore(): ScopeOfferStore {
+  if (configuredScopeOfferStore) return configuredScopeOfferStore
+  const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN
+  if (url && token) {
+    configuredScopeOfferStore = new UpstashScopeOfferStore(url, token)
+    return configuredScopeOfferStore
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new ScanStoreConfigurationError('Production scope offer persistence requires Upstash Redis REST configuration.')
+  }
+  return memoryScopeOfferStore
+}
+
 export function setScanStoreForTests(store: ScanStore | undefined): void {
   configuredStore = store
 }
 
 export function setLeadStoreForTests(store: LeadStore | undefined): void {
   configuredLeadStore = store
+}
+
+export function setScopeReviewStoreForTests(store: ScopeReviewStore | undefined): void {
+  configuredScopeReviewStore = store
+}
+
+export function setScopeOfferStoreForTests(store: ScopeOfferStore | undefined): void {
+  configuredScopeOfferStore = store
 }

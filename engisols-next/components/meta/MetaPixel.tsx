@@ -11,9 +11,11 @@ import {
 } from '@/src/meta/browser'
 import { META_CONSENT_EVENT } from '@/src/meta/consent'
 import type { MetaConsentDecision } from '@/src/meta/types'
+import { isProductionCheckOfferUrl } from '@/src/production-check/analytics-privacy'
 
 export function MetaPixel({ pixelId }: { pixelId?: string }) {
   const pathname = usePathname()
+  const suppressPageView = isProductionCheckOfferUrl(pathname)
   const consent = useSyncExternalStore(
     subscribeToConsent,
     browserMetaConsent,
@@ -21,9 +23,10 @@ export function MetaPixel({ pixelId }: { pixelId?: string }) {
   )
 
   const initializePixel = useCallback(() => {
+    if (suppressPageView) return
     if (consent !== 'granted' || !metaPixel.init(pixelId)) return
     metaPixel.pageView(pathname)
-  }, [consent, pathname, pixelId])
+  }, [consent, pathname, pixelId, suppressPageView])
 
   useEffect(() => {
     initializePixel()
@@ -46,7 +49,7 @@ export function MetaPixel({ pixelId }: { pixelId?: string }) {
     }
   }, [])
 
-  if (consent !== 'granted' || !pixelId) return null
+  if (suppressPageView || consent !== 'granted' || !pixelId) return null
   return (
     <>
       <Script

@@ -8,6 +8,7 @@ import {
   type ReviewEmailMessage,
 } from '../../src/production-check/review-email'
 import { MemoryLeadStore } from '../../src/production-check/store'
+import { MemoryScopeReviewStore } from '../../src/production-check/store'
 import type { LeadStore, PersistedScan, ProductionCheckLead } from '../../src/production-check/types'
 import { finding, scanResult } from './fixtures'
 
@@ -20,7 +21,12 @@ const validBody = {
   timeline: 'month',
   context: 'Preparing the first paid launch.',
   website: '',
+  concern: 'payments',
+  concernDetail: 'We need webhook behavior checked.',
+  accessWillingness: 'yes_after_review',
 }
+
+process.env.PRODUCTION_CHECK_OPERATOR_SECRET = 'test-operator-secret-that-is-long-enough'
 
 function completedScan(overrides: Partial<PersistedScan> = {}): PersistedScan {
   return {
@@ -48,9 +54,11 @@ function request(body: unknown, origin = 'https://engisols.com'): Request {
 test('sends a validated review request with server-derived report context', async () => {
   const messages: ReviewEmailMessage[] = []
   const leads = new MemoryLeadStore()
+  const reviews = new MemoryScopeReviewStore()
   const handler = createReviewRequestPostHandler({
     load: async () => completedScan(),
     leads,
+    reviews,
     send: async (message) => { messages.push(message) },
   })
 
@@ -58,26 +66,36 @@ test('sends a validated review request with server-derived report context', asyn
   assert.equal(response.status, 200)
   const body = await response.json() as {
     ok: boolean
-    requestId: string
+    scopeReviewId: string
+    leadId: string
     nextStep: string
     notification: string
   }
   assert.equal(body.ok, true)
-  assert.match(body.requestId, /^lead_[A-Za-z0-9_-]{24}$/)
-  assert.equal(body.nextStep, 'senior_engineer_review')
+  assert.match(body.scopeReviewId, /^scope_[A-Za-z0-9_-]{24}$/)
+  assert.match(body.leadId, /^lead_[A-Za-z0-9_-]{24}$/)
+  assert.equal(body.nextStep, 'engineer_scope_check')
   assert.equal(body.notification, 'sent')
   assert.equal(messages.length, 1)
   assert.equal(messages[0]?.replyTo, validBody.email)
   assert.match(messages[0]?.text ?? '', /Report: https:\/\/engisols\.com\/production-check\/report\//)
   assert.match(messages[0]?.text ?? '', /Builder: lovable/)
   assert.match(messages[0]?.text ?? '', /Lead ID: lead_/)
-  assert.match(messages[0]?.text ?? '', /Score: 6/)
-  assert.match(messages[0]?.text ?? '', /Segment: qualified/)
+  assert.match(messages[0]?.text ?? '', /Scope review ID: scope_/)
+  assert.match(messages[0]?.text ?? '', /Main concern: payments/)
+  assert.match(messages[0]?.text ?? '', /\/internal\/production-check\/review\/scope_.*\/access\?token=/)
+  assert.match(messages[0]?.text ?? '', /Score: 7/)
+  assert.match(messages[0]?.text ?? '', /Segment: maybe/)
   assert.match(messages[0]?.text ?? '', /Source: meta/)
-  assert.match(messages[0]?.idempotencyKey ?? '', /^production-check\/lead_[A-Za-z0-9_-]{24}$/)
-  const lead = await leads.get(body.requestId)
+  assert.match(messages[0]?.idempotencyKey ?? '', /^production-check\/scope-review\/scope_[A-Za-z0-9_-]{24}$/)
+  const lead = await leads.get(body.leadId)
   assert.deepEqual(lead?.attribution, completedScan().attribution)
   assert.equal(lead?.notification.status, 'sent')
+  const review = await reviews.get(body.scopeReviewId)
+  assert.equal(review?.status, 'pending_review')
+  assert.equal(review?.concern, 'payments')
+  assert.equal(review?.accessWillingness, 'yes_after_review')
+  assert.equal(review?.notification.status, 'sent')
 })
 
 test('persists the lead before attempting Resend', async () => {
@@ -126,7 +144,7 @@ test('attempts Meta only after durable persistence and before Resend', async () 
     send: async () => { events.push('resend') },
   })
 
-  const response = await handler(request(validBody))
+  const response = await handler(request({ ...validBody, help: 'ongoing', timeline: 'now' }))
   assert.equal(response.status, 200)
   assert.deepEqual(events, ['persist', 'meta:Lead', 'meta:QualifiedLead', 'resend'])
 })
@@ -177,13 +195,13 @@ test('keeps the saved lead when Resend is unavailable', async () => {
     send: async () => { throw new ReviewEmailConfigurationError('private setup detail') },
   })
   const response = await handler(request(validBody))
-  const body = await response.json() as { requestId: string; notification: string; message: string }
+  const body = await response.json() as { leadId: string; notification: string; message: string }
   const serialized = JSON.stringify(body)
   assert.equal(response.status, 202)
   assert.equal(body.notification, 'delayed')
   assert.match(body.message, /saved/i)
   assert.doesNotMatch(serialized, /private setup detail/)
-  assert.equal((await leads.get(body.requestId))?.notification.status, 'failed')
+  assert.equal((await leads.get(body.leadId))?.notification.status, 'failed')
 })
 
 test('does not lose the lead when Resend rejects delivery', async () => {
@@ -194,9 +212,9 @@ test('does not lose the lead when Resend rejects delivery', async () => {
     send: async () => { throw new ReviewEmailDeliveryError('provider detail') },
   })
   const response = await handler(request(validBody))
-  const body = await response.json() as { requestId: string }
+  const body = await response.json() as { leadId: string }
   assert.equal(response.status, 202)
-  assert.ok(await leads.get(body.requestId))
+  assert.ok(await leads.get(body.leadId))
 })
 
 test('never sends when durable lead persistence fails', async () => {
@@ -243,7 +261,7 @@ test('sends QualifiedLead only for the qualified segment', async () => {
     result: scanResult([finding({ ruleId: 'credential.public', classification: 'actually_bad' })]),
     answers: { launchStage: 'experimenting' },
   }), { ...validBody, timeline: 'exploring' })
-  const qualified = await metaEventsFor(completedScan(), validBody)
+  const qualified = await metaEventsFor(completedScan(), { ...validBody, help: 'ongoing', timeline: 'now' })
 
   assert.deepEqual(nurture, ['Lead'])
   assert.deepEqual(maybe, ['Lead'])
@@ -286,15 +304,15 @@ test('Meta failure keeps one durable lead and does not prevent Resend', async ()
     send: async () => { resendAttempts += 1 },
   })
   const first = await handler(request(validBody))
-  const firstBody = await first.json() as { requestId: string }
+  const firstBody = await first.json() as { leadId: string }
   const retry = await handler(request(validBody))
-  const retryBody = await retry.json() as { requestId: string }
+  const retryBody = await retry.json() as { leadId: string }
 
   assert.equal(first.status, 200)
   assert.equal(retry.status, 200)
-  assert.equal(firstBody.requestId, retryBody.requestId)
-  assert.ok(await leads.get(firstBody.requestId))
-  assert.equal(metaAttempts, 2)
+  assert.equal(firstBody.leadId, retryBody.leadId)
+  assert.ok(await leads.get(firstBody.leadId))
+  assert.equal(metaAttempts, 1)
   assert.equal(resendAttempts, 1)
 })
 
@@ -322,6 +340,21 @@ test('rejects credential-like shipping context before lead persistence', async (
   assert.equal(saves, 0)
 })
 
+test('rejects credentials in scope-specific concern details', async () => {
+  let sends = 0
+  const handler = createReviewRequestPostHandler({
+    load: async () => completedScan(),
+    leads: new MemoryLeadStore(),
+    send: async () => { sends += 1 },
+  })
+  const response = await handler(request({
+    ...validBody,
+    concernDetail: `The key is ${'sk_live_' + 'A'.repeat(24)}`,
+  }))
+  assert.equal(response.status, 400)
+  assert.equal(sends, 0)
+})
+
 test('reuses a sent lead and notification idempotency key on an identical retry', async () => {
   const leads = new MemoryLeadStore()
   const messages: ReviewEmailMessage[] = []
@@ -333,12 +366,12 @@ test('reuses a sent lead and notification idempotency key on an identical retry'
 
   const first = await handler(request(validBody))
   const second = await handler(request({ ...validBody }))
-  const firstBody = await first.json() as { requestId: string; notification: string }
-  const secondBody = await second.json() as { requestId: string; notification: string }
+  const firstBody = await first.json() as { scopeReviewId: string; notification: string }
+  const secondBody = await second.json() as { scopeReviewId: string; notification: string }
 
   assert.equal(first.status, 200)
   assert.equal(second.status, 200)
-  assert.equal(firstBody.requestId, secondBody.requestId)
+  assert.equal(firstBody.scopeReviewId, secondBody.scopeReviewId)
   assert.equal(secondBody.notification, 'sent')
   assert.equal(messages.length, 1)
 })
@@ -360,14 +393,14 @@ test('atomically reuses a pending lead during concurrent identical submissions',
   const firstResponse = handler(request(validBody))
   await Promise.resolve()
   const second = await handler(request(validBody))
-  const secondBody = await second.json() as { requestId: string; notification: string }
+  const secondBody = await second.json() as { scopeReviewId: string; notification: string }
   releaseSend?.()
   const first = await firstResponse
-  const firstBody = await first.json() as { requestId: string }
+  const firstBody = await first.json() as { scopeReviewId: string }
 
   assert.equal(first.status, 200)
   assert.equal(second.status, 202)
-  assert.equal(firstBody.requestId, secondBody.requestId)
+  assert.equal(firstBody.scopeReviewId, secondBody.scopeReviewId)
   assert.equal(secondBody.notification, 'delayed')
   assert.equal(sends, 1)
 })
@@ -389,11 +422,11 @@ test('returns public next steps without exposing internal segment labels', async
   const maybe = await nextStepFor(completedScan({
     result: scanResult([finding({ ruleId: 'credential.public', classification: 'actually_bad' })]),
     answers: { launchStage: 'experimenting' },
-  }), { ...validBody, timeline: 'exploring' })
-  const qualified = await nextStepFor(completedScan(), validBody)
+  }), { ...validBody, help: 'fix', timeline: 'exploring' })
+  const qualified = await nextStepFor(completedScan(), { ...validBody, help: 'ongoing', timeline: 'now' })
 
   assert.match(nurture, /report_guidance/)
-  assert.match(maybe, /launch_blocker_fix/)
-  assert.match(qualified, /senior_engineer_review/)
+  assert.match(maybe, /engineer_scope_check/)
+  assert.match(qualified, /engineer_scope_check/)
   assert.doesNotMatch(`${nurture}${maybe}${qualified}`, /"segment"|nurture|qualified/)
 })

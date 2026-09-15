@@ -16,6 +16,9 @@ const input: ReviewRequestInput = {
   help: 'ongoing',
   timeline: 'month',
   context: 'We need to onboard our first paying customers.',
+  concern: 'payments',
+  concernDetail: 'We need webhook behavior checked.',
+  accessWillingness: 'yes_after_review',
 }
 
 const context: ReviewRequestContext = {
@@ -33,11 +36,13 @@ const context: ReviewRequestContext = {
 
 test('validates the minimum review request without collecting the report again', () => {
   assert.deepEqual(validateReviewRequest(input), {})
-  assert.deepEqual(validateReviewRequest({ ...input, name: '', email: 'wrong', help: '', timeline: '' }), {
+  assert.deepEqual(validateReviewRequest({ ...input, name: '', email: 'wrong', help: '', timeline: '', concern: '', accessWillingness: '' }), {
     name: 'Enter your name.',
     email: 'Enter a valid email address.',
     help: 'Choose the kind of help you need.',
     timeline: 'Choose a rough timeline.',
+    concern: 'Choose your main concern.',
+    accessWillingness: 'Choose whether we may ask for limited evidence later.',
   })
 })
 
@@ -49,6 +54,8 @@ test('builds a review handoff containing the report and qualification context', 
   assert.match(body, /Within the next month/)
   assert.match(body, /0 fix now · 2 review · 1 expected/)
   assert.match(body, /Private controls needing code review: 4/)
+  assert.match(body, /Main concern: Payments/)
+  assert.match(body, /Limited technical evidence: Yes, after you review the report/)
   assert.match(body, new RegExp(reportUrl))
 })
 
@@ -58,6 +65,7 @@ test('parses only bounded review request fields and valid option values', () => 
     { reportId: context.reportId, ...input, website: '' },
   )
   assert.equal(parseReviewRequestSubmission({ reportId: context.reportId, ...input, help: 'arbitrary', website: '' }), null)
+  assert.equal(parseReviewRequestSubmission({ reportId: context.reportId, ...input, concern: 'arbitrary', website: '' }), null)
   assert.equal(parseReviewRequestSubmission({ reportId: context.reportId, ...input, admin: true, website: '' }), null)
   assert.equal(reviewRequestSubject(context.targetUrl), 'Engineering review request — app.example.com')
 })

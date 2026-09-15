@@ -91,8 +91,7 @@ export type ProductionCheckLeadSegment = 'nurture' | 'maybe' | 'qualified'
 export type ProductionCheckLeadStatus = 'new' | 'contacted' | 'booked' | 'proposal' | 'won' | 'lost'
 export type ProductionCheckLeadNextStep =
   | 'report_guidance'
-  | 'launch_blocker_fix'
-  | 'senior_engineer_review'
+  | 'engineer_scope_check'
 
 export interface ProductionCheckLead {
   id: string
@@ -136,6 +135,141 @@ export interface LeadStore {
   claimFailedNotification(id: string, updatedAt: string): Promise<ProductionCheckLead | null>
   save(lead: ProductionCheckLead): Promise<void>
   get(id: string): Promise<ProductionCheckLead | null>
+}
+
+export const SCOPE_CONCERNS = [
+  'security_customer_data',
+  'payments',
+  'authentication_access',
+  'reliability_bugs',
+  'launch_readiness',
+  'scaling_architecture',
+  'ongoing_development',
+  'other',
+] as const
+export type ScopeConcern = (typeof SCOPE_CONCERNS)[number]
+
+export type ScopeAccessWillingness = 'yes_after_review' | 'not_yet'
+export type ScopeReviewStatus =
+  | 'pending_review'
+  | 'needs_information'
+  | 'no_paid_work'
+  | 'offer_prepared'
+  | 'offer_sent'
+  | 'accepted'
+  | 'declined'
+export const SCOPE_DECISIONS = [
+  'no_paid_work',
+  'needs_information',
+  'launch_blocker_fix',
+  'production_harden',
+  'ongoing_engineering',
+  'custom',
+] as const
+export type ScopeDecision = (typeof SCOPE_DECISIONS)[number]
+
+export interface ProductionScopeReview {
+  id: string
+  leadId: string
+  scanId: string
+  concern: ScopeConcern
+  concernDetail?: string
+  accessWillingness: ScopeAccessWillingness
+  status: ScopeReviewStatus
+  decision?: ScopeDecision
+  requestedAt: string
+  reviewedAt?: string
+  updatedAt: string
+  expiresAt: string
+  recommendationSummary?: string
+  informationRequested?: string
+  internalNotes?: string
+  offerId?: string
+  notification: {
+    status: 'pending' | 'sent' | 'failed'
+    attemptedAt?: string
+  }
+  decisionNotification?: {
+    status: 'pending' | 'sent' | 'failed'
+    attemptedAt?: string
+  }
+}
+
+export interface ScopeReviewStore {
+  createOrGet(review: ProductionScopeReview): Promise<{
+    review: ProductionScopeReview
+    created: boolean
+  }>
+  save(review: ProductionScopeReview): Promise<void>
+  get(id: string): Promise<ProductionScopeReview | null>
+}
+
+export type ScopeOfferType =
+  | 'launch_blocker_fix'
+  | 'production_harden'
+  | 'ongoing_engineering'
+  | 'custom'
+export type ScopeOfferBilling = 'one_time' | 'monthly' | 'custom'
+export type ScopeOfferStatus = 'draft' | 'sent' | 'accepted' | 'declined' | 'expired'
+export type ScopeOfferDecisionReviewSyncStatus = 'pending' | 'synced' | 'failed'
+export type ScopeOfferDecisionNotificationStatus = 'pending' | 'sent' | 'failed'
+
+export interface ProductionScopeOffer {
+  id: string
+  scopeReviewId: string
+  leadId: string
+  scanId: string
+  type: ScopeOfferType
+  title: string
+  summary: string
+  includedItems: string[]
+  exclusions: string[]
+  amount?: number
+  currency: 'USD'
+  billing: ScopeOfferBilling
+  deliveryWindow?: string
+  status: ScopeOfferStatus
+  createdAt: string
+  sentAt?: string
+  acceptedAt?: string
+  declinedAt?: string
+  expiresAt: string
+  retainedUntil: string
+  notification: {
+    status: 'pending' | 'sent' | 'failed'
+    attemptedAt?: string
+  }
+  decisionReviewSync?: {
+    status: ScopeOfferDecisionReviewSyncStatus
+    attemptedAt?: string
+  }
+  decisionNotification?: {
+    status: ScopeOfferDecisionNotificationStatus
+    attemptedAt?: string
+  }
+}
+
+export interface ScopeOfferStore {
+  claimForReview(offer: ProductionScopeOffer): Promise<{
+    offer: ProductionScopeOffer
+    created: boolean
+  }>
+  get(id: string): Promise<ProductionScopeOffer | null>
+  markSent(id: string, sentAt: string): Promise<ProductionScopeOffer | null>
+  markSendFailed(id: string, attemptedAt: string): Promise<ProductionScopeOffer | null>
+  transitionDecision(
+    id: string,
+    decision: 'accepted' | 'declined',
+    decidedAt: string,
+  ): Promise<ProductionScopeOffer | null>
+  recordDecisionReconciliation(
+    id: string,
+    update: {
+      reviewSync?: Exclude<ScopeOfferDecisionReviewSyncStatus, 'pending'>
+      notification?: Exclude<ScopeOfferDecisionNotificationStatus, 'pending'>
+    },
+    attemptedAt: string,
+  ): Promise<ProductionScopeOffer | null>
 }
 
 export type FounderLabel = 'FIX NOW' | 'REVIEW' | 'EXPECTED'

@@ -14,15 +14,15 @@ type QualificationInput = Pick<
 
 const launchStageWeights: Record<NonNullable<ProductionCheckLead['launchStage']>, number> = {
   experimenting: 0,
-  preparing_to_launch: 1,
-  has_users: 2,
-  taking_payments: 3,
+  preparing_to_launch: 2,
+  has_users: 3,
+  taking_payments: 4,
 }
 
 const helpWeights: Record<ProductionCheckLead['helpNeeded'], number> = {
   verify: 0,
-  fix: 2,
-  ongoing: 3,
+  fix: 3,
+  ongoing: 4,
 }
 
 const timelineWeights: Record<ProductionCheckLead['timeline'], number> = {
@@ -60,16 +60,15 @@ export function qualifyProductionCheckLead(
 }
 
 export function segmentProductionCheckScore(score: number): ProductionCheckLeadSegment {
-  if (score >= 6) return 'qualified'
-  if (score >= 3) return 'maybe'
+  if (score >= 9) return 'qualified'
+  if (score >= 4) return 'maybe'
   return 'nurture'
 }
 
 export function nextStepForLeadSegment(
   segment: ProductionCheckLeadSegment,
 ): ProductionCheckLeadNextStep {
-  if (segment === 'qualified') return 'senior_engineer_review'
-  if (segment === 'maybe') return 'launch_blocker_fix'
+  if (segment === 'qualified' || segment === 'maybe') return 'engineer_scope_check'
   return 'report_guidance'
 }
 

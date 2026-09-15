@@ -25,6 +25,18 @@ export function productionAnswersPath(publicId: string): string {
 
 export const productionReviewRequestPath = '/api/production-check/review'
 
+export function productionOfferPath(offerId: string): string {
+  return `${productionLandingPath}/offer/${encodeURIComponent(offerId)}`
+}
+
+export function productionOfferDecisionPath(offerId: string): string {
+  return `/api/production-check/offers/${encodeURIComponent(offerId)}/decision`
+}
+
+export function productionOperatorAccessPath(scopeReviewId: string, token: string): string {
+  return `/internal/production-check/review/${encodeURIComponent(scopeReviewId)}/access?token=${encodeURIComponent(token)}`
+}
+
 export function productionRestartPath(currentHref: string): string {
   const currentUrl = new URL(currentHref)
   currentUrl.searchParams.delete('scanId')
