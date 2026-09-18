@@ -43,10 +43,19 @@ limiter or ledger is unavailable. The response contract is:
   "since": "2026-09-18T00:00:00.000Z",
   "until": "2026-09-19T00:00:00.000Z",
   "events": [],
+  "deliveryHealth": {
+    "asOf": "2026-09-19T00:00:00.000Z",
+    "failed": 0,
+    "deadLetter": 0
+  },
   "checkpointCursor": "opaque",
   "nextCursor": null
 }
 ```
+
+`deliveryHealth` contains only current aggregate outbox counts. Redis maintains
+bounded failed/dead-letter indexes as states change and removes expired members;
+the export never scans or returns individual outbox records for this health view.
 
 `GROWTH_COPILOT_EXPORT_TOKEN` must match Growth Copilot's
 `ENGISOLS_EXPORT_TOKEN`. Use distinct preview and production values. Keep the

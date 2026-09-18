@@ -31,7 +31,6 @@ capacity headroom is sufficient; set `GROWTH_REDIS_DURABILITY_VERIFIED=true`
 only after that check. Configure repository secrets `GROWTH_OUTBOX_URL` (the
 full internal route URL) and `GROWTH_COPILOT_OUTBOX_CRON_SECRET`. The scheduled
 workflow runs hourly at minute 17 and can also be dispatched manually after it
-has landed on the default branch. Each run invokes the bounded cron route,
-waits 55 seconds, and invokes it once more. The first timed-out delivery wakes
-a sleeping Render Free service; the second can claim the 30-second retry while
-Render is warm. This is bounded recovery, not artificial keep-alive traffic.
+has landed on the default branch. Each run invokes the bounded cron route once.
+Cold-start or webhook failures remain in the durable queue for a later retry;
+the workflow sends no artificial keep-alive traffic.
