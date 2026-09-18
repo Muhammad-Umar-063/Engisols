@@ -94,7 +94,7 @@ export class MemoryRetainedNotificationStore<T extends RetainedNotificationRecor
 }
 
 export class UpstashRetainedNotificationStore<T extends RetainedNotificationRecord> {
-  private readonly client: UpstashRestClient
+  protected readonly client: UpstashRestClient
 
   constructor(
     url: string,
@@ -102,7 +102,7 @@ export class UpstashRetainedNotificationStore<T extends RetainedNotificationReco
     unavailableMessage: string,
     private readonly keyPrefix: string,
     private readonly maximumTtlSeconds: number,
-    private readonly now: () => Date,
+    protected readonly now: () => Date,
     timeoutMs: number,
   ) {
     this.client = new UpstashRestClient(url, token, unavailableMessage, timeoutMs)
@@ -169,11 +169,11 @@ export class UpstashRetainedNotificationStore<T extends RetainedNotificationReco
     return new Date(record.expiresAt).getTime() > this.now().getTime() ? record : null
   }
 
-  private key(id: string): string {
+  protected key(id: string): string {
     return `${this.keyPrefix}${id}`
   }
 
-  private remainingTtlSeconds(expiresAt: string): number {
+  protected remainingTtlSeconds(expiresAt: string): number {
     const seconds = Math.ceil((new Date(expiresAt).getTime() - this.now().getTime()) / 1_000)
     if (!Number.isFinite(seconds) || seconds <= 0) throw new Error('Cannot persist an expired record.')
     return Math.min(seconds, this.maximumTtlSeconds)

@@ -58,6 +58,14 @@ export interface ProductionCheckAttribution {
   metaSource?: string
 }
 
+/** Sanitized context copied forward so outcome events never need to re-read PII. */
+export interface ProductionCheckGrowthContext {
+  attribution: ProductionCheckAttribution
+  builder?: BuilderAnswer
+  launchStage?: LaunchStageAnswer
+  leadSegment?: ProductionCheckLeadSegment
+}
+
 export interface PersistedScan {
   publicId: string
   /** Stable analytical identity; never grants access to the public report capability. */
@@ -201,6 +209,8 @@ export interface ProductionScopeReview {
     status: 'pending' | 'sent' | 'failed'
     attemptedAt?: string
   }
+  growthContext?: ProductionCheckGrowthContext
+  growthEventRevisions?: { decisionRecorded?: number }
 }
 
 export interface ScopeReviewStore {
@@ -255,6 +265,7 @@ export interface ProductionScopeOffer {
     status: ScopeOfferDecisionNotificationStatus
     attemptedAt?: string
   }
+  growthContext?: ProductionCheckGrowthContext
 }
 
 export interface ScopeOfferStore {
