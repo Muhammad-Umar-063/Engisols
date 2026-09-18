@@ -1,3 +1,5 @@
+import { after } from 'next/server'
+
 import {
   sendMetaConversion,
   type MetaConversionSender,
@@ -18,6 +20,12 @@ import { nextStepForLeadSegment } from '../../../../src/production-check/qualifi
 import { isValidPublicScanId } from '../../../../src/production-check/report'
 import { readLimitedJson } from '../../../../src/production-check/request'
 import { containsCredentialLikeValue } from '../../../../src/production-check/security'
+import { isControlledQaAttribution } from '../../../../src/production-check/attribution'
+import { toPostHogAttributionProperties } from '../../../../src/production-check/attribution'
+import {
+  captureProductionCheckServerEvent,
+  type ServerPostHogCapture,
+} from '../../../../src/production-check/posthog.server'
 import {
   sendReviewEmail,
   type ReviewEmailSender,
@@ -58,6 +66,8 @@ interface HandlerDependencies {
   sendMeta?: MetaConversionSender
   reviews?: ScopeReviewStore
   createOperatorLink?: (scopeReviewId: string, requestUrl: string) => string
+  capturePostHog?: ServerPostHogCapture
+  schedule?: (task: () => Promise<void>) => void
 }
 
 export function createReviewRequestPostHandler({
@@ -69,6 +79,8 @@ export function createReviewRequestPostHandler({
   sendMeta = sendMetaConversion,
   reviews,
   createOperatorLink = defaultOperatorLink,
+  capturePostHog,
+  schedule = (task) => { void task() },
 }: HandlerDependencies = {}) {
   const injectedReviewStore = reviews ?? (leads ? new MemoryScopeReviewStore(now) : undefined)
   return async function POST(request: Request): Promise<Response> {
@@ -153,9 +165,11 @@ export function createReviewRequestPostHandler({
       scopeReview = reviewResult.review
       if (!reviewResult.created) {
         if (scopeReview.notification.status === 'sent') {
+          scheduleLeadAnalytics(schedule, capturePostHog, scan, lead, scopeReview)
           return leadResponse(200, lead, scopeReview, nextStepForLeadSegment(lead.segment), 'sent')
         }
         if (scopeReview.notification.status === 'pending') {
+          scheduleLeadAnalytics(schedule, capturePostHog, scan, lead, scopeReview)
           return delayedLeadResponse(lead, scopeReview, nextStepForLeadSegment(lead.segment))
         }
         scopeReview = { ...scopeReview, notification: { status: 'pending' }, updatedAt: now().toISOString() }
@@ -168,6 +182,8 @@ export function createReviewRequestPostHandler({
         'We could not save your request. Your details are still here—please try again.',
       )
     }
+
+    scheduleLeadAnalytics(schedule, capturePostHog, scan, lead, scopeReview)
 
     const nextStep = nextStepForLeadSegment(lead.segment)
     if (!created && lead.notification.status === 'failed') {
@@ -213,6 +229,57 @@ export function createReviewRequestPostHandler({
   }
 }
 
+function scheduleLeadAnalytics(
+  schedule: (task: () => Promise<void>) => void,
+  capture: ServerPostHogCapture | undefined,
+  scan: PersistedScan,
+  lead: ProductionCheckLead,
+  review: ProductionScopeReview,
+): void {
+  if (!capture) return
+  const scanId = scan.growthAnalyticsId
+  const common = {
+    ...(scanId ? { scan_id: scanId } : {}),
+    lead_id: lead.id,
+    scope_review_id: review.id,
+    lead_segment: lead.segment,
+    ...toPostHogAttributionProperties(lead.attribution),
+    ...(lead.builder ? { builder: lead.builder } : {}),
+    ...(lead.launchStage ? { launch_stage: lead.launchStage } : {}),
+  }
+  const distinctId = scanId ?? lead.id
+  schedule(async () => {
+    await Promise.all([
+      capture({
+        event: 'scope_review_requested',
+        subjectId: review.id,
+        distinctId,
+        properties: common,
+      }),
+      capture({
+        event: 'lead_created',
+        subjectId: lead.id,
+        distinctId,
+        properties: common,
+      }),
+      capture({
+        event: 'lead_segmented',
+        subjectId: lead.id,
+        distinctId,
+        properties: common,
+      }),
+      ...(lead.segment === 'qualified'
+        ? [capture({
+            event: 'lead_qualified',
+            subjectId: lead.id,
+            distinctId,
+            properties: common,
+          })]
+        : []),
+    ]).catch(() => undefined)
+  })
+}
+
 function delayedLeadResponse(
   lead: ProductionCheckLead,
   scopeReview: ProductionScopeReview,
@@ -255,9 +322,10 @@ function leadResponse(
       ok: true,
       scopeReviewId: scopeReview.id,
       leadId: lead.id,
+      highIntent: lead.segment === 'qualified',
       nextStep,
       notification,
-      ...(lead.metaTracking
+      ...(lead.metaTracking && !isControlledQaAttribution(lead.attribution)
         ? {
             metaEvents: {
               primary: lead.metaTracking.lead.eventId,
@@ -286,6 +354,24 @@ async function attemptMetaLeadEvents(
 ): Promise<ProductionCheckLead> {
   const tracking = lead.metaTracking
   if (!tracking) return lead
+  if (isControlledQaAttribution(lead.attribution)) {
+    const attemptedAt = now().toISOString()
+    return {
+      ...lead,
+      metaTracking: {
+        ...tracking,
+        lead: { ...tracking.lead, attemptedAt: tracking.lead.attemptedAt ?? attemptedAt },
+        ...(tracking.qualifiedLead
+          ? {
+              qualifiedLead: {
+                ...tracking.qualifiedLead,
+                attemptedAt: tracking.qualifiedLead.attemptedAt ?? attemptedAt,
+              },
+            }
+          : {}),
+      },
+    }
+  }
   const requestContext = metaRequestContext(request, {
     fallbackIdentifiers: tracking.identifiers,
   })
@@ -364,4 +450,7 @@ function errorResponse(status: number, code: string, message: string): Response 
   )
 }
 
-export const POST = createReviewRequestPostHandler()
+export const POST = createReviewRequestPostHandler({
+  capturePostHog: captureProductionCheckServerEvent,
+  schedule: (task) => after(task),
+})

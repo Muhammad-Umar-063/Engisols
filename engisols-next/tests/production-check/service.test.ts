@@ -54,6 +54,23 @@ test('creates scan records with a 90-day expiry and persisted attribution', asyn
   })
 })
 
+test('persists a keyed analytical scan ID that cannot grant report access', async () => {
+  const store = new MemoryScanStore()
+  const created = await createScanRecord(
+    'https://app.example/',
+    store,
+    () => new Date('2026-09-09T10:00:00.000Z'),
+    {},
+    {
+      requestContext: { consent: 'denied', identifiers: {} },
+      eventSourceUrl: 'https://engisols.com/production-check',
+      growthAnalyticsIdKey: 'growth-analytics-unit-test-key-0123456789',
+    },
+  )
+  assert.match(created.growthAnalyticsId ?? '', /^scan_v1_[A-Za-z0-9_-]{43}$/)
+  assert.doesNotMatch(created.growthAnalyticsId ?? '', new RegExp(created.publicId))
+})
+
 test('rejects credential-like attribution before scan persistence', async () => {
   const store = new MemoryScanStore()
   await assert.rejects(

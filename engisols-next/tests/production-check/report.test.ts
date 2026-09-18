@@ -157,4 +157,13 @@ test('exposes only browser event IDs from persisted Meta tracking state', () => 
   const serialized = JSON.stringify(redactPersistedScanForPublic(scan))
   assert.match(serialized, /scancomplete_/)
   assert.doesNotMatch(serialized, /browser123|click_123|eventSourceUrl|metaTracking/)
+
+  const controlledQa = redactPersistedScanForPublic({
+    ...scan,
+    growthAnalyticsId: 'scan_v1_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
+    attribution: { source: 'meta_test', metaAdId: '12003' },
+  })
+  assert.equal(controlledQa.metaEvents, undefined)
+  assert.match(controlledQa.growthAnalyticsId ?? '', /^scan_v1_/)
+  assert.deepEqual(controlledQa.attribution, {})
 })

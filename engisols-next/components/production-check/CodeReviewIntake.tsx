@@ -25,6 +25,7 @@ type SubmissionState = 'idle' | 'sending' | 'sent' | 'error'
 interface ReviewSubmissionResult {
   scopeReviewId: string
   leadId: string
+  highIntent: boolean
   nextStep: ProductionCheckLeadNextStep
   notification: 'sent' | 'delayed'
   message?: string
@@ -104,37 +105,48 @@ export function CodeReviewIntake({
       if (!response.ok || !body.ok) {
         throw new Error(body.error?.message || 'We could not send your request. Please try again.')
       }
-      if (!body.scopeReviewId || !body.leadId || !body.nextStep || !body.notification) {
+      if (
+        !body.scopeReviewId ||
+        !body.leadId ||
+        typeof body.highIntent !== 'boolean' ||
+        !body.nextStep ||
+        !body.notification
+      ) {
         throw new Error('Your request was received, but its confirmation could not be loaded.')
       }
       setSubmissionResult({
         scopeReviewId: body.scopeReviewId,
         leadId: body.leadId,
+        highIntent: body.highIntent,
         nextStep: body.nextStep,
         notification: body.notification,
         ...(body.message ? { message: body.message } : {}),
         ...(body.metaEvents ? { metaEvents: body.metaEvents } : {}),
       })
       setSubmissionState('sent')
-      trackProductionCheck('review_request_sent', { reportId: reviewContext.reportId })
+      trackProductionCheck('review_request_sent', {
+        ...(reviewContext.analyticsScanId ? { scan_id: reviewContext.analyticsScanId } : {}),
+      })
       trackProductionCheck('scope_review_requested', {
-        scan_id: reviewContext.reportId,
+        ...(reviewContext.analyticsScanId ? { scan_id: reviewContext.analyticsScanId } : {}),
         scope_review_id: body.scopeReviewId,
         ...(reviewContext.launchStage ? { launch_stage: reviewContext.launchStage } : {}),
         ...(reviewContext.builder ? { builder: reviewContext.builder } : {}),
       })
       trackProductionCheck('scope_review_confirmation_viewed', {
-        scan_id: reviewContext.reportId,
+        ...(reviewContext.analyticsScanId ? { scan_id: reviewContext.analyticsScanId } : {}),
         scope_review_id: body.scopeReviewId,
       })
       trackProductionCheck('lead_created', {
-        reportId: reviewContext.reportId,
+        ...(reviewContext.analyticsScanId ? { scan_id: reviewContext.analyticsScanId } : {}),
+        lead_id: body.leadId,
         ...(body.metaEvents?.primary ? { metaEventId: body.metaEvents.primary } : {}),
       })
-      if (body.metaEvents?.secondary) {
+      if (body.highIntent) {
         trackProductionCheck('lead_qualified', {
-          reportId: reviewContext.reportId,
-          metaEventId: body.metaEvents.secondary,
+          ...(reviewContext.analyticsScanId ? { scan_id: reviewContext.analyticsScanId } : {}),
+          lead_id: body.leadId,
+          ...(body.metaEvents?.secondary ? { metaEventId: body.metaEvents.secondary } : {}),
         })
       }
       push(body.notification === 'delayed' ? 'Engineering review request saved.' : 'Engineering review request sent.')
@@ -147,7 +159,9 @@ export function CodeReviewIntake({
     } catch (error) {
       setSubmissionState('error')
       setSubmissionError(error instanceof Error ? error.message : 'We could not send your request. Please try again.')
-      trackProductionCheck('review_request_failed', { reportId: reviewContext.reportId })
+      trackProductionCheck('review_request_failed', {
+        ...(reviewContext.analyticsScanId ? { scan_id: reviewContext.analyticsScanId } : {}),
+      })
       requestAnimationFrame(() => document.getElementById('review-request-submit')?.focus())
     }
   }
@@ -157,7 +171,9 @@ export function CodeReviewIntake({
     try {
       await navigator.clipboard.writeText(requestText())
       setCopied(true)
-      trackProductionCheck('review_request_copied', { reportId: reviewContext.reportId })
+      trackProductionCheck('review_request_copied', {
+        ...(reviewContext.analyticsScanId ? { scan_id: reviewContext.analyticsScanId } : {}),
+      })
       push(`Engineering review request copied. Send it to ${SITE.email}.`)
     } catch {
       setCopied(false)
@@ -399,6 +415,7 @@ async function readResponse(response: Response): Promise<{
   ok: boolean
   scopeReviewId?: string
   leadId?: string
+  highIntent?: boolean
   nextStep?: ProductionCheckLeadNextStep
   notification?: 'sent' | 'delayed'
   message?: string
@@ -410,6 +427,7 @@ async function readResponse(response: Response): Promise<{
       ok: boolean
       scopeReviewId?: string
       leadId?: string
+      highIntent?: boolean
       nextStep?: ProductionCheckLeadNextStep
       notification?: 'sent' | 'delayed'
       message?: string

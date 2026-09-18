@@ -15,6 +15,11 @@ test('round-trips bounded attribution through a signed token', () => {
     medium: 'paid-social',
     campaign: 'founder-launch',
     fbclid: 'click-123',
+    metaCampaignId: '12001',
+    metaAdsetId: '12002',
+    metaAdId: '12003',
+    metaPlacement: 'instagram_story',
+    metaSource: 'ig',
   }
   const token = signAttributionToken(attribution, { secret, now: issuedAt })
 

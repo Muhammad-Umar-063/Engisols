@@ -10,7 +10,7 @@ import type { DetectedTechnology, ProductionProofCheck, ScanCoverage } from '@/s
 type EvidenceLens = 'surface' | 'source' | 'handoff'
 
 export function ReportEvidenceExplorer({
-  reportId,
+  analyticsScanId,
   coverage,
   coverageScore,
   confidence,
@@ -20,7 +20,7 @@ export function ReportEvidenceExplorer({
   technologies,
   builderPrompt,
 }: {
-  reportId: string
+  analyticsScanId?: string
   coverage: ScanCoverage
   coverageScore: number
   confidence: string
@@ -36,7 +36,10 @@ export function ReportEvidenceExplorer({
 
   function chooseLens(nextLens: EvidenceLens) {
     setLens(nextLens)
-    trackProductionCheck('report_lens_selected', { reportId, lens: nextLens })
+    trackProductionCheck('report_lens_selected', {
+      ...(analyticsScanId ? { scan_id: analyticsScanId } : {}),
+      lens: nextLens,
+    })
   }
 
   async function copyPrompt() {
@@ -44,7 +47,10 @@ export function ReportEvidenceExplorer({
     try {
       await navigator.clipboard.writeText(builderPrompt.prompt)
       setCopied(true)
-      trackProductionCheck('copy_prompt_clicked', { reportId, location: 'evidence_lens' })
+      trackProductionCheck('copy_prompt_clicked', {
+        ...(analyticsScanId ? { scan_id: analyticsScanId } : {}),
+        location: 'evidence_lens',
+      })
       push('Builder handoff copied.')
     } catch {
       setCopied(false)
@@ -73,13 +79,13 @@ export function ReportEvidenceExplorer({
       </div>
 
       <div className="divide-y divide-greige/60 md:hidden">
-        <MobileEvidenceSection label="Public surface" count={`${coverage.scripts.scanned} scripts`} lens="surface" reportId={reportId} defaultOpen>
+        <MobileEvidenceSection label="Public surface" count={`${coverage.scripts.scanned} scripts`} lens="surface" analyticsScanId={analyticsScanId} defaultOpen>
           <SurfaceEvidence coverage={coverage} coverageReasons={coverageReasons} technologies={technologies} />
         </MobileEvidenceSection>
-        <MobileEvidenceSection label="Needs source access" count={`${needsCodeReview} checks`} lens="source" reportId={reportId}>
+        <MobileEvidenceSection label="Needs source access" count={`${needsCodeReview} checks`} lens="source" analyticsScanId={analyticsScanId}>
           <SourceEvidence needsSourceReview={needsSourceReview} observedChecks={observedChecks} />
         </MobileEvidenceSection>
-        <MobileEvidenceSection label="Handoff kit" count={builderPrompt ? 'Ready to copy' : 'Review brief'} lens="handoff" reportId={reportId}>
+        <MobileEvidenceSection label="Handoff kit" count={builderPrompt ? 'Ready to copy' : 'Review brief'} lens="handoff" analyticsScanId={analyticsScanId}>
           <HandoffEvidence builderPrompt={builderPrompt} copied={copied} onCopy={copyPrompt} />
         </MobileEvidenceSection>
       </div>
@@ -109,14 +115,18 @@ export function ReportEvidenceExplorer({
   )
 }
 
-function MobileEvidenceSection({ label, count, lens, reportId, defaultOpen = false, children }: { label: string; count: string; lens: EvidenceLens; reportId: string; defaultOpen?: boolean; children: ReactNode }) {
+function MobileEvidenceSection({ label, count, lens, analyticsScanId, defaultOpen = false, children }: { label: string; count: string; lens: EvidenceLens; analyticsScanId?: string; defaultOpen?: boolean; children: ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
 
   function trackOpen(event: SyntheticEvent<HTMLDetailsElement>) {
     const nextOpen = event.currentTarget.open
     setOpen(nextOpen)
     if (event.currentTarget === event.target && nextOpen && event.nativeEvent.isTrusted) {
-      trackProductionCheck('report_lens_selected', { reportId, lens, layout: 'mobile_accordion' })
+      trackProductionCheck('report_lens_selected', {
+        ...(analyticsScanId ? { scan_id: analyticsScanId } : {}),
+        lens,
+        layout: 'mobile_accordion',
+      })
     }
   }
 

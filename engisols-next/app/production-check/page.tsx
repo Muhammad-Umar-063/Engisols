@@ -5,6 +5,7 @@ import { ProductionCheckExperience } from '@/components/production-check/Product
 import { ProductionCheckFooter } from '@/components/production-check/ProductionCheckFooter'
 import { attributionFromSearchParams } from '@/src/production-check/attribution'
 import { signAttributionToken } from '@/src/production-check/attribution-token.server'
+import { toPostHogAttributionProperties } from '@/src/production-check/attribution'
 import { loadScan } from '@/src/production-check/load'
 import {
   buildFounderReport,
@@ -54,6 +55,7 @@ export default async function ProductionCheckPage({
         initialScan={initialScan}
         initialReport={initialReport}
         initialAttributionToken={initialAttributionToken}
+        initialAnalyticsProperties={toPostHogAttributionProperties(initialAttribution)}
       />
       <ProductionCheckFooter />
     </>

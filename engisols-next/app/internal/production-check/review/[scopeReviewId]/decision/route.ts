@@ -1,3 +1,6 @@
+import { after } from 'next/server'
+
+import { createGrowthAnalyticsOfferId } from '../../../../../../src/growth/event-contract'
 import { authorizeOperatorRequest } from '../../../../../../src/production-check/operator-session.server'
 import {
   isPaidScopeDecision,
@@ -25,6 +28,11 @@ import type {
   ScopeOfferStore,
   ScopeReviewStore,
 } from '../../../../../../src/production-check/types'
+import { toPostHogAttributionProperties } from '../../../../../../src/production-check/attribution'
+import {
+  captureProductionCheckServerEvent,
+  type ServerPostHogCapture,
+} from '../../../../../../src/production-check/posthog.server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -39,6 +47,8 @@ interface Dependencies {
   sendCustomer?: CustomerScopeEmailSender
   now?: () => Date
   createOfferId?: () => string
+  capturePostHog?: ServerPostHogCapture
+  schedule?: (task: () => Promise<void>) => void
 }
 
 export function createOperatorDecisionPostHandler({
@@ -49,6 +59,8 @@ export function createOperatorDecisionPostHandler({
   sendCustomer = sendCustomerScopeEmail,
   now = () => new Date(),
   createOfferId,
+  capturePostHog,
+  schedule = (task) => { void task() },
 }: Dependencies = {}) {
   return async function POST(request: Request, context: RouteContext): Promise<Response> {
     const { scopeReviewId } = await context.params
@@ -71,7 +83,7 @@ export function createOperatorDecisionPostHandler({
     if (!lead) return jsonError(404, 'lead_not_found', 'The associated lead is unavailable.')
 
     if (isPaidScopeDecision(submission.decision)) {
-      return preparePaidOffer({ request, review, lead, submission, reviews: reviewStore, offers: offerStore, sendCustomer, now, createOfferId })
+      return preparePaidOffer({ request, review, lead, submission, reviews: reviewStore, offers: offerStore, sendCustomer, now, createOfferId, capturePostHog, schedule })
     }
 
     const reviewedAt = now()
@@ -118,6 +130,7 @@ export function createOperatorDecisionPostHandler({
 
 async function preparePaidOffer({
   request, review, lead, submission, reviews, offers, sendCustomer, now, createOfferId,
+  capturePostHog, schedule,
 }: {
   request: Request
   review: ProductionScopeReview
@@ -128,6 +141,8 @@ async function preparePaidOffer({
   sendCustomer: CustomerScopeEmailSender
   now: () => Date
   createOfferId?: () => string
+  capturePostHog?: ServerPostHogCapture
+  schedule: (task: () => Promise<void>) => void
 }): Promise<Response> {
   const linkedOffer = review.offerId ? await offers.get(review.offerId) : null
   let proposedOffer: ProductionScopeOffer
@@ -172,6 +187,7 @@ async function preparePaidOffer({
   await reviews.save(preparedReview)
   const offerUrl = new URL(productionOfferPath(offer.id), request.url).toString()
   if (offer.status === 'sent') {
+    scheduleOfferSentAnalytics(schedule, capturePostHog, lead, offer)
     return Response.json({ ok: true, status: 'offer_sent', offerId: offer.id, offerUrl }, { headers: noStoreHeaders })
   }
   try {
@@ -198,9 +214,41 @@ async function preparePaidOffer({
   try {
     await reviews.save({ ...preparedReview, status: 'offer_sent', updatedAt: sentAt.toISOString() })
   } catch {
+    scheduleOfferSentAnalytics(schedule, capturePostHog, lead, sentOffer)
     return Response.json({ ok: true, status: 'offer_sent', offerId: offer.id, offerUrl, reconciliation: 'delayed' }, { status: 202, headers: noStoreHeaders })
   }
+  scheduleOfferSentAnalytics(schedule, capturePostHog, lead, sentOffer)
   return Response.json({ ok: true, status: 'offer_sent', offerId: offer.id, offerUrl }, { headers: noStoreHeaders })
+}
+
+function scheduleOfferSentAnalytics(
+  schedule: (task: () => Promise<void>) => void,
+  capture: ServerPostHogCapture | undefined,
+  lead: NonNullable<Awaited<ReturnType<LeadStore['get']>>>,
+  offer: ProductionScopeOffer,
+): void {
+  if (!capture) return
+  const key = process.env.GROWTH_ANALYTICS_ID_KEY
+  const analyticsOfferId = key ? createGrowthAnalyticsOfferId(offer.id, key) : undefined
+  schedule(async () => {
+    await capture({
+      event: 'offer_sent',
+      subjectId: analyticsOfferId ?? offer.scopeReviewId,
+      distinctId: lead.id,
+      properties: {
+        lead_id: lead.id,
+        scope_review_id: offer.scopeReviewId,
+        ...(analyticsOfferId ? { offer_id: analyticsOfferId } : {}),
+        offer_type: offer.type,
+        ...(offer.amount !== undefined ? { offer_amount: offer.amount } : {}),
+        currency: offer.currency,
+        ...toPostHogAttributionProperties(lead.attribution),
+        ...(lead.builder ? { builder: lead.builder } : {}),
+        ...(lead.launchStage ? { launch_stage: lead.launchStage } : {}),
+        lead_segment: lead.segment,
+      },
+    }).catch(() => undefined)
+  })
 }
 
 function matchesCommercialScope(existing: ProductionScopeOffer, proposed: ProductionScopeOffer): boolean {
@@ -229,4 +277,7 @@ function jsonError(status: number, code: string, message: string): Response {
   return Response.json({ ok: false, error: { code, message } }, { status, headers: noStoreHeaders })
 }
 
-export const POST = createOperatorDecisionPostHandler()
+export const POST = createOperatorDecisionPostHandler({
+  capturePostHog: captureProductionCheckServerEvent,
+  schedule: (task) => after(task),
+})

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useState, type CSSProperties } from 'react'
 
 import { Eyebrow, TickItem } from '@/components/campaign/ui'
 import { LiveScan } from '@/components/production-check/LiveScan'
@@ -15,18 +15,32 @@ import {
   replaceProductionScanHistory,
 } from '@/src/production-check/paths'
 import type { FounderReport, PersistedScan } from '@/src/production-check/types'
+import {
+  productionCheckLandingSubject,
+  trackProductionCheck,
+} from '@/src/production-check/analytics'
 
 export function ProductionCheckExperience({
   initialScan,
   initialReport,
   initialAttributionToken,
+  initialAnalyticsProperties,
 }: {
   initialScan?: PersistedScan
   initialReport?: FounderReport
   initialAttributionToken: string
+  initialAnalyticsProperties: Readonly<Record<string, string>>
 }) {
   const [scan, setScan] = useState(initialScan)
   const [report, setReport] = useState(initialReport)
+
+  useEffect(() => {
+    trackProductionCheck(
+      'landing viewed',
+      initialAnalyticsProperties,
+      { subject: productionCheckLandingSubject(), storage: 'session' },
+    )
+  }, [initialAnalyticsProperties])
 
   const completeScan = useCallback((completedScan: PersistedScan, completedReport: FounderReport) => {
     setScan(completedScan)

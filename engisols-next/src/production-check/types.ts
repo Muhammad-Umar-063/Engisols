@@ -51,6 +51,11 @@ export interface ProductionCheckAttribution {
   content?: string
   term?: string
   fbclid?: string
+  metaCampaignId?: string
+  metaAdsetId?: string
+  metaAdId?: string
+  metaPlacement?: string
+  metaSource?: string
 }
 
 export interface PersistedScan {

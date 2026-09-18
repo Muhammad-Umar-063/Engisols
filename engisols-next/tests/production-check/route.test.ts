@@ -113,6 +113,52 @@ test('captures fbp and derives fbc without changing persisted attribution', asyn
   })
 })
 
+test('returns the analytical scan ID and suppresses Meta CAPI for controlled QA attribution', async () => {
+  const store = new MemoryScanStore()
+  const tasks: Array<() => Promise<void>> = []
+  let metaSends = 0
+  const handler = createScansPostHandler({
+    store,
+    schedule: (task) => tasks.push(task),
+    scan: async () => scanResult(),
+    growthAnalyticsIdKey: 'growth-analytics-route-test-key-0123456789',
+    verifyAttributionToken: (token) => verifyAttributionToken(token, {
+      secret: attributionSecret,
+      now: new Date('2026-09-10T10:00:00.000Z'),
+    }),
+    now: () => new Date('2026-09-10T10:00:00.000Z'),
+    sendMeta: async () => {
+      metaSends += 1
+      return { status: 'sent' }
+    },
+  })
+  const token = signAttributionToken(
+    {
+      source: 'meta_test',
+      campaign: 'growth_copilot_join_test',
+      metaCampaignId: '12001',
+      metaAdsetId: '12002',
+      metaAdId: '12003',
+    },
+    { secret: attributionSecret, now: new Date('2026-09-10T09:00:00.000Z') },
+  )
+  const response = await handler(request(JSON.stringify({
+    url: 'https://app.example/',
+    attributionToken: token,
+  })))
+  const body = await response.json() as {
+    scanId: string
+    analyticsScanId: string
+    metaEvents?: unknown
+  }
+  await tasks[0]?.()
+
+  assert.match(body.analyticsScanId, /^scan_v1_[A-Za-z0-9_-]{43}$/)
+  assert.equal(body.metaEvents, undefined)
+  assert.equal(metaSends, 0)
+  assert.equal((await store.get(body.scanId))?.metaTracking?.scanCompleted.attemptedAt, '2026-09-10T10:00:00.000Z')
+})
+
 test('persists validated attribution with the scan record', async () => {
   const store = new MemoryScanStore()
   const tasks: Array<() => Promise<void>> = []

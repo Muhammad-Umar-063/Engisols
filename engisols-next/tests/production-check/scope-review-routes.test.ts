@@ -27,7 +27,15 @@ function lead(): ProductionCheckLead {
     createdAt: now.toISOString(), updatedAt: now.toISOString(), expiresAt: '2027-09-14T10:00:00.000Z',
     name: 'Ada Founder', email: 'ada@example.com', appUrl: 'https://app.example/',
     builder: 'lovable', launchStage: 'taking_payments', helpNeeded: 'ongoing', timeline: 'now',
-    attribution: {}, score: 11, segment: 'qualified', status: 'new',
+    attribution: {
+      source: 'meta',
+      campaign: 'growth',
+      metaCampaignId: '12001',
+      metaAdsetId: '12002',
+      metaAdId: '12003',
+      metaPlacement: 'instagram_story',
+      metaSource: 'ig',
+    }, score: 11, segment: 'qualified', status: 'new',
     scanSummary: { publicRisk: 12, fixNow: 1, review: 2, expected: 3, exposureBand: 'medium' },
     notification: { status: 'sent', attemptedAt: now.toISOString() },
   }
@@ -125,6 +133,73 @@ test('operator prepares the three known packages and a custom offer with editabl
     assert.equal(offer?.billing, billing)
     assert.doesNotMatch(JSON.stringify(offer), /Private operator note/)
     assert.match(body.offerUrl, /\/production-check\/offer\/offer_/)
+  }
+})
+
+test('server-confirmed offer events use a non-capability offer ID and remain idempotent', async () => {
+  const previousKey = process.env.GROWTH_ANALYTICS_ID_KEY
+  process.env.GROWTH_ANALYTICS_ID_KEY = 'growth-analytics-offer-test-key-0123456789'
+  try {
+    const state = await fixture()
+    const scheduled: Array<() => Promise<void>> = []
+    const captures: Array<{ event: string; subjectId: string; properties?: Readonly<Record<string, string | number | boolean>> }> = []
+    const capturePostHog = async (event: (typeof captures)[number]) => {
+      captures.push(event)
+      return 'sent' as const
+    }
+    const operator = createOperatorDecisionPostHandler({
+      reviews: state.reviews,
+      offers: state.offers,
+      leads: state.leads,
+      authorize: () => true,
+      now: () => now,
+      createOfferId: () => 'offer_abcdefghijklmnopqrstuvwx',
+      sendCustomer: async () => undefined,
+      capturePostHog,
+      schedule: (task) => scheduled.push(task),
+    })
+    const sentResponse = await operator(
+      operatorRequest(state.review, paidDecision()),
+      { params: Promise.resolve({ scopeReviewId: state.review.id }) },
+    )
+    const sentBody = await sentResponse.json() as { offerId: string }
+    await Promise.all(scheduled.splice(0).map((task) => task()))
+
+    const customer = createOfferDecisionPostHandler({
+      offers: state.offers,
+      reviews: state.reviews,
+      leads: state.leads,
+      now: () => now,
+      notify: async () => undefined,
+      capturePostHog,
+      schedule: (task) => scheduled.push(task),
+    })
+    const decide = () => customer(new Request(
+      `https://engisols.com/api/production-check/offers/${sentBody.offerId}/decision`,
+      {
+        method: 'POST',
+        headers: { Origin: 'https://engisols.com', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve' }),
+      },
+    ), { params: Promise.resolve({ offerId: sentBody.offerId }) })
+    await decide()
+    await decide()
+    await Promise.all(scheduled.splice(0).map((task) => task()))
+
+    assert.deepEqual(captures.map(({ event }) => event), [
+      'offer_sent',
+      'offer_accepted',
+      'offer_accepted',
+    ])
+    for (const capture of captures) {
+      assert.match(String(capture.properties?.offer_id), /^offer_v1_[A-Za-z0-9_-]{43}$/)
+      assert.doesNotMatch(JSON.stringify(capture), new RegExp(sentBody.offerId))
+      assert.equal(capture.properties?.meta_ad_id, '12003')
+    }
+    assert.equal(captures[1]?.subjectId, captures[2]?.subjectId)
+  } finally {
+    if (previousKey === undefined) delete process.env.GROWTH_ANALYTICS_ID_KEY
+    else process.env.GROWTH_ANALYTICS_ID_KEY = previousKey
   }
 })
 

@@ -1,4 +1,5 @@
 import { ScannerError, scanPublicUrl, toPublicScanError } from '../scanner'
+import { createGrowthAnalyticsScanId } from '../growth/event-contract'
 import type { ScanDependencies } from '../scanner/scan'
 import type { ScanProgressEvent, ScanResult } from '../scanner/types'
 import { sendMetaConversion, type MetaConversionSender } from '../meta/capi.server'
@@ -7,6 +8,9 @@ import type { MetaRequestContext } from '../meta/request.server'
 import { SCAN_RECORD_LIFETIME_MS } from './config'
 import { createPublicScanId, sanitizeResultForPersistence } from './report'
 import { containsCredentialLikeValue } from './security'
+import { isControlledQaAttribution } from './attribution'
+import { toPostHogAttributionProperties } from './attribution'
+import type { ServerPostHogCapture } from './posthog.server'
 import type {
   PersistedScan,
   ProductionCheckAttribution,
@@ -24,12 +28,14 @@ const MAX_RECENT_EVENTS = 5
 interface ScanMetaOptions {
   requestContext: MetaRequestContext
   eventSourceUrl: string
+  growthAnalyticsIdKey?: string
 }
 
 interface RunScanOptions {
   requestContext?: MetaRequestContext
   sendMeta?: MetaConversionSender
   now?: () => Date
+  capturePostHog?: ServerPostHogCapture
 }
 
 export async function createScanRecord(
@@ -45,8 +51,12 @@ export async function createScanRecord(
   const requestedUrl = displayUrl(input)
   const createdAt = now()
   const publicId = createPublicScanId()
+  const growthAnalyticsIdKey = meta?.growthAnalyticsIdKey ?? process.env.GROWTH_ANALYTICS_ID_KEY
   const scan: PersistedScan = {
     publicId,
+    ...(growthAnalyticsIdKey
+      ? { growthAnalyticsId: createGrowthAnalyticsScanId(publicId, growthAnalyticsIdKey) }
+      : {}),
     status: 'queued',
     requestedUrl,
     progress: {
@@ -131,6 +141,7 @@ export async function runScanRecord(
     const result = await scan(input, { onProgress })
     await flushProgress()
     await store.complete(publicId, sanitizeResultForPersistence(result))
+    await trackPostHogScanCompletion(publicId, store, options)
     await trackScanCompletion(publicId, store, options)
   } catch (error) {
     await flushProgress()
@@ -167,6 +178,31 @@ export async function runScanRecord(
   }
 }
 
+async function trackPostHogScanCompletion(
+  publicId: string,
+  store: ScanStore,
+  options: RunScanOptions,
+): Promise<void> {
+  if (!options.capturePostHog) return
+  try {
+    const persisted = await store.get(publicId)
+    if (!persisted?.growthAnalyticsId) return
+    await options.capturePostHog({
+      event: persisted.status === 'partial' ? 'scan_partial' : 'scan_completed',
+      subjectId: persisted.growthAnalyticsId,
+      distinctId: persisted.growthAnalyticsId,
+      properties: {
+        scan_id: persisted.growthAnalyticsId,
+        ...toPostHogAttributionProperties(persisted.attribution),
+        ...(persisted.answers.builder ? { builder: persisted.answers.builder } : {}),
+        ...(persisted.answers.launchStage ? { launch_stage: persisted.answers.launchStage } : {}),
+      },
+    })
+  } catch {
+    // PostHog measurement must never change a completed scan into a failed scan.
+  }
+}
+
 async function trackScanCompletion(
   publicId: string,
   store: ScanStore,
@@ -177,6 +213,16 @@ async function trackScanCompletion(
     const tracking = persisted?.metaTracking
     if (!persisted || !tracking || tracking.scanCompleted.attemptedAt) return
     const attemptedAt = (options.now ?? (() => new Date()))()
+    if (isControlledQaAttribution(persisted.attribution)) {
+      await store.updateMetaTracking(publicId, {
+        ...tracking,
+        scanCompleted: {
+          ...tracking.scanCompleted,
+          attemptedAt: attemptedAt.toISOString(),
+        },
+      })
+      return
+    }
     const context = options.requestContext
     const result = await (options.sendMeta ?? sendMetaConversion)({
       eventName: 'ScanCompleted',

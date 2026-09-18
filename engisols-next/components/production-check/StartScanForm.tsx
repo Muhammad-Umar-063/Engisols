@@ -40,6 +40,7 @@ export function StartScanForm({
       const body = (await response.json()) as {
         ok: boolean
         scanId?: string
+        analyticsScanId?: string
         metaEvents?: { scanStarted?: string }
         error?: { message?: string }
       }
@@ -47,6 +48,7 @@ export function StartScanForm({
         throw new Error(body.error?.message || 'The scan could not be started.')
       }
       trackProductionCheck('scan_started', {
+        ...(body.analyticsScanId ? { scan_id: body.analyticsScanId } : {}),
         ...(body.metaEvents?.scanStarted
           ? { metaEventId: body.metaEvents.scanStarted }
           : {}),

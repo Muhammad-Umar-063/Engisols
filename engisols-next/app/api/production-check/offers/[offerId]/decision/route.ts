@@ -1,4 +1,12 @@
+import { after } from 'next/server'
+
+import { createGrowthAnalyticsOfferId } from '../../../../../../src/growth/event-contract'
+import { toPostHogAttributionProperties } from '../../../../../../src/production-check/attribution'
 import { productionReportPath } from '../../../../../../src/production-check/paths'
+import {
+  captureProductionCheckServerEvent,
+  type ServerPostHogCapture,
+} from '../../../../../../src/production-check/posthog.server'
 import { readLimitedJson } from '../../../../../../src/production-check/request'
 import { sendReviewEmail, type ReviewEmailSender } from '../../../../../../src/production-check/review-email'
 import { isValidScopeOfferId } from '../../../../../../src/production-check/scope-review'
@@ -25,6 +33,8 @@ interface Dependencies {
   leads?: LeadStore
   notify?: ReviewEmailSender
   now?: () => Date
+  capturePostHog?: ServerPostHogCapture
+  schedule?: (task: () => Promise<void>) => void
 }
 
 export function createOfferDecisionPostHandler({
@@ -33,6 +43,8 @@ export function createOfferDecisionPostHandler({
   leads,
   notify = sendReviewEmail,
   now = () => new Date(),
+  capturePostHog,
+  schedule = (task) => { void task() },
 }: Dependencies = {}) {
   return async function POST(request: Request, context: RouteContext): Promise<Response> {
     if (!isSameOrigin(request)) return jsonError(403, 'request_blocked', 'This request was blocked.')
@@ -67,6 +79,8 @@ export function createOfferDecisionPostHandler({
         leads: leadStore,
         notify,
         now,
+        capturePostHog,
+        schedule,
       })
     }
     if (existing.status !== 'sent') return jsonError(409, 'offer_not_ready', 'This scope is not ready for approval.')
@@ -83,12 +97,15 @@ export function createOfferDecisionPostHandler({
       leads: leadStore,
       notify,
       now,
+      capturePostHog,
+      schedule,
     })
   }
 }
 
 async function reconcileCustomerDecision({
   request, decided, decision, offers, reviews, leads, notify, now,
+  capturePostHog, schedule,
 }: {
   request: Request
   decided: ProductionScopeOffer
@@ -98,7 +115,10 @@ async function reconcileCustomerDecision({
   leads: LeadStore
   notify: ReviewEmailSender
   now: () => Date
+  capturePostHog?: ServerPostHogCapture
+  schedule: (task: () => Promise<void>) => void
 }): Promise<Response> {
+  scheduleOfferDecisionAnalytics(schedule, capturePostHog, leads, decided, decision)
   const attemptedAt = now().toISOString()
   let reviewSynced = decided.decisionReviewSync?.status === 'synced'
   let notificationSent = decided.decisionNotification?.status === 'sent'
@@ -175,6 +195,38 @@ async function reconcileCustomerDecision({
   )
 }
 
+function scheduleOfferDecisionAnalytics(
+  schedule: (task: () => Promise<void>) => void,
+  capture: ServerPostHogCapture | undefined,
+  leads: LeadStore,
+  offer: ProductionScopeOffer,
+  decision: 'accepted' | 'declined',
+): void {
+  if (!capture) return
+  const key = process.env.GROWTH_ANALYTICS_ID_KEY
+  const analyticsOfferId = key ? createGrowthAnalyticsOfferId(offer.id, key) : undefined
+  schedule(async () => {
+    const lead = await leads.get(offer.leadId).catch(() => null)
+    await capture({
+      event: decision === 'accepted' ? 'offer_accepted' : 'offer_declined',
+      subjectId: analyticsOfferId ?? offer.scopeReviewId,
+      distinctId: lead?.id ?? offer.scopeReviewId,
+      properties: {
+        ...(lead ? { lead_id: lead.id } : {}),
+        scope_review_id: offer.scopeReviewId,
+        ...(analyticsOfferId ? { offer_id: analyticsOfferId } : {}),
+        offer_type: offer.type,
+        ...(offer.amount !== undefined ? { offer_amount: offer.amount } : {}),
+        currency: offer.currency,
+        ...(lead ? toPostHogAttributionProperties(lead.attribution) : {}),
+        ...(lead?.builder ? { builder: lead.builder } : {}),
+        ...(lead?.launchStage ? { launch_stage: lead.launchStage } : {}),
+        ...(lead ? { lead_segment: lead.segment } : {}),
+      },
+    }).catch(() => undefined)
+  })
+}
+
 function isSameOrigin(request: Request): boolean {
   const origin = request.headers.get('origin')
   if (!origin) return false
@@ -186,4 +238,7 @@ function jsonError(status: number, code: string, message: string): Response {
   return Response.json({ ok: false, error: { code, message } }, { status, headers: noStoreHeaders })
 }
 
-export const POST = createOfferDecisionPostHandler()
+export const POST = createOfferDecisionPostHandler({
+  capturePostHog: captureProductionCheckServerEvent,
+  schedule: (task) => after(task),
+})

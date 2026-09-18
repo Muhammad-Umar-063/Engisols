@@ -24,6 +24,7 @@ export const ENGISOLS_RESERVED_GROWTH_EVENT_TYPES = [
 export type EngisolsGrowthEventType = (typeof ENGISOLS_GROWTH_EVENT_TYPES)[number]
 export type ReservedEngisolsGrowthEventType = (typeof ENGISOLS_RESERVED_GROWTH_EVENT_TYPES)[number]
 export type GrowthAnalyticsScanId = `scan_v1_${string}`
+export type GrowthAnalyticsOfferId = `offer_v1_${string}`
 export type EngisolsGrowthEventId = `evt_v1_${string}`
 
 export interface EngisolsGrowthEventSubject {
@@ -112,6 +113,15 @@ export function createGrowthAnalyticsScanId(
 ): GrowthAnalyticsScanId {
   assertOpaqueIdentityInput(reportCapabilityId, 'report capability ID')
   return `scan_v1_${hmacIdentity('engisols-growth-analytics-scan/v1', reportCapabilityId, key)}`
+}
+
+/** Derives a safe analytics identifier from the bearer offer capability. */
+export function createGrowthAnalyticsOfferId(
+  offerCapabilityId: string,
+  key: string = requireGrowthAnalyticsIdKey(),
+): GrowthAnalyticsOfferId {
+  assertOpaqueIdentityInput(offerCapabilityId, 'offer capability ID')
+  return `offer_v1_${hmacIdentity('engisols-growth-analytics-offer/v1', offerCapabilityId, key)}`
 }
 
 export function createEngisolsGrowthEventId(
