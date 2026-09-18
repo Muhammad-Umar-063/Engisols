@@ -112,6 +112,7 @@ export type ProductionCheckLeadNextStep =
 export interface ProductionCheckLead {
   id: string
   scanId: string
+  analyticsScanId?: string
   createdAt: string
   updatedAt: string
   expiresAt: string

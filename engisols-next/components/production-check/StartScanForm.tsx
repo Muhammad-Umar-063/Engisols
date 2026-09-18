@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRef, useState, type FormEvent } from 'react'
 
-import { trackProductionCheck } from '@/src/production-check/analytics'
+import { identifyProductionCheckSubject, trackProductionCheck } from '@/src/production-check/analytics'
 
 export function StartScanForm({
   attributionToken,
@@ -47,6 +47,7 @@ export function StartScanForm({
       if (!response.ok || !body.ok || !body.scanId) {
         throw new Error(body.error?.message || 'The scan could not be started.')
       }
+      if (body.analyticsScanId) identifyProductionCheckSubject(body.analyticsScanId)
       trackProductionCheck('scan_started', {
         ...(body.analyticsScanId ? { scan_id: body.analyticsScanId } : {}),
         ...(body.metaEvents?.scanStarted

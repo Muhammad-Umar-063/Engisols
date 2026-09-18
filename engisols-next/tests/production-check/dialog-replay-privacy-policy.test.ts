@@ -11,6 +11,7 @@ const findingExplorer = readFileSync('components/production-check/FindingExplore
 const evidenceExplorer = readFileSync('components/production-check/ReportEvidenceExplorer.tsx', 'utf8')
 const reportView = readFileSync('components/production-check/ReportView.tsx', 'utf8')
 const reportActions = readFileSync('components/production-check/ReportActions.tsx', 'utf8')
+const startScanForm = readFileSync('components/production-check/StartScanForm.tsx', 'utf8')
 const campaignAnalytics = readFileSync('src/campaign/analytics.ts', 'utf8')
 const productionAnalytics = readFileSync('src/production-check/analytics.ts', 'utf8')
 const routeCommit = readFileSync('components/analytics/PostHogRouteCommit.tsx', 'utf8')
@@ -128,6 +129,8 @@ test('business events and the Meta bridges remain intact', () => {
   assert.match(reportActions, /trackProductionCheck\('scope_review_cta_clicked'/)
   assert.match(productionAnalytics, /'review_intake_opened'/)
   assert.match(productionAnalytics, /'scope_review_cta_clicked'/)
+  assert.match(startScanForm, /identifyProductionCheckSubject\(body\.analyticsScanId\)/)
+  assert.match(productionAnalytics, /posthog\.identify\(analyticsScanId\)/)
   assert.match(campaignAnalytics, /window\.dispatchEvent\(new CustomEvent\(AI_APP_AUDIT_META_EVENT/)
 })
 

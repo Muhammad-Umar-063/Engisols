@@ -24,6 +24,7 @@ function lead(): ProductionCheckLead {
   return {
     id: 'lead_abcdefghijklmnopqrstuvwx',
     scanId: 'rpt_abcdefghijklmnopqrstuvwx',
+    analyticsScanId: `scan_v1_${'A'.repeat(43)}`,
     createdAt: now.toISOString(), updatedAt: now.toISOString(), expiresAt: '2027-09-14T10:00:00.000Z',
     name: 'Ada Founder', email: 'ada@example.com', appUrl: 'https://app.example/',
     builder: 'lovable', launchStage: 'taking_payments', helpNeeded: 'ongoing', timeline: 'now',
@@ -142,7 +143,7 @@ test('server-confirmed offer events use a non-capability offer ID and remain ide
   try {
     const state = await fixture()
     const scheduled: Array<() => Promise<void>> = []
-    const captures: Array<{ event: string; subjectId: string; properties?: Readonly<Record<string, string | number | boolean>> }> = []
+    const captures: Array<{ event: string; subjectId: string; distinctId: string; properties?: Readonly<Record<string, string | number | boolean>> }> = []
     const capturePostHog = async (event: (typeof captures)[number]) => {
       captures.push(event)
       return 'sent' as const
@@ -195,6 +196,7 @@ test('server-confirmed offer events use a non-capability offer ID and remain ide
       assert.match(String(capture.properties?.offer_id), /^offer_v1_[A-Za-z0-9_-]{43}$/)
       assert.doesNotMatch(JSON.stringify(capture), new RegExp(sentBody.offerId))
       assert.equal(capture.properties?.meta_ad_id, '12003')
+      assert.equal(capture.distinctId, `scan_v1_${'A'.repeat(43)}`)
     }
     assert.equal(captures[1]?.subjectId, captures[2]?.subjectId)
   } finally {

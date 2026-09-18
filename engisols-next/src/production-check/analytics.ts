@@ -89,6 +89,14 @@ export function trackProductionCheck(
   )
 }
 
+export function identifyProductionCheckSubject(analyticsScanId: string): void {
+  if (typeof window === 'undefined' || !posthogConfigured) return
+  if (!/^scan_v1_[A-Za-z0-9_-]{43}$/.test(analyticsScanId)) {
+    throw new Error('Production Check analytics identity is invalid')
+  }
+  posthog.identify(analyticsScanId)
+}
+
 export function productionCheckLandingSubject(): string {
   if (typeof window === 'undefined') return 'landing-session-server'
   const key = 'engisols:production-check:landing-session:v1'

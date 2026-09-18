@@ -32,6 +32,12 @@ PostHog uses the canonical funnel:
 `scope_review_requested` → `lead_created` → `lead_qualified` → `offer_sent` →
 `offer_accepted`.
 
+When the scan is created, the browser identifies its existing anonymous
+PostHog person with the non-PII analytical scan ID. That ID is persisted on
+the lead and reused by every server event through offer decision, so the
+ordered aggregate funnel does not split when processing moves from browser to
+server routes.
+
 Existing `scope_offer_viewed`, `scope_offer_approved`, and
 `scope_offer_declined` events remain available through documented compatibility
 mapping. Stable `$insert_id` values suppress rerender, remount, refresh, and

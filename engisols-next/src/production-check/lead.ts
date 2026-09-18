@@ -36,6 +36,7 @@ export function createProductionCheckLead(
   const lead: ProductionCheckLead = {
     id,
     scanId: scan.publicId,
+    ...(scan.growthAnalyticsId ? { analyticsScanId: scan.growthAnalyticsId } : {}),
     createdAt: createdAt.toISOString(),
     updatedAt: createdAt.toISOString(),
     expiresAt: new Date(createdAt.getTime() + LEAD_RECORD_LIFETIME_MS).toISOString(),

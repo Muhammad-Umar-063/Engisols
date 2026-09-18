@@ -240,7 +240,7 @@ function scheduleOfferSentAnalytics(
     await capture({
       event: 'offer_sent',
       subjectId: analyticsOfferId ?? offer.scopeReviewId,
-      distinctId: lead.id,
+      distinctId: lead.analyticsScanId ?? lead.id,
       properties: {
         lead_id: lead.id,
         scope_review_id: offer.scopeReviewId,

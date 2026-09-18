@@ -218,7 +218,7 @@ function scheduleOfferDecisionAnalytics(
     await capture({
       event: decision === 'accepted' ? 'offer_accepted' : 'offer_declined',
       subjectId: analyticsOfferId ?? offer.scopeReviewId,
-      distinctId: lead?.id ?? offer.scopeReviewId,
+      distinctId: lead?.analyticsScanId ?? lead?.id ?? offer.scopeReviewId,
       properties: {
         ...(lead ? { lead_id: lead.id } : {}),
         scope_review_id: offer.scopeReviewId,
