@@ -5,7 +5,6 @@ export const ENGISOLS_GROWTH_EXPORT_SCHEMA_VERSION = 'engisols-growth-export/v1'
 export interface GrowthExportCursorClaims {
   readonly version: 1
   readonly afterSequence: number
-  readonly afterEventId?: string | undefined
   readonly snapshotMaxSequence: number
   readonly since: string
   readonly until: string
@@ -53,7 +52,7 @@ function assertSecret(secret: string): void {
 function assertCursorClaims(value: GrowthExportCursorClaims): void {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Growth export cursor is invalid')
   const keys = Object.keys(value)
-  if (keys.some((key) => !['version', 'afterSequence', 'afterEventId', 'snapshotMaxSequence', 'since', 'until', 'complete'].includes(key))) {
+  if (keys.some((key) => !['version', 'afterSequence', 'snapshotMaxSequence', 'since', 'until', 'complete'].includes(key))) {
     throw new Error('Growth export cursor is invalid')
   }
   if (
@@ -62,7 +61,6 @@ function assertCursorClaims(value: GrowthExportCursorClaims): void {
     !Number.isSafeInteger(value.snapshotMaxSequence) || value.snapshotMaxSequence < value.afterSequence ||
     typeof value.since !== 'string' || !Number.isFinite(Date.parse(value.since)) ||
     typeof value.until !== 'string' || !Number.isFinite(Date.parse(value.until)) ||
-    typeof value.complete !== 'boolean' ||
-    (value.afterEventId !== undefined && !/^evt_v1_[A-Za-z0-9_-]{20,}$/.test(value.afterEventId))
+    typeof value.complete !== 'boolean'
   ) throw new Error('Growth export cursor is invalid')
 }

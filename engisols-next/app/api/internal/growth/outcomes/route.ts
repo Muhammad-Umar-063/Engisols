@@ -83,7 +83,6 @@ export function createGrowthOutcomesGetHandler({
         ? cursor.snapshotMaxSequence
         : currentMax
       let afterSequence = cursor?.afterSequence ?? 0
-      let afterEventId = cursor?.afterEventId
       const events: GrowthEventLedgerRecord['event'][] = []
       let batches = 0
 
@@ -92,12 +91,10 @@ export function createGrowthOutcomesGetHandler({
         batches += 1
         if (!records.length) {
           afterSequence = snapshotMaxSequence
-          afterEventId = undefined
           break
         }
         for (const record of records) {
           afterSequence = record.sequence
-          afterEventId = record.event.eventId
           const occurredAt = Date.parse(record.event.occurredAt)
           if (occurredAt >= range.sinceMs && occurredAt <= range.untilMs) events.push(record.event)
           if (events.length === limit) break
@@ -105,10 +102,10 @@ export function createGrowthOutcomesGetHandler({
       }
 
       const complete = afterSequence >= snapshotMaxSequence
+      const deliveryHealth = await store.getDeliveryHealth(now())
       const claims: GrowthExportCursorClaims = {
         version: 1,
         afterSequence,
-        ...(afterEventId ? { afterEventId } : {}),
         snapshotMaxSequence,
         since: range.since,
         until: range.until,
@@ -130,6 +127,7 @@ export function createGrowthOutcomesGetHandler({
           since: range.since,
           until: range.until,
           events,
+          deliveryHealth,
           checkpointCursor,
           nextCursor,
         },

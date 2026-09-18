@@ -52,6 +52,12 @@ export interface GrowthOutboxAppend {
   readonly retainedUntil?: string | undefined
 }
 
+export interface GrowthOutboxDeliveryHealth {
+  readonly asOf: string
+  readonly failed: number
+  readonly deadLetter: number
+}
+
 export interface GrowthOutboxOperations {
   claimDue(now: Date, leaseMs: number, limit: number): Promise<ClaimedGrowthEvent[]>
   markDelivered(eventId: string, deliveredAt: Date): Promise<GrowthOutboxRecord | null>
@@ -66,6 +72,7 @@ export interface GrowthOutboxOperations {
   getOutbox(eventId: string): Promise<GrowthOutboxRecord | null>
   getMaxSequence(): Promise<number>
   listLedger(afterSequence?: number, limit?: number, maxSequence?: number): Promise<GrowthEventLedgerRecord[]>
+  getDeliveryHealth(now: Date): Promise<GrowthOutboxDeliveryHealth>
 }
 
 export interface GrowthOutboxStore extends GrowthOutboxOperations {

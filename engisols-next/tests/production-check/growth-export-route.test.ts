@@ -55,8 +55,18 @@ test('exports a frozen snapshot with signed interruption-safe pagination and no 
   const base = 'https://engisols.example/api/internal/growth/outcomes?since=2026-09-18T09:00:00.000Z&until=2026-09-18T11:00:00.000Z&limit=1'
   const first = await handler(request(base))
   assert.equal(first.status, 200)
-  const firstBody = await first.json() as { events: EngisolsGrowthEvent[]; nextCursor: string; checkpointCursor: string }
+  const firstBody = await first.json() as {
+    events: EngisolsGrowthEvent[]
+    nextCursor: string
+    checkpointCursor: string
+    deliveryHealth: { asOf: string; failed: number; deadLetter: number }
+  }
   assert.equal(firstBody.events.length, 1)
+  assert.deepEqual(firstBody.deliveryHealth, {
+    asOf: NOW.toISOString(),
+    failed: 0,
+    deadLetter: 0,
+  })
   append(store, event(3, '2026-09-18T10:02:00.000Z'))
 
   const second = await handler(request(`${base}&cursor=${encodeURIComponent(firstBody.nextCursor)}`))

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { createGrowthOutcomeEventFactory } from '../../src/growth/outcome-events'
-import { MemoryGrowthOutboxStore } from '../../src/growth/outbox-store'
+import { MemoryGrowthOutboxStore, UpstashGrowthOutboxStore } from '../../src/growth/outbox-store'
 import { GROWTH_OUTBOX_MAX_ATTEMPTS } from '../../src/growth/outbox-types'
 import {
   MemoryLeadStore,
@@ -195,6 +195,95 @@ test('leases, retries with bounded backoff, reclaims stale delivery, and dead-le
   }
   assert.equal((await outbox.claimDue(new Date('2027-09-01T00:00:00.000Z'), 60_000, 10)).some(({ outbox: item }) => item.eventId === firstEventId), false)
   assert.ok(await outbox.getLedger(firstEventId), 'dead-letter event remains exportable')
+  assert.deepEqual(await outbox.getDeliveryHealth(now), {
+    asOf: now.toISOString(),
+    failed: 0,
+    deadLetter: 1,
+  })
+})
+
+test('delivery health counts only retained failed and dead-letter records', async () => {
+  let now = START
+  const outbox = new MemoryGrowthOutboxStore(() => now)
+  const events = createGrowthOutcomeEventFactory(KEY)
+  const failedEvent = events.leadCreated({ ...lead(), id: 'lead_aaaaaaaaaaaaaaaaaaaaaaaa' })
+  const deadLetterEvent = events.leadCreated({ ...lead(), id: 'lead_bbbbbbbbbbbbbbbbbbbbbbbb' })
+  outbox.commit([
+    { event: failedEvent, retainedUntil: '2026-09-19T12:00:00.000Z' },
+    { event: deadLetterEvent, retainedUntil: '2026-09-19T12:00:00.000Z' },
+  ], () => undefined)
+
+  await outbox.claimDue(now, 60_000, 2)
+  await outbox.markFailed(failedEvent.eventId, now, 'network')
+  await outbox.markFailed(deadLetterEvent.eventId, now, 'provider_4xx', true)
+
+  assert.deepEqual(await outbox.getDeliveryHealth(now), {
+    asOf: now.toISOString(),
+    failed: 1,
+    deadLetter: 1,
+  })
+
+  now = new Date('2026-09-20T12:00:00.000Z')
+  assert.deepEqual(await outbox.getDeliveryHealth(now), {
+    asOf: now.toISOString(),
+    failed: 0,
+    deadLetter: 0,
+  })
+})
+
+test('Upstash delivery health prunes expired state-index members without scanning records', async () => {
+  const originalFetch = globalThis.fetch
+  let command: string[] = []
+  globalThis.fetch = async (_input, init) => {
+    command = JSON.parse(String(init?.body)) as string[]
+    return Response.json({ result: [3, 2] })
+  }
+  try {
+    const outbox = new UpstashGrowthOutboxStore('https://redis.example', 'private-token')
+    assert.deepEqual(await outbox.getDeliveryHealth(START), {
+      asOf: START.toISOString(),
+      failed: 3,
+      deadLetter: 2,
+    })
+    assert.equal(command[0], 'EVAL')
+    assert.match(command[1] ?? '', /ZREMRANGEBYSCORE[\s\S]*ZCARD/)
+    assert.doesNotMatch(command[1] ?? '', /redis\.call\(['"](?:SCAN|KEYS)['"]/)
+    assert.ok(command.includes('engisols:growth:outbox:state:failed'))
+    assert.ok(command.includes('engisols:growth:outbox:state:dead_letter'))
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('Upstash ledger pagination uses one bounded Redis round trip in sequence order', async () => {
+  const originalFetch = globalThis.fetch
+  const requests: string[][] = []
+  const events = createGrowthOutcomeEventFactory(KEY)
+  const first = events.leadCreated({ ...lead(), id: 'lead_cccccccccccccccccccccccc' })
+  const second = events.leadCreated({ ...lead(), id: 'lead_dddddddddddddddddddddddd' })
+  globalThis.fetch = async (_input, init) => {
+    requests.push(JSON.parse(String(init?.body)) as string[])
+    return Response.json({
+      result: [
+        '4', JSON.stringify(first), 'a'.repeat(64), START.toISOString(), '2027-09-18T10:00:00.000Z',
+        '5', JSON.stringify(second), 'b'.repeat(64), START.toISOString(), '2027-09-18T10:00:00.000Z',
+      ],
+    })
+  }
+  try {
+    const outbox = new UpstashGrowthOutboxStore('https://redis.example', 'private-token')
+    const records = await outbox.listLedger(3, 2, 5)
+    assert.deepEqual(records.map(({ sequence, event }) => [sequence, event.eventId]), [
+      [4, first.eventId],
+      [5, second.eventId],
+    ])
+    assert.equal(requests.length, 1)
+    assert.equal(requests[0]?.[0], 'EVAL')
+    assert.match(requests[0]?.[1] ?? '', /ZRANGEBYSCORE[\s\S]*HMGET/)
+    assert.ok(requests[0]?.includes('2'), 'the requested page bound is passed to Redis')
+  } finally {
+    globalThis.fetch = originalFetch
+  }
 })
 
 test('delivered terminal records remain in the immutable export ledger', async () => {

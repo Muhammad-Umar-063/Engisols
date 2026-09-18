@@ -7,6 +7,7 @@ import {
   type ClaimedGrowthEvent,
   type GrowthEventLedgerRecord,
   type GrowthOutboxAppend,
+  type GrowthOutboxDeliveryHealth,
   type GrowthOutboxRecord,
   type GrowthOutboxOperations,
   type GrowthOutboxSafeErrorCategory,
@@ -21,6 +22,8 @@ export const GROWTH_REDIS_LEASE_KEY = 'engisols:growth:outbox:leases'
 export const GROWTH_REDIS_OFFER_EXPIRY_KEY = 'engisols:growth:offers:expires'
 export const GROWTH_REDIS_LEDGER_KEY_PREFIX = 'engisols:growth:event:'
 export const GROWTH_REDIS_OUTBOX_KEY_PREFIX = 'engisols:growth:outbox:'
+export const GROWTH_REDIS_FAILED_INDEX_KEY = 'engisols:growth:outbox:state:failed'
+export const GROWTH_REDIS_DEAD_LETTER_INDEX_KEY = 'engisols:growth:outbox:state:dead_letter'
 
 export type MemoryGrowthOutboxFailurePoint =
   | 'before_business'
@@ -179,6 +182,17 @@ export class MemoryGrowthOutboxStore implements GrowthOutboxStore {
       .map((record) => structuredClone(record))
   }
 
+  async getDeliveryHealth(now: Date): Promise<GrowthOutboxDeliveryHealth> {
+    this.evictExpired(now)
+    let failed = 0
+    let deadLetter = 0
+    for (const record of this.outbox.values()) {
+      if (record.state === 'failed') failed += 1
+      if (record.state === 'dead_letter') deadLetter += 1
+    }
+    return { asOf: now.toISOString(), failed, deadLetter }
+  }
+
   private prepare(item: GrowthOutboxAppend) {
     const event = parseEngisolsGrowthEvent(item.event)
     const serialized = JSON.stringify(event)
@@ -245,10 +259,11 @@ export class UpstashGrowthOutboxStore implements GrowthOutboxOperations {
     await this.reclaimStale(now)
     const claimedIds = await this.client.command<string[]>([
       'EVAL',
-      "local ids = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', 0, ARGV[2]); local claimed = {}; for _, id in ipairs(ids) do local key = ARGV[5] .. id; local state = redis.call('HGET', key, 'state'); if state == 'pending' or state == 'failed' then local attempts = redis.call('HINCRBY', key, 'attemptCount', 1); redis.call('HSET', key, 'state', 'delivering', 'leaseExpiresAt', ARGV[3], 'updatedAt', ARGV[4]); redis.call('ZREM', KEYS[1], id); redis.call('ZADD', KEYS[2], ARGV[6], id); table.insert(claimed, id) end end; return claimed",
-      '2',
+      "local ids = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', 0, ARGV[2]); local claimed = {}; for _, id in ipairs(ids) do local key = ARGV[5] .. id; local state = redis.call('HGET', key, 'state'); if state == 'pending' or state == 'failed' then local attempts = redis.call('HINCRBY', key, 'attemptCount', 1); redis.call('HSET', key, 'state', 'delivering', 'leaseExpiresAt', ARGV[3], 'updatedAt', ARGV[4]); redis.call('ZREM', KEYS[1], id); redis.call('ZREM', KEYS[3], id); redis.call('ZADD', KEYS[2], ARGV[6], id); table.insert(claimed, id) end end; return claimed",
+      '3',
       GROWTH_REDIS_DUE_KEY,
       GROWTH_REDIS_LEASE_KEY,
+      GROWTH_REDIS_FAILED_INDEX_KEY,
       String(now.getTime()),
       String(limit),
       new Date(now.getTime() + leaseMs).toISOString(),
@@ -266,11 +281,13 @@ export class UpstashGrowthOutboxStore implements GrowthOutboxOperations {
   async markDelivered(eventId: string, deliveredAt: Date): Promise<GrowthOutboxRecord | null> {
     const values = await this.client.command<string[]>([
       'EVAL',
-      "local state = redis.call('HGET', KEYS[1], 'state'); if not state then return {} end; if state == 'delivering' then redis.call('HSET', KEYS[1], 'state', 'delivered', 'deliveredAt', ARGV[1], 'updatedAt', ARGV[1]); redis.call('HDEL', KEYS[1], 'leaseExpiresAt', 'lastSafeErrorCategory'); redis.call('ZREM', KEYS[2], ARGV[2]); redis.call('ZREM', KEYS[3], ARGV[2]) end; return redis.call('HGETALL', KEYS[1])",
-      '3',
+      "local state = redis.call('HGET', KEYS[1], 'state'); if not state then return {} end; if state == 'delivering' then redis.call('HSET', KEYS[1], 'state', 'delivered', 'deliveredAt', ARGV[1], 'updatedAt', ARGV[1]); redis.call('HDEL', KEYS[1], 'leaseExpiresAt', 'lastSafeErrorCategory'); redis.call('ZREM', KEYS[2], ARGV[2]); redis.call('ZREM', KEYS[3], ARGV[2]); redis.call('ZREM', KEYS[4], ARGV[2]); redis.call('ZREM', KEYS[5], ARGV[2]) end; return redis.call('HGETALL', KEYS[1])",
+      '5',
       `${GROWTH_REDIS_OUTBOX_KEY_PREFIX}${eventId}`,
       GROWTH_REDIS_LEASE_KEY,
       GROWTH_REDIS_DUE_KEY,
+      GROWTH_REDIS_FAILED_INDEX_KEY,
+      GROWTH_REDIS_DEAD_LETTER_INDEX_KEY,
       deliveredAt.toISOString(),
       eventId,
     ])
@@ -285,11 +302,13 @@ export class UpstashGrowthOutboxStore implements GrowthOutboxOperations {
   ): Promise<GrowthOutboxRecord | null> {
     const values = await this.client.command<string[]>([
       'EVAL',
-      "local state = redis.call('HGET', KEYS[1], 'state'); if not state then return {} end; if state ~= 'delivering' then return redis.call('HGETALL', KEYS[1]) end; local attempts = tonumber(redis.call('HGET', KEYS[1], 'attemptCount') or '0'); redis.call('ZREM', KEYS[2], ARGV[2]); redis.call('HDEL', KEYS[1], 'leaseExpiresAt'); if ARGV[8] == '1' or attempts >= tonumber(ARGV[3]) then redis.call('HSET', KEYS[1], 'state', 'dead_letter', 'updatedAt', ARGV[1], 'lastSafeErrorCategory', ARGV[4]) else local delay = math.min(tonumber(ARGV[5]) * (2 ^ math.max(attempts - 1, 0)), tonumber(ARGV[6])); local nextMs = tonumber(ARGV[7]) + delay; local nextIso = ARGV[8 + attempts]; redis.call('HSET', KEYS[1], 'state', 'failed', 'nextAttemptAt', nextIso, 'updatedAt', ARGV[1], 'lastSafeErrorCategory', ARGV[4]); redis.call('ZADD', KEYS[3], nextMs, ARGV[2]) end; return redis.call('HGETALL', KEYS[1])",
-      '3',
+      "local state = redis.call('HGET', KEYS[1], 'state'); if not state then return {} end; if state ~= 'delivering' then return redis.call('HGETALL', KEYS[1]) end; local attempts = tonumber(redis.call('HGET', KEYS[1], 'attemptCount') or '0'); local retainedUntilMs = tonumber(redis.call('HGET', KEYS[1], 'retainedUntilMs') or '0'); redis.call('ZREM', KEYS[2], ARGV[2]); redis.call('HDEL', KEYS[1], 'leaseExpiresAt'); if ARGV[8] == '1' or attempts >= tonumber(ARGV[3]) then redis.call('HSET', KEYS[1], 'state', 'dead_letter', 'updatedAt', ARGV[1], 'lastSafeErrorCategory', ARGV[4]); redis.call('ZREM', KEYS[4], ARGV[2]); if retainedUntilMs > tonumber(ARGV[7]) then redis.call('ZADD', KEYS[5], retainedUntilMs, ARGV[2]) end else local delay = math.min(tonumber(ARGV[5]) * (2 ^ math.max(attempts - 1, 0)), tonumber(ARGV[6])); local nextMs = tonumber(ARGV[7]) + delay; local nextIso = ARGV[8 + attempts]; redis.call('HSET', KEYS[1], 'state', 'failed', 'nextAttemptAt', nextIso, 'updatedAt', ARGV[1], 'lastSafeErrorCategory', ARGV[4]); redis.call('ZREM', KEYS[5], ARGV[2]); if retainedUntilMs > tonumber(ARGV[7]) then redis.call('ZADD', KEYS[4], retainedUntilMs, ARGV[2]) end; redis.call('ZADD', KEYS[3], nextMs, ARGV[2]) end; return redis.call('HGETALL', KEYS[1])",
+      '5',
       `${GROWTH_REDIS_OUTBOX_KEY_PREFIX}${eventId}`,
       GROWTH_REDIS_LEASE_KEY,
       GROWTH_REDIS_DUE_KEY,
+      GROWTH_REDIS_FAILED_INDEX_KEY,
+      GROWTH_REDIS_DEAD_LETTER_INDEX_KEY,
       failedAt.toISOString(),
       eventId,
       String(GROWTH_OUTBOX_MAX_ATTEMPTS),
@@ -307,10 +326,12 @@ export class UpstashGrowthOutboxStore implements GrowthOutboxOperations {
   async reclaimStale(now: Date): Promise<number> {
     const result = await this.client.command<number | string>([
       'EVAL',
-      "local ids = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1]); local count = 0; for _, id in ipairs(ids) do local key = ARGV[4] .. id; if redis.call('HGET', key, 'state') == 'delivering' then local attempts = tonumber(redis.call('HGET', key, 'attemptCount') or '0'); redis.call('HDEL', key, 'leaseExpiresAt'); if attempts >= tonumber(ARGV[3]) then redis.call('HSET', key, 'state', 'dead_letter', 'updatedAt', ARGV[2], 'lastSafeErrorCategory', 'timeout') else redis.call('HSET', key, 'state', 'failed', 'nextAttemptAt', ARGV[2], 'updatedAt', ARGV[2], 'lastSafeErrorCategory', 'timeout'); redis.call('ZADD', KEYS[2], ARGV[1], id) end; count = count + 1 end; redis.call('ZREM', KEYS[1], id) end; return count",
-      '2',
+      "local ids = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1]); local count = 0; for _, id in ipairs(ids) do local key = ARGV[4] .. id; if redis.call('HGET', key, 'state') == 'delivering' then local attempts = tonumber(redis.call('HGET', key, 'attemptCount') or '0'); local retainedUntilMs = tonumber(redis.call('HGET', key, 'retainedUntilMs') or '0'); redis.call('HDEL', key, 'leaseExpiresAt'); if attempts >= tonumber(ARGV[3]) then redis.call('HSET', key, 'state', 'dead_letter', 'updatedAt', ARGV[2], 'lastSafeErrorCategory', 'timeout'); redis.call('ZREM', KEYS[3], id); if retainedUntilMs > tonumber(ARGV[1]) then redis.call('ZADD', KEYS[4], retainedUntilMs, id) end else redis.call('HSET', key, 'state', 'failed', 'nextAttemptAt', ARGV[2], 'updatedAt', ARGV[2], 'lastSafeErrorCategory', 'timeout'); redis.call('ZREM', KEYS[4], id); if retainedUntilMs > tonumber(ARGV[1]) then redis.call('ZADD', KEYS[3], retainedUntilMs, id) end; redis.call('ZADD', KEYS[2], ARGV[1], id) end; count = count + 1 end; redis.call('ZREM', KEYS[1], id) end; return count",
+      '4',
       GROWTH_REDIS_LEASE_KEY,
       GROWTH_REDIS_DUE_KEY,
+      GROWTH_REDIS_FAILED_INDEX_KEY,
+      GROWTH_REDIS_DEAD_LETTER_INDEX_KEY,
       String(now.getTime()),
       now.toISOString(),
       String(GROWTH_OUTBOX_MAX_ATTEMPTS),
@@ -352,17 +373,51 @@ export class UpstashGrowthOutboxStore implements GrowthOutboxOperations {
     if (!Number.isSafeInteger(afterSequence) || afterSequence < 0) throw new Error('Growth ledger cursor is invalid')
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500) throw new Error('Growth ledger limit is invalid')
     if (!Number.isSafeInteger(maxSequence) || maxSequence < afterSequence) throw new Error('Growth ledger snapshot is invalid')
-    const ids = await this.client.command<string[]>([
-      'ZRANGEBYSCORE',
+    const values = await this.client.command<string[]>([
+      'EVAL',
+      "local ids = redis.call('ZRANGEBYSCORE', KEYS[1], ARGV[1], ARGV[2], 'LIMIT', 0, ARGV[3]); local rows = {}; for _, id in ipairs(ids) do local values = redis.call('HMGET', ARGV[4] .. id, 'sequence', 'event', 'payloadDigest', 'recordedAt', 'retainedUntil'); if values[1] and values[2] and values[3] and values[4] and values[5] then for _, value in ipairs(values) do table.insert(rows, value) end else redis.call('ZREM', KEYS[1], id) end end; return rows",
+      '1',
       GROWTH_REDIS_LEDGER_INDEX_KEY,
       `(${afterSequence}`,
       String(maxSequence),
-      'LIMIT',
-      '0',
       String(limit),
+      GROWTH_REDIS_LEDGER_KEY_PREFIX,
     ])
-    const records = await Promise.all(ids.map((eventId) => this.getLedger(eventId)))
-    return records.filter((record): record is GrowthEventLedgerRecord => record !== null)
+    if (values.length % 5 !== 0) throw new Error('Growth ledger response is invalid')
+    const records: GrowthEventLedgerRecord[] = []
+    let previousSequence = afterSequence
+    for (let index = 0; index < values.length; index += 5) {
+      const sequence = Number(values[index])
+      const event = parseEngisolsGrowthEvent(JSON.parse(values[index + 1] ?? 'null'))
+      if (!Number.isSafeInteger(sequence) || sequence <= previousSequence || sequence > maxSequence) {
+        throw new Error('Growth ledger sequence is invalid')
+      }
+      records.push({
+        sequence,
+        event,
+        payloadDigest: values[index + 2] ?? '',
+        recordedAt: values[index + 3] ?? '',
+        retainedUntil: values[index + 4] ?? '',
+      })
+      previousSequence = sequence
+    }
+    return records
+  }
+
+  async getDeliveryHealth(now: Date): Promise<GrowthOutboxDeliveryHealth> {
+    const counts = await this.client.command<Array<number | string>>([
+      'EVAL',
+      "redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', ARGV[1]); redis.call('ZREMRANGEBYSCORE', KEYS[2], '-inf', ARGV[1]); return { redis.call('ZCARD', KEYS[1]), redis.call('ZCARD', KEYS[2]) }",
+      '2',
+      GROWTH_REDIS_FAILED_INDEX_KEY,
+      GROWTH_REDIS_DEAD_LETTER_INDEX_KEY,
+      String(now.getTime()),
+    ])
+    return {
+      asOf: now.toISOString(),
+      failed: Number(counts[0] ?? 0),
+      deadLetter: Number(counts[1] ?? 0),
+    }
   }
 }
 
@@ -426,10 +481,10 @@ export function prepareRedisGrowthEvents(
     keys.push(`${GROWTH_REDIS_LEDGER_KEY_PREFIX}${event.eventId}`, `${GROWTH_REDIS_OUTBOX_KEY_PREFIX}${event.eventId}`)
     const eventKey = firstKeyIndex + 3 + index * 2
     const outboxKey = eventKey + 1
-    const arg = firstArgIndex + index * 7
-    args.push(serialized, digest, event.eventId, now.toISOString(), retainedUntil.toISOString(), String(ttl), String(now.getTime()))
+    const arg = firstArgIndex + index * 8
+    args.push(serialized, digest, event.eventId, now.toISOString(), retainedUntil.toISOString(), String(ttl), String(now.getTime()), String(retainedUntil.getTime()))
     guards.push(`local existingDigest${index} = redis.call('HGET', KEYS[${eventKey}], 'payloadDigest'); if existingDigest${index} and existingDigest${index} ~= ARGV[${arg + 1}] then return redis.error_reply('growth event id collision') end`)
-    appends.push(`if not existingDigest${index} then local seq${index} = redis.call('INCR', KEYS[${firstKeyIndex}]); redis.call('HSET', KEYS[${eventKey}], 'event', ARGV[${arg}], 'payloadDigest', ARGV[${arg + 1}], 'sequence', seq${index}, 'recordedAt', ARGV[${arg + 3}], 'retainedUntil', ARGV[${arg + 4}]); redis.call('EXPIRE', KEYS[${eventKey}], ARGV[${arg + 5}]); redis.call('HSET', KEYS[${outboxKey}], 'eventId', ARGV[${arg + 2}], 'state', 'pending', 'attemptCount', '0', 'nextAttemptAt', ARGV[${arg + 3}], 'createdAt', ARGV[${arg + 3}], 'updatedAt', ARGV[${arg + 3}]); redis.call('EXPIRE', KEYS[${outboxKey}], ARGV[${arg + 5}]); redis.call('ZADD', KEYS[${firstKeyIndex + 1}], seq${index}, ARGV[${arg + 2}]); redis.call('ZADD', KEYS[${firstKeyIndex + 2}], ARGV[${arg + 6}], ARGV[${arg + 2}]) end`)
+    appends.push(`if not existingDigest${index} then local seq${index} = redis.call('INCR', KEYS[${firstKeyIndex}]); redis.call('HSET', KEYS[${eventKey}], 'event', ARGV[${arg}], 'payloadDigest', ARGV[${arg + 1}], 'sequence', seq${index}, 'recordedAt', ARGV[${arg + 3}], 'retainedUntil', ARGV[${arg + 4}]); redis.call('EXPIRE', KEYS[${eventKey}], ARGV[${arg + 5}]); redis.call('HSET', KEYS[${outboxKey}], 'eventId', ARGV[${arg + 2}], 'state', 'pending', 'attemptCount', '0', 'nextAttemptAt', ARGV[${arg + 3}], 'createdAt', ARGV[${arg + 3}], 'updatedAt', ARGV[${arg + 3}], 'retainedUntilMs', ARGV[${arg + 7}]); redis.call('EXPIRE', KEYS[${outboxKey}], ARGV[${arg + 5}]); redis.call('ZADD', KEYS[${firstKeyIndex + 1}], seq${index}, ARGV[${arg + 2}]); redis.call('ZADD', KEYS[${firstKeyIndex + 2}], ARGV[${arg + 6}], ARGV[${arg + 2}]) end`)
   })
   return { keys, args, collisionGuardLua: guards.join('; '), appendLua: appends.join('; ') }
 }

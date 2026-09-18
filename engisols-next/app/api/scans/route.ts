@@ -66,8 +66,8 @@ export function createScansPostHandler({
       })
       schedule(async () => {
         try {
-          if (record.growthAnalyticsId && capturePostHog) {
-            await capturePostHog({
+          const captureStarted = record.growthAnalyticsId && capturePostHog
+            ? capturePostHog({
               event: 'scan_started',
               subjectId: record.growthAnalyticsId,
               distinctId: record.growthAnalyticsId,
@@ -76,13 +76,16 @@ export function createScansPostHandler({
                 ...toPostHogAttributionProperties(record.attribution),
               },
             }).catch(() => undefined)
-          }
-          await runScanRecord(record.publicId, target, activeStore, scan, {
-            requestContext,
-            sendMeta,
-            now,
-            capturePostHog,
-          })
+            : Promise.resolve()
+          await Promise.all([
+            captureStarted,
+            runScanRecord(record.publicId, target, activeStore, scan, {
+              requestContext,
+              sendMeta,
+              now,
+              capturePostHog,
+            }),
+          ])
         } finally {
           activeScans -= 1
         }
