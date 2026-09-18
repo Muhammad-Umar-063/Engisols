@@ -1,4 +1,5 @@
 import { after } from 'next/server'
+import { attemptImmediateGrowthDelivery } from '../../../../../../src/growth/webhook-delivery'
 
 import { createGrowthAnalyticsOfferId } from '../../../../../../src/growth/event-contract'
 import { authorizeOperatorRequest } from '../../../../../../src/production-check/operator-session.server'
@@ -49,6 +50,7 @@ interface Dependencies {
   createOfferId?: () => string
   capturePostHog?: ServerPostHogCapture
   schedule?: (task: () => Promise<void>) => void
+  deliverGrowth?: () => Promise<void>
 }
 
 export function createOperatorDecisionPostHandler({
@@ -61,6 +63,7 @@ export function createOperatorDecisionPostHandler({
   createOfferId,
   capturePostHog,
   schedule = (task) => { void task() },
+  deliverGrowth,
 }: Dependencies = {}) {
   return async function POST(request: Request, context: RouteContext): Promise<Response> {
     const { scopeReviewId } = await context.params
@@ -83,7 +86,7 @@ export function createOperatorDecisionPostHandler({
     if (!lead) return jsonError(404, 'lead_not_found', 'The associated lead is unavailable.')
 
     if (isPaidScopeDecision(submission.decision)) {
-      return preparePaidOffer({ request, review, lead, submission, reviews: reviewStore, offers: offerStore, sendCustomer, now, createOfferId, capturePostHog, schedule })
+      return preparePaidOffer({ request, review, lead, submission, reviews: reviewStore, offers: offerStore, sendCustomer, now, createOfferId, capturePostHog, schedule, deliverGrowth })
     }
 
     const reviewedAt = now()
@@ -101,6 +104,7 @@ export function createOperatorDecisionPostHandler({
       decisionNotification: { status: 'pending' },
     }
     await reviewStore.save(updated)
+    if (deliverGrowth) schedule(deliverGrowth)
     const message = submission.decision === 'no_paid_work'
       ? noPaidWorkEmailText(updated, submission.recommendationSummary)
       : needsInformationEmailText(updated, submission.recommendationSummary, submission.informationRequested)
@@ -130,7 +134,7 @@ export function createOperatorDecisionPostHandler({
 
 async function preparePaidOffer({
   request, review, lead, submission, reviews, offers, sendCustomer, now, createOfferId,
-  capturePostHog, schedule,
+  capturePostHog, schedule, deliverGrowth,
 }: {
   request: Request
   review: ProductionScopeReview
@@ -143,6 +147,7 @@ async function preparePaidOffer({
   createOfferId?: () => string
   capturePostHog?: ServerPostHogCapture
   schedule: (task: () => Promise<void>) => void
+  deliverGrowth?: () => Promise<void>
 }): Promise<Response> {
   const linkedOffer = review.offerId ? await offers.get(review.offerId) : null
   let proposedOffer: ProductionScopeOffer
@@ -163,6 +168,7 @@ async function preparePaidOffer({
     return jsonError(400, 'invalid_offer', 'Check the offer fields.')
   }
   const claimed = await offers.claimForReview(linkedOffer ?? proposedOffer)
+  if (deliverGrowth) schedule(deliverGrowth)
   const offer = claimed.offer
   if (!matchesCommercialScope(offer, proposedOffer)) {
     if (offer.status !== 'draft') {
@@ -279,5 +285,6 @@ function jsonError(status: number, code: string, message: string): Response {
 
 export const POST = createOperatorDecisionPostHandler({
   capturePostHog: captureProductionCheckServerEvent,
+  deliverGrowth: attemptImmediateGrowthDelivery,
   schedule: (task) => after(task),
 })

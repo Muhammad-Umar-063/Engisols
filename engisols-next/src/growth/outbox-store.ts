@@ -109,13 +109,14 @@ export class MemoryGrowthOutboxStore implements GrowthOutboxStore {
     eventId: string,
     failedAt: Date,
     category: GrowthOutboxSafeErrorCategory,
+    terminal = false,
   ): Promise<GrowthOutboxRecord | null> {
     this.evictExpired(failedAt)
     const existing = this.outbox.get(eventId)
     if (!existing) return null
     if (existing.state === 'delivered' || existing.state === 'dead_letter') return structuredClone(existing)
     if (existing.state !== 'delivering') return structuredClone(existing)
-    const exhausted = existing.attemptCount >= GROWTH_OUTBOX_MAX_ATTEMPTS
+    const exhausted = terminal || existing.attemptCount >= GROWTH_OUTBOX_MAX_ATTEMPTS
     const failed: GrowthOutboxRecord = {
       ...existing,
       state: exhausted ? 'dead_letter' : 'failed',
@@ -161,12 +162,18 @@ export class MemoryGrowthOutboxStore implements GrowthOutboxStore {
     return record ? structuredClone(record) : null
   }
 
-  async listLedger(afterSequence = 0, limit = 100): Promise<GrowthEventLedgerRecord[]> {
+  async getMaxSequence(): Promise<number> {
+    this.evictExpired(this.now())
+    return this.sequence
+  }
+
+  async listLedger(afterSequence = 0, limit = 100, maxSequence = Number.MAX_SAFE_INTEGER): Promise<GrowthEventLedgerRecord[]> {
     this.evictExpired(this.now())
     if (!Number.isSafeInteger(afterSequence) || afterSequence < 0) throw new Error('Growth ledger cursor is invalid')
-    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error('Growth ledger limit is invalid')
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500) throw new Error('Growth ledger limit is invalid')
+    if (!Number.isSafeInteger(maxSequence) || maxSequence < afterSequence) throw new Error('Growth ledger snapshot is invalid')
     return [...this.ledger.values()]
-      .filter((record) => record.sequence > afterSequence)
+      .filter((record) => record.sequence > afterSequence && record.sequence <= maxSequence)
       .sort((left, right) => left.sequence - right.sequence)
       .slice(0, limit)
       .map((record) => structuredClone(record))
@@ -274,10 +281,11 @@ export class UpstashGrowthOutboxStore implements GrowthOutboxOperations {
     eventId: string,
     failedAt: Date,
     category: GrowthOutboxSafeErrorCategory,
+    terminal = false,
   ): Promise<GrowthOutboxRecord | null> {
     const values = await this.client.command<string[]>([
       'EVAL',
-      "local state = redis.call('HGET', KEYS[1], 'state'); if not state then return {} end; if state ~= 'delivering' then return redis.call('HGETALL', KEYS[1]) end; local attempts = tonumber(redis.call('HGET', KEYS[1], 'attemptCount') or '0'); redis.call('ZREM', KEYS[2], ARGV[2]); redis.call('HDEL', KEYS[1], 'leaseExpiresAt'); if attempts >= tonumber(ARGV[3]) then redis.call('HSET', KEYS[1], 'state', 'dead_letter', 'updatedAt', ARGV[1], 'lastSafeErrorCategory', ARGV[4]) else local delay = math.min(tonumber(ARGV[5]) * (2 ^ math.max(attempts - 1, 0)), tonumber(ARGV[6])); local nextMs = tonumber(ARGV[7]) + delay; local nextIso = ARGV[7 + attempts]; redis.call('HSET', KEYS[1], 'state', 'failed', 'nextAttemptAt', nextIso, 'updatedAt', ARGV[1], 'lastSafeErrorCategory', ARGV[4]); redis.call('ZADD', KEYS[3], nextMs, ARGV[2]) end; return redis.call('HGETALL', KEYS[1])",
+      "local state = redis.call('HGET', KEYS[1], 'state'); if not state then return {} end; if state ~= 'delivering' then return redis.call('HGETALL', KEYS[1]) end; local attempts = tonumber(redis.call('HGET', KEYS[1], 'attemptCount') or '0'); redis.call('ZREM', KEYS[2], ARGV[2]); redis.call('HDEL', KEYS[1], 'leaseExpiresAt'); if ARGV[8] == '1' or attempts >= tonumber(ARGV[3]) then redis.call('HSET', KEYS[1], 'state', 'dead_letter', 'updatedAt', ARGV[1], 'lastSafeErrorCategory', ARGV[4]) else local delay = math.min(tonumber(ARGV[5]) * (2 ^ math.max(attempts - 1, 0)), tonumber(ARGV[6])); local nextMs = tonumber(ARGV[7]) + delay; local nextIso = ARGV[8 + attempts]; redis.call('HSET', KEYS[1], 'state', 'failed', 'nextAttemptAt', nextIso, 'updatedAt', ARGV[1], 'lastSafeErrorCategory', ARGV[4]); redis.call('ZADD', KEYS[3], nextMs, ARGV[2]) end; return redis.call('HGETALL', KEYS[1])",
       '3',
       `${GROWTH_REDIS_OUTBOX_KEY_PREFIX}${eventId}`,
       GROWTH_REDIS_LEASE_KEY,
@@ -289,6 +297,7 @@ export class UpstashGrowthOutboxStore implements GrowthOutboxOperations {
       '30000',
       String(6 * 60 * 60 * 1_000),
       String(failedAt.getTime()),
+      terminal ? '1' : '0',
       ...Array.from({ length: GROWTH_OUTBOX_MAX_ATTEMPTS }, (_, index) =>
         new Date(failedAt.getTime() + growthOutboxBackoffMs(index + 1)).toISOString()),
     ])
@@ -328,14 +337,26 @@ export class UpstashGrowthOutboxStore implements GrowthOutboxOperations {
     return values.length ? parseOutboxHash(values) : null
   }
 
-  async listLedger(afterSequence = 0, limit = 100): Promise<GrowthEventLedgerRecord[]> {
+  async getMaxSequence(): Promise<number> {
+    const values = await this.client.command<string[]>([
+      'ZREVRANGE',
+      GROWTH_REDIS_LEDGER_INDEX_KEY,
+      '0',
+      '0',
+      'WITHSCORES',
+    ])
+    return values.length >= 2 ? Number(values[1]) : 0
+  }
+
+  async listLedger(afterSequence = 0, limit = 100, maxSequence = Number.MAX_SAFE_INTEGER): Promise<GrowthEventLedgerRecord[]> {
     if (!Number.isSafeInteger(afterSequence) || afterSequence < 0) throw new Error('Growth ledger cursor is invalid')
-    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error('Growth ledger limit is invalid')
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500) throw new Error('Growth ledger limit is invalid')
+    if (!Number.isSafeInteger(maxSequence) || maxSequence < afterSequence) throw new Error('Growth ledger snapshot is invalid')
     const ids = await this.client.command<string[]>([
       'ZRANGEBYSCORE',
       GROWTH_REDIS_LEDGER_INDEX_KEY,
       `(${afterSequence}`,
-      '+inf',
+      String(maxSequence),
       'LIMIT',
       '0',
       String(limit),

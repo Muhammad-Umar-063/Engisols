@@ -107,6 +107,22 @@ test('sends a validated review request with server-derived report context', asyn
   assert.equal(review?.notification.status, 'sent')
 })
 
+test('committed customer work schedules Growth delivery without awaiting it', async () => {
+  const scheduled: Array<() => Promise<void>> = []
+  const handler = createReviewRequestPostHandler({
+    load: async () => completedScan(),
+    leads: new MemoryLeadStore(),
+    reviews: new MemoryScopeReviewStore(),
+    send: async () => undefined,
+    deliverGrowth: async () => new Promise<void>(() => undefined),
+    schedule: (task) => scheduled.push(task),
+  })
+
+  const response = await handler(request(validBody))
+  assert.equal(response.status, 200)
+  assert.equal(scheduled.length, 1)
+})
+
 test('persists the lead before attempting Resend', async () => {
   const events: string[] = []
   let persisted: ProductionCheckLead | undefined

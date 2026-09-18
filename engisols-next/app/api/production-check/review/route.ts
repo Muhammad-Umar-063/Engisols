@@ -1,4 +1,5 @@
 import { after } from 'next/server'
+import { attemptImmediateGrowthDelivery } from '../../../../src/growth/webhook-delivery'
 
 import {
   sendMetaConversion,
@@ -68,6 +69,7 @@ interface HandlerDependencies {
   createOperatorLink?: (scopeReviewId: string, requestUrl: string) => string
   capturePostHog?: ServerPostHogCapture
   schedule?: (task: () => Promise<void>) => void
+  deliverGrowth?: () => Promise<void>
 }
 
 export function createReviewRequestPostHandler({
@@ -81,6 +83,7 @@ export function createReviewRequestPostHandler({
   createOperatorLink = defaultOperatorLink,
   capturePostHog,
   schedule = (task) => { void task() },
+  deliverGrowth,
 }: HandlerDependencies = {}) {
   const injectedReviewStore = reviews ?? (leads ? new MemoryScopeReviewStore(now) : undefined)
   return async function POST(request: Request): Promise<Response> {
@@ -163,6 +166,7 @@ export function createReviewRequestPostHandler({
         accessWillingness: submission.accessWillingness,
       }, now))
       scopeReview = reviewResult.review
+      if (deliverGrowth) schedule(deliverGrowth)
       if (!reviewResult.created) {
         if (scopeReview.notification.status === 'sent') {
           scheduleLeadAnalytics(schedule, capturePostHog, scan, lead, scopeReview)
@@ -452,5 +456,6 @@ function errorResponse(status: number, code: string, message: string): Response 
 
 export const POST = createReviewRequestPostHandler({
   capturePostHog: captureProductionCheckServerEvent,
+  deliverGrowth: attemptImmediateGrowthDelivery,
   schedule: (task) => after(task),
 })

@@ -234,6 +234,39 @@ test('an expired offer transition records the real expiry outcome without a deci
   assert.doesNotMatch(JSON.stringify(await outbox.listLedger()), /payment\.received|revenue\.recorded/)
 })
 
+test('the scheduler materializes an expired offer without a customer decision', async () => {
+  let now = new Date(START)
+  const clock = () => new Date(now)
+  const outbox = new MemoryGrowthOutboxStore(clock)
+  const options = growth(outbox)
+  const leads = new MemoryLeadStore(clock, options)
+  const reviews = new MemoryScopeReviewStore(clock, options)
+  const offers = new MemoryScopeOfferStore(clock, options)
+  const persistedLead = (await leads.createOrGet(lead())).lead
+  const review = createProductionScopeReview({
+    lead: persistedLead,
+    concern: 'launch_readiness',
+    accessWillingness: 'yes_after_review',
+  }, clock)
+  await reviews.createOrGet(review)
+  const offer = createProductionScopeOffer({
+    review,
+    type: 'launch_blocker_fix',
+    summary: 'Bounded scope',
+    includedItems: ['Correct authorization'],
+    exclusions: [],
+    createId: () => 'offer_schedulerabcdefghijklmnop',
+  }, clock)
+  await offers.claimForReview(offer)
+  await offers.markSent(offer.id, START.toISOString())
+  now = new Date(Date.parse(offer.expiresAt) + 1)
+
+  assert.equal(await offers.materializeExpired(now, 10), 1)
+  assert.equal((await offers.get(offer.id))?.status, 'expired')
+  assert.equal((await outbox.listLedger()).filter(({ event }) => event.eventType === 'offer.expired').length, 1)
+  assert.equal(await offers.materializeExpired(now, 10), 0, 'repeat sweeps are idempotent')
+})
+
 test('Upstash lead transition writes business state, two events, indexes, and TTLs in one EVAL', async () => {
   const originalFetch = globalThis.fetch
   const commands: string[][] = []

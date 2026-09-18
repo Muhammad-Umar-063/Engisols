@@ -1,4 +1,5 @@
 import { after } from 'next/server'
+import { attemptImmediateGrowthDelivery } from '../../../../../../src/growth/webhook-delivery'
 
 import { createGrowthAnalyticsOfferId } from '../../../../../../src/growth/event-contract'
 import { toPostHogAttributionProperties } from '../../../../../../src/production-check/attribution'
@@ -35,6 +36,7 @@ interface Dependencies {
   now?: () => Date
   capturePostHog?: ServerPostHogCapture
   schedule?: (task: () => Promise<void>) => void
+  deliverGrowth?: () => Promise<void>
 }
 
 export function createOfferDecisionPostHandler({
@@ -45,6 +47,7 @@ export function createOfferDecisionPostHandler({
   now = () => new Date(),
   capturePostHog,
   schedule = (task) => { void task() },
+  deliverGrowth,
 }: Dependencies = {}) {
   return async function POST(request: Request, context: RouteContext): Promise<Response> {
     if (!isSameOrigin(request)) return jsonError(403, 'request_blocked', 'This request was blocked.')
@@ -66,6 +69,7 @@ export function createOfferDecisionPostHandler({
     const desired = action === 'approve' ? 'accepted' : 'declined'
     if (existing.status === 'expired' || new Date(existing.expiresAt).getTime() <= now().getTime()) {
       await offerStore.transitionDecision(offerId, desired, now().toISOString()).catch(() => undefined)
+      if (deliverGrowth) schedule(deliverGrowth)
       return jsonError(410, 'offer_expired', 'This scope has expired. Reply to the review email for an updated scope.')
     }
     if (existing.status === 'accepted' || existing.status === 'declined') {
@@ -81,6 +85,7 @@ export function createOfferDecisionPostHandler({
         now,
         capturePostHog,
         schedule,
+        deliverGrowth,
       })
     }
     if (existing.status !== 'sent') return jsonError(409, 'offer_not_ready', 'This scope is not ready for approval.')
@@ -99,13 +104,14 @@ export function createOfferDecisionPostHandler({
       now,
       capturePostHog,
       schedule,
+      deliverGrowth,
     })
   }
 }
 
 async function reconcileCustomerDecision({
   request, decided, decision, offers, reviews, leads, notify, now,
-  capturePostHog, schedule,
+  capturePostHog, schedule, deliverGrowth,
 }: {
   request: Request
   decided: ProductionScopeOffer
@@ -117,7 +123,9 @@ async function reconcileCustomerDecision({
   now: () => Date
   capturePostHog?: ServerPostHogCapture
   schedule: (task: () => Promise<void>) => void
+  deliverGrowth?: () => Promise<void>
 }): Promise<Response> {
+  if (deliverGrowth) schedule(deliverGrowth)
   scheduleOfferDecisionAnalytics(schedule, capturePostHog, leads, decided, decision)
   const attemptedAt = now().toISOString()
   let reviewSynced = decided.decisionReviewSync?.status === 'synced'
@@ -240,5 +248,6 @@ function jsonError(status: number, code: string, message: string): Response {
 
 export const POST = createOfferDecisionPostHandler({
   capturePostHog: captureProductionCheckServerEvent,
+  deliverGrowth: attemptImmediateGrowthDelivery,
   schedule: (task) => after(task),
 })

@@ -388,6 +388,22 @@ export class MemoryScopeOfferStore implements ScopeOfferStore {
     return structuredClone(reconciled)
   }
 
+  async materializeExpired(now: Date, limit: number): Promise<number> {
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error('Offer expiry limit is invalid')
+    const dueIds = [...this.offers.values()]
+      .filter((offer) => !['accepted', 'declined', 'expired'].includes(offer.status))
+      .filter((offer) => Date.parse(offer.expiresAt) <= now.getTime())
+      .sort((left, right) => Date.parse(left.expiresAt) - Date.parse(right.expiresAt))
+      .slice(0, limit)
+      .map((offer) => offer.id)
+    let materialized = 0
+    for (const id of dueIds) {
+      const result = await this.transitionDecision(id, 'declined', now.toISOString())
+      if (result?.status === 'expired') materialized += 1
+    }
+    return materialized
+  }
+
   private evictExpired(): void {
     const current = this.now().getTime()
     for (const [id, offer] of this.offers) {
@@ -864,6 +880,25 @@ export class UpstashScopeOfferStore
       attemptedAt,
     ])
     return result ? JSON.parse(result) as ProductionScopeOffer : null
+  }
+
+  async materializeExpired(now: Date, limit: number): Promise<number> {
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error('Offer expiry limit is invalid')
+    const dueIds = await this.client.command<string[]>([
+      'ZRANGEBYSCORE',
+      GROWTH_REDIS_OFFER_EXPIRY_KEY,
+      '-inf',
+      String(now.getTime()),
+      'LIMIT',
+      '0',
+      String(limit),
+    ])
+    let materialized = 0
+    for (const id of dueIds) {
+      const result = await this.transitionDecision(id, 'declined', now.toISOString())
+      if (result?.status === 'expired') materialized += 1
+    }
+    return materialized
   }
 
   private reviewKey(scopeReviewId: string): string {

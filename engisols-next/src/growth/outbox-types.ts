@@ -18,6 +18,7 @@ export type GrowthOutboxSafeErrorCategory =
   | 'timeout'
   | 'provider_4xx'
   | 'provider_5xx'
+  | 'rate_limited'
   | 'invalid_response'
   | 'unknown'
 
@@ -58,11 +59,13 @@ export interface GrowthOutboxOperations {
     eventId: string,
     failedAt: Date,
     category: GrowthOutboxSafeErrorCategory,
+    terminal?: boolean,
   ): Promise<GrowthOutboxRecord | null>
   reclaimStale(now: Date): Promise<number>
   getLedger(eventId: string): Promise<GrowthEventLedgerRecord | null>
   getOutbox(eventId: string): Promise<GrowthOutboxRecord | null>
-  listLedger(afterSequence?: number, limit?: number): Promise<GrowthEventLedgerRecord[]>
+  getMaxSequence(): Promise<number>
+  listLedger(afterSequence?: number, limit?: number, maxSequence?: number): Promise<GrowthEventLedgerRecord[]>
 }
 
 export interface GrowthOutboxStore extends GrowthOutboxOperations {

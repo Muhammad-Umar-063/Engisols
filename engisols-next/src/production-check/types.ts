@@ -289,6 +289,7 @@ export interface ScopeOfferStore {
     },
     attemptedAt: string,
   ): Promise<ProductionScopeOffer | null>
+  materializeExpired(now: Date, limit: number): Promise<number>
 }
 
 export type FounderLabel = 'FIX NOW' | 'REVIEW' | 'EXPECTED'
