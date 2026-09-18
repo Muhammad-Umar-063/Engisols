@@ -3,6 +3,7 @@ import type {
   ProductionCheckLeadMetaTracking,
   ProductionCheckScanMetaTracking,
 } from '../meta/types'
+import type { GrowthAnalyticsScanId } from '../growth/event-contract'
 
 export const BUILDER_ANSWERS = [
   'lovable',
@@ -54,6 +55,8 @@ export interface ProductionCheckAttribution {
 
 export interface PersistedScan {
   publicId: string
+  /** Stable analytical identity; never grants access to the public report capability. */
+  growthAnalyticsId?: GrowthAnalyticsScanId
   status: PersistedScanStatus
   requestedUrl: string
   progress: ScanProgressSnapshot
