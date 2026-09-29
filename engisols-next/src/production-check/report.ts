@@ -8,6 +8,7 @@ import type {
 import { FINDING_CLASSIFICATION_RANK } from '../scanner/types'
 import { detectFindingTechnologies } from '../scanner/technology'
 import { containsCredentialLikeValue } from './security'
+import { isControlledQaAttribution } from './attribution'
 import type {
   BuilderAnswer,
   FounderFinding,
@@ -36,7 +37,7 @@ export function redactPersistedScanForPublic(scan: PersistedScan): PersistedScan
   return {
     ...publicScan,
     attribution: {},
-    ...(scan.metaTracking
+    ...(scan.metaTracking && !isControlledQaAttribution(scan.attribution)
       ? {
           metaEvents: {
             scanStarted: scan.metaTracking.scanStartedEventId,

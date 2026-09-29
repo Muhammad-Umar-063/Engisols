@@ -29,8 +29,10 @@ export function ReportActions({
   const hasUrgentFindings = urgentFindings > 0
 
   useEffect(() => {
-    trackProductionCheck('report_viewed', { reportId })
-  }, [reportId])
+    trackProductionCheck('report_viewed', {
+      ...(reviewContext.analyticsScanId ? { scan_id: reviewContext.analyticsScanId } : {}),
+    })
+  }, [reviewContext.analyticsScanId])
 
   async function copy(
     text: string,
@@ -41,7 +43,9 @@ export function ReportActions({
     try {
       await navigator.clipboard.writeText(text)
       setCopiedAction(action)
-      trackProductionCheck(event, { reportId })
+      trackProductionCheck(event, {
+        ...(reviewContext.analyticsScanId ? { scan_id: reviewContext.analyticsScanId } : {}),
+      })
       push(message)
     } catch {
       setCopiedAction(null)
@@ -57,8 +61,13 @@ export function ReportActions({
   const light = tone === 'light'
 
   function openIntake() {
-    trackProductionCheck('scope_review_cta_clicked', { scan_id: reportId })
-    trackProductionCheck('review_intake_opened', { reportId, urgent: hasUrgentFindings })
+    trackProductionCheck('scope_review_cta_clicked', {
+      ...(reviewContext.analyticsScanId ? { scan_id: reviewContext.analyticsScanId } : {}),
+    })
+    trackProductionCheck('review_intake_opened', {
+      ...(reviewContext.analyticsScanId ? { scan_id: reviewContext.analyticsScanId } : {}),
+      urgent: hasUrgentFindings,
+    })
     setIntakeOpen(true)
   }
 

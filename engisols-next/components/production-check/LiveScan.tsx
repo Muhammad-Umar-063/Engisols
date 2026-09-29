@@ -71,6 +71,7 @@ export function LiveScan({
       trackProductionCheck(
         scanStatus === 'partial' ? 'scan_partial' : 'scan_completed',
         {
+          ...(scan.growthAnalyticsId ? { scan_id: scan.growthAnalyticsId } : {}),
           ...(scan.metaEvents?.scanCompleted
             ? { metaEventId: scan.metaEvents.scanCompleted }
             : {}),
@@ -123,8 +124,14 @@ export function LiveScan({
 
   async function answer(values: ScanAnswers) {
     setScan((current) => ({ ...current, answers: { ...current.answers, ...values } }))
-    if (values.builder) trackProductionCheck('builder_answered', { answer: values.builder })
-    if (values.launchStage) trackProductionCheck('launch_stage_answered', { answer: values.launchStage })
+    if (values.builder) trackProductionCheck('builder_answered', {
+      ...(scan.growthAnalyticsId ? { scan_id: scan.growthAnalyticsId } : {}),
+      answer: values.builder,
+    })
+    if (values.launchStage) trackProductionCheck('launch_stage_answered', {
+      ...(scan.growthAnalyticsId ? { scan_id: scan.growthAnalyticsId } : {}),
+      answer: values.launchStage,
+    })
     await fetch(productionAnswersPath(scan.publicId), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

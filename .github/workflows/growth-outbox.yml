@@ -1,0 +1,45 @@
+name: Growth outcome outbox
+
+on:
+  schedule:
+    # Hourly, away from the top-of-hour congestion window.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: growth-outcome-outbox
+  cancel-in-progress: false
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GROWTH_OUTBOX_URL: ${{ secrets.GROWTH_OUTBOX_URL }}
+      GROWTH_OUTBOX_CRON_SECRET: ${{ secrets.GROWTH_COPILOT_OUTBOX_CRON_SECRET }}
+    steps:
+      - name: Trigger bounded outbox delivery
+        shell: bash
+        run: |
+          if [[ -z "$GROWTH_OUTBOX_URL" || -z "$GROWTH_OUTBOX_CRON_SECRET" ]]; then
+            echo "Required growth outbox secrets are not configured."
+            exit 1
+          fi
+          invoke_outbox() {
+            status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+              --max-time 45 \
+              --request POST \
+              --header "Authorization: Bearer $GROWTH_OUTBOX_CRON_SECRET" \
+              "$GROWTH_OUTBOX_URL")" || {
+                echo "Growth outbox request failed before an HTTP response."
+                exit 1
+              }
+            if [[ "$status" != 2* ]]; then
+              echo "Growth outbox request returned HTTP $status."
+              exit 1
+            fi
+          }
+          invoke_outbox
+          echo "Growth outbox delivery completed."

@@ -6,6 +6,14 @@ import { readScanCreationInput } from '../../../src/production-check/request'
 import { createScanRecord, runScanRecord, type ScanFunction } from '../../../src/production-check/service'
 import { getScanStore, ScanStoreConfigurationError } from '../../../src/production-check/store'
 import type { ProductionCheckAttribution, ScanStore } from '../../../src/production-check/types'
+import {
+  captureProductionCheckServerEvent,
+  type ServerPostHogCapture,
+} from '../../../src/production-check/posthog.server'
+import {
+  isControlledQaAttribution,
+  toPostHogAttributionProperties,
+} from '../../../src/production-check/attribution'
 import { DEFAULT_SCAN_LIMITS, ScannerError, toPublicScanError } from '../../../src/scanner'
 
 export const runtime = 'nodejs'
@@ -18,6 +26,8 @@ interface HandlerDependencies {
   verifyAttributionToken?: (token: string) => ProductionCheckAttribution | null
   sendMeta?: MetaConversionSender
   now?: () => Date
+  growthAnalyticsIdKey?: string
+  capturePostHog?: ServerPostHogCapture
 }
 
 export function createScansPostHandler({
@@ -27,6 +37,8 @@ export function createScansPostHandler({
   verifyAttributionToken,
   sendMeta,
   now = () => new Date(),
+  growthAnalyticsIdKey,
+  capturePostHog,
 }: HandlerDependencies = {}) {
   let activeScans = 0
   return async function POST(request: Request): Promise<Response> {
@@ -50,14 +62,30 @@ export function createScansPostHandler({
       const record = await createScanRecord(target, activeStore, now, attribution, {
         requestContext,
         eventSourceUrl: new URL('/production-check', request.url).toString(),
+        ...(growthAnalyticsIdKey ? { growthAnalyticsIdKey } : {}),
       })
       schedule(async () => {
         try {
-          await runScanRecord(record.publicId, target, activeStore, scan, {
-            requestContext,
-            sendMeta,
-            now,
-          })
+          const captureStarted = record.growthAnalyticsId && capturePostHog
+            ? capturePostHog({
+              event: 'scan_started',
+              subjectId: record.growthAnalyticsId,
+              distinctId: record.growthAnalyticsId,
+              properties: {
+                scan_id: record.growthAnalyticsId,
+                ...toPostHogAttributionProperties(record.attribution),
+              },
+            }).catch(() => undefined)
+            : Promise.resolve()
+          await Promise.all([
+            captureStarted,
+            runScanRecord(record.publicId, target, activeStore, scan, {
+              requestContext,
+              sendMeta,
+              now,
+              capturePostHog,
+            }),
+          ])
         } finally {
           activeScans -= 1
         }
@@ -67,10 +95,15 @@ export function createScansPostHandler({
         {
           ok: true,
           scanId: record.publicId,
-          metaEvents: {
-            scanStarted: record.metaTracking?.scanStartedEventId,
-            scanCompleted: record.metaTracking?.scanCompleted.eventId,
-          },
+          ...(record.growthAnalyticsId ? { analyticsScanId: record.growthAnalyticsId } : {}),
+          ...(!isControlledQaAttribution(record.attribution)
+            ? {
+                metaEvents: {
+                  scanStarted: record.metaTracking?.scanStartedEventId,
+                  scanCompleted: record.metaTracking?.scanCompleted.eventId,
+                },
+              }
+            : {}),
         },
         { status: 202, headers: { 'Cache-Control': 'no-store' } },
       )
@@ -96,4 +129,6 @@ export function createScansPostHandler({
   }
 }
 
-export const POST = createScansPostHandler()
+export const POST = createScansPostHandler({
+  capturePostHog: captureProductionCheckServerEvent,
+})

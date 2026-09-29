@@ -117,7 +117,7 @@ export function ReportContent({ scan, report, showSummary = true }: { scan: Pers
             <h2 className="max-w-[22ch] text-[clamp(2rem,4vw,3.6rem)]">Know what the scanner saw—and what it could not prove.</h2>
             <p className="measure mt-step-2 text-bordeaux/75">Explore the sampled surface, the source-level proof gap, and a ready-to-use engineering handoff.</p>
             <ReportEvidenceExplorer
-              reportId={scan.publicId}
+              analyticsScanId={scan.growthAnalyticsId}
               coverage={result.coverage}
               coverageScore={report.coverage.score}
               confidence={report.coverage.confidence}
@@ -214,6 +214,7 @@ function fixesFor(targetUrl: string, report: FounderReport): string {
 function reviewContextFor(scan: PersistedScan, report: FounderReport): ReviewRequestContext {
   return {
     reportId: scan.publicId,
+    ...(scan.growthAnalyticsId ? { analyticsScanId: scan.growthAnalyticsId } : {}),
     targetUrl: scan.result?.target.finalUrl ?? scan.requestedUrl,
     verdict: report.verdict,
     recommendedAction: report.startHere.action,

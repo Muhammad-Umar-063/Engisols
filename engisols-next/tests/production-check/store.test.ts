@@ -236,7 +236,7 @@ test('claims an Upstash offer with one atomic review-and-offer operation', async
   globalThis.fetch = async (_input, init) => {
     const command = JSON.parse(String(init?.body)) as string[]
     commands.push(command)
-    return Response.json({ result: [1, command[5]] })
+    return Response.json({ result: [1, command[6]] })
   }
 
   try {
@@ -260,9 +260,10 @@ test('claims an Upstash offer with one atomic review-and-offer operation', async
     assert.equal(result.offer.id, offer.id)
     assert.equal(commands.length, 1)
     assert.equal(commands[0]?.[0], 'EVAL')
-    assert.equal(commands[0]?.[2], '2')
+    assert.equal(commands[0]?.[2], '3')
     assert.match(commands[0]?.[3] ?? '', /scope-offer-review:/)
     assert.match(commands[0]?.[4] ?? '', /scope-offer:/)
+    assert.match(commands[0]?.[5] ?? '', /growth:offers:expires/)
     assert.match(commands[0]?.[1] ?? '', /claimedId.*SET.*KEYS\[2\].*SET.*KEYS\[1\]/)
   } finally {
     globalThis.fetch = originalFetch

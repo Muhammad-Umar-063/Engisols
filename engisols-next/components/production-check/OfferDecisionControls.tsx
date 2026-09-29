@@ -8,6 +8,7 @@ import type { ScopeOfferStatus, ScopeOfferType } from '@/src/production-check/ty
 
 export function OfferDecisionControls({
   offerId,
+  analyticsOfferId,
   scopeReviewId,
   offerType,
   amount,
@@ -15,6 +16,7 @@ export function OfferDecisionControls({
   initialStatus,
 }: {
   offerId: string
+  analyticsOfferId?: string
   scopeReviewId: string
   offerType: ScopeOfferType
   amount?: number
@@ -28,11 +30,12 @@ export function OfferDecisionControls({
   useEffect(() => {
     trackProductionCheck('scope_offer_viewed', {
       scope_review_id: scopeReviewId,
+      ...(analyticsOfferId ? { offer_id: analyticsOfferId } : {}),
       offer_type: offerType,
       ...(amount !== undefined ? { offer_amount: amount } : {}),
       currency,
     })
-  }, [amount, currency, offerId, offerType, scopeReviewId])
+  }, [amount, analyticsOfferId, currency, offerId, offerType, scopeReviewId])
 
   async function decide(action: 'approve' | 'decline') {
     setPending(action)
@@ -46,12 +49,15 @@ export function OfferDecisionControls({
       const body = await response.json() as { ok?: boolean; status?: ScopeOfferStatus; error?: { message?: string } }
       if (!response.ok || !body.ok || !body.status) throw new Error(body.error?.message ?? 'Your response could not be saved.')
       setStatus(body.status)
-      trackProductionCheck(action === 'approve' ? 'scope_offer_approved' : 'scope_offer_declined', {
+      const detail = {
         scope_review_id: scopeReviewId,
+        ...(analyticsOfferId ? { offer_id: analyticsOfferId } : {}),
         offer_type: offerType,
         ...(amount !== undefined ? { offer_amount: amount } : {}),
         currency,
-      })
+      }
+      trackProductionCheck(action === 'approve' ? 'scope_offer_approved' : 'scope_offer_declined', detail)
+      trackProductionCheck(action === 'approve' ? 'offer_accepted' : 'offer_declined', detail)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Your response could not be saved.')
     } finally {

@@ -42,6 +42,9 @@ export function createProductionScopeReview(
     updatedAt: requestedAt.toISOString(),
     expiresAt: new Date(requestedAt.getTime() + SCOPE_REVIEW_RECORD_LIFETIME_MS).toISOString(),
     notification: { status: 'pending' },
+    growthContext: {
+      attribution: structuredClone(input.lead.attribution),
+    },
   }
 }
 
@@ -137,6 +140,9 @@ export function createProductionScopeOffer(
     expiresAt: new Date(createdAt.getTime() + SCOPE_OFFER_VALIDITY_MS).toISOString(),
     retainedUntil: new Date(createdAt.getTime() + SCOPE_OFFER_RETENTION_MS).toISOString(),
     notification: { status: 'pending' },
+    ...(input.review.growthContext
+      ? { growthContext: structuredClone(input.review.growthContext) }
+      : {}),
   }
 }
 

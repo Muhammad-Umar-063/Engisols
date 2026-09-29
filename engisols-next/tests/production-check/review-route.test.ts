@@ -35,7 +35,16 @@ function completedScan(overrides: Partial<PersistedScan> = {}): PersistedScan {
     requestedUrl: 'https://app.example/',
     progress: { phase: 'complete', progress: 100, message: 'Complete', events: [] },
     answers: { builder: 'lovable', launchStage: 'taking_payments' },
-    attribution: { source: 'meta', campaign: 'paid-launch', content: 'proof-a' },
+    attribution: {
+      source: 'meta',
+      campaign: 'paid-launch',
+      content: 'proof-a',
+      metaCampaignId: '12001',
+      metaAdsetId: '12002',
+      metaAdId: '12003',
+      metaPlacement: 'instagram_story',
+      metaSource: 'ig',
+    },
     result: scanResult(),
     createdAt: '2026-09-08T10:00:00.000Z',
     expiresAt: '2026-09-15T10:00:00.000Z',
@@ -96,6 +105,22 @@ test('sends a validated review request with server-derived report context', asyn
   assert.equal(review?.concern, 'payments')
   assert.equal(review?.accessWillingness, 'yes_after_review')
   assert.equal(review?.notification.status, 'sent')
+})
+
+test('committed customer work schedules Growth delivery without awaiting it', async () => {
+  const scheduled: Array<() => Promise<void>> = []
+  const handler = createReviewRequestPostHandler({
+    load: async () => completedScan(),
+    leads: new MemoryLeadStore(),
+    reviews: new MemoryScopeReviewStore(),
+    send: async () => undefined,
+    deliverGrowth: async () => new Promise<void>(() => undefined),
+    schedule: (task) => scheduled.push(task),
+  })
+
+  const response = await handler(request(validBody))
+  assert.equal(response.status, 200)
+  assert.equal(scheduled.length, 1)
 })
 
 test('persists the lead before attempting Resend', async () => {
@@ -266,6 +291,50 @@ test('sends QualifiedLead only for the qualified segment', async () => {
   assert.deepEqual(nurture, ['Lead'])
   assert.deepEqual(maybe, ['Lead'])
   assert.deepEqual(qualified, ['Lead', 'QualifiedLead'])
+})
+
+test('emits qualified PostHog truth while controlled QA suppresses Meta CAPI', async () => {
+  const scheduled: Array<() => Promise<void>> = []
+  const postHogEvents: string[] = []
+  let metaSends = 0
+  const handler = createReviewRequestPostHandler({
+    load: async () => completedScan({
+      growthAnalyticsId: 'scan_v1_abcdefghijklmnopqrstuvwxabcdefghijklmnopqrs',
+      attribution: {
+        source: 'meta_test',
+        campaign: 'growth_copilot_join_test',
+        metaCampaignId: '12001',
+        metaAdsetId: '12002',
+        metaAdId: '12003',
+      },
+    }),
+    leads: new MemoryLeadStore(),
+    reviews: new MemoryScopeReviewStore(),
+    sendMeta: async () => {
+      metaSends += 1
+      return { status: 'sent' }
+    },
+    capturePostHog: async ({ event }) => {
+      postHogEvents.push(event)
+      return 'sent'
+    },
+    schedule: (task) => scheduled.push(task),
+    send: async () => undefined,
+  })
+
+  const response = await handler(request({ ...validBody, help: 'ongoing', timeline: 'now' }))
+  const body = await response.json() as { highIntent: boolean; metaEvents?: unknown }
+  await Promise.all(scheduled.map((task) => task()))
+
+  assert.equal(body.highIntent, true)
+  assert.equal(body.metaEvents, undefined)
+  assert.equal(metaSends, 0)
+  assert.deepEqual(postHogEvents.sort(), [
+    'lead_created',
+    'lead_qualified',
+    'lead_segmented',
+    'scope_review_requested',
+  ])
 })
 
 test('browser response and server Lead reuse the same event ID across retries', async () => {

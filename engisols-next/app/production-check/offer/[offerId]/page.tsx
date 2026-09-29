@@ -6,6 +6,7 @@ import { ProductionCheckHeader } from '@/components/production-check/ProductionC
 import { formatProductionScopeOfferPrice } from '@/src/production-check/config'
 import { isValidScopeOfferId } from '@/src/production-check/scope-review'
 import { getScopeOfferStore } from '@/src/production-check/store'
+import { createGrowthAnalyticsOfferId } from '@/src/growth/event-contract'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Your recommended next step | Engisols', robots: { index: false, follow: false } }
@@ -21,6 +22,10 @@ export default async function ScopeOfferPage({ params }: { params: Promise<{ off
     ? 'expired'
     : offer.status
   const price = formatProductionScopeOfferPrice(offer.amount, offer.billing)
+  const analyticsKey = process.env.GROWTH_ANALYTICS_ID_KEY
+  const analyticsOfferId = analyticsKey
+    ? createGrowthAnalyticsOfferId(offer.id, analyticsKey)
+    : undefined
 
   return (
     <>
@@ -49,7 +54,7 @@ export default async function ScopeOfferPage({ params }: { params: Promise<{ off
               <p className="font-mono text-[0.68rem] tracking-[0.06em] text-bordeaux/55">PRICE</p>
               <p className="mt-step-1 font-display text-[clamp(2rem,5vw,3.2rem)] font-semibold text-cherry">{price}</p>
               <div className="mt-step-3 border-t border-greige/60 pt-step-3">
-                <OfferDecisionControls offerId={offer.id} scopeReviewId={offer.scopeReviewId} offerType={offer.type} amount={offer.amount} currency={offer.currency} initialStatus={status} />
+                <OfferDecisionControls offerId={offer.id} analyticsOfferId={analyticsOfferId} scopeReviewId={offer.scopeReviewId} offerType={offer.type} amount={offer.amount} currency={offer.currency} initialStatus={status} />
               </div>
             </aside>
           </div>

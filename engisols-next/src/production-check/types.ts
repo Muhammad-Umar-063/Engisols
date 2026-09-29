@@ -3,6 +3,7 @@ import type {
   ProductionCheckLeadMetaTracking,
   ProductionCheckScanMetaTracking,
 } from '../meta/types'
+import type { GrowthAnalyticsScanId } from '../growth/event-contract'
 
 export const BUILDER_ANSWERS = [
   'lovable',
@@ -50,10 +51,25 @@ export interface ProductionCheckAttribution {
   content?: string
   term?: string
   fbclid?: string
+  metaCampaignId?: string
+  metaAdsetId?: string
+  metaAdId?: string
+  metaPlacement?: string
+  metaSource?: string
+}
+
+/** Sanitized context copied forward so outcome events never need to re-read PII. */
+export interface ProductionCheckGrowthContext {
+  attribution: ProductionCheckAttribution
+  builder?: BuilderAnswer
+  launchStage?: LaunchStageAnswer
+  leadSegment?: ProductionCheckLeadSegment
 }
 
 export interface PersistedScan {
   publicId: string
+  /** Stable analytical identity; never grants access to the public report capability. */
+  growthAnalyticsId?: GrowthAnalyticsScanId
   status: PersistedScanStatus
   requestedUrl: string
   progress: ScanProgressSnapshot
@@ -96,6 +112,7 @@ export type ProductionCheckLeadNextStep =
 export interface ProductionCheckLead {
   id: string
   scanId: string
+  analyticsScanId?: string
   createdAt: string
   updatedAt: string
   expiresAt: string
@@ -193,6 +210,8 @@ export interface ProductionScopeReview {
     status: 'pending' | 'sent' | 'failed'
     attemptedAt?: string
   }
+  growthContext?: ProductionCheckGrowthContext
+  growthEventRevisions?: { decisionRecorded?: number }
 }
 
 export interface ScopeReviewStore {
@@ -247,6 +266,7 @@ export interface ProductionScopeOffer {
     status: ScopeOfferDecisionNotificationStatus
     attemptedAt?: string
   }
+  growthContext?: ProductionCheckGrowthContext
 }
 
 export interface ScopeOfferStore {
@@ -270,6 +290,7 @@ export interface ScopeOfferStore {
     },
     attemptedAt: string,
   ): Promise<ProductionScopeOffer | null>
+  materializeExpired(now: Date, limit: number): Promise<number>
 }
 
 export type FounderLabel = 'FIX NOW' | 'REVIEW' | 'EXPECTED'

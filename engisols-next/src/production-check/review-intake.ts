@@ -37,6 +37,7 @@ export const SCOPE_ACCESS_OPTIONS: ReadonlyArray<{
 
 export interface ReviewRequestContext {
   reportId: string
+  analyticsScanId?: string
   targetUrl: string
   verdict: string
   recommendedAction: string
