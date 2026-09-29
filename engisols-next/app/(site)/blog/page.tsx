@@ -1,5 +1,6 @@
-import type { Metadata } from 'next'
-import { Band, BandHeading, Blocked } from '@/components/layout/Band'
+import { createPageMetadata } from '@/lib/seo'
+import Link from 'next/link'
+import { Band, BandHeading } from '@/components/layout/Band'
 import { PageHero, ScanCapture } from '@/components/sections/shared'
 
 /**
@@ -11,16 +12,17 @@ import { PageHero, ScanCapture } from '@/components/sections/shared'
  * that nothing is published yet.
  */
 
-export const metadata: Metadata = {
-  title: 'Writing',
+export const metadata = createPageMetadata({
+  title: 'Engineering Notes',
   description: 'Notes on stalled builds, AI-generated codebases, and shipping with a small team.',
-  alternates: { canonical: '/blog' },
-}
+  path: '/blog',
+  robots: { index: false, follow: true },
+})
 
 const PILLARS = [
   {
     title: 'Rescuing AI-tool builds',
-    body: 'What breaks at the 70% wall, why it breaks there, and what the repair actually costs.',
+    body: 'How to assess a stalled build, identify the remaining work, and plan repairs.',
   },
   {
     title: 'Production AI systems',
@@ -41,13 +43,13 @@ export default function BlogPage() {
     <>
       <PageHero
         eyebrow="Writing"
-        title="Nothing published yet, and we would rather say so."
-        lead="The four things we intend to write about are below. When there is something worth reading it appears here — not before."
+        title="Engineering notes and project lessons."
+        lead="New articles will appear here. For now, explore the published case studies for a closer look at our engineering work."
       />
 
       <Band ground="vanilla">
         <BandHeading eyebrow="Pillars" title="What this will cover" />
-        <div className="mt-step-5 grid gap-step-4 md:grid-cols-2">
+        <div className="mt-step-4 grid gap-step-4 md:grid-cols-2">
           {PILLARS.map((pillar) => (
             <div key={pillar.title} className="border-t border-current/20 pt-step-3">
               <h3 className="font-display text-lg">{pillar.title}</h3>
@@ -55,8 +57,8 @@ export default function BlogPage() {
             </div>
           ))}
         </div>
-        <div className="mt-step-5">
-          <Blocked marker="{{TODO: BLOG}}" need="zero posts at launch — phase 4 builds the shell only" />
+        <div className="mt-step-4">
+          <Link href="/work" className="underline underline-offset-4">Read the published project case studies</Link>
         </div>
       </Band>
 

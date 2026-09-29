@@ -15,75 +15,66 @@ export const SITE = {
 
 export type NavLink = { label: string; href: string; blurb?: string }
 
-/** Five services. Order is a positioning decision — see TODO_POSITIONING. */
+/** Five engineering services. */
 export const SERVICES: NavLink[] = [
   {
     label: 'AI & Agentic Systems',
     href: '/services/ai-engineering',
-    blurb: 'RAG pipelines, agent workflows, and evals that survive production.',
+    blurb: 'Retrieval, agent workflows, and evaluation on real data.',
   },
   {
     label: 'Product & MVP Build',
     href: '/services/product-build',
-    blurb: 'Zero to shipped, with the architecture decisions made once.',
+    blurb: 'Web products and MVPs, from scope to implementation.',
   },
   {
     label: 'Build Rescue',
     href: '/services/build-rescue',
-    blurb: 'Stalled builds, inherited codebases, and the 70% that AI tools leave.',
+    blurb: 'Review, repair, and move an existing codebase forward.',
   },
   {
     label: 'Automation & Integrations',
     href: '/services/automation',
-    blurb: 'Workflows that remove headcount, not add dashboards.',
+    blurb: 'Connect your tools and reduce repetitive manual work.',
   },
   {
     label: 'Cloud & DevOps',
     href: '/services/cloud-devops',
-    blurb: 'Infrastructure you can hand to someone else and they understand it.',
+    blurb: 'Cloud infrastructure, deployment pipelines, and monitoring.',
   },
 ]
 
-/**
- * Six verticals. {{TODO: VERTICALS}} is NOT resolved by this list.
- *
- * The spec's rule stands: an industry page ships only if it has at least one
- * real case study in it. Today only `legal` and `saas` clear that bar, and
- * content/industries.ts marks the other four `evidenced: false` so the page
- * renders the blocker instead of implying evidence that does not exist. They
- * are listed here so the nav, the hub and the template can be reviewed at full
- * length — not because they are ready to publish.
- */
+/** Industry capabilities; published case studies are identified on each page. */
 export const INDUSTRIES: NavLink[] = [
   {
     label: 'Legal',
     href: '/industries/legal',
-    blurb: 'Jurisdiction rules, generated filings, and deadlines that cannot slip.',
+    blurb: 'Legal workflows, document generation, and case management.',
   },
   {
     label: 'SaaS',
     href: '/industries/saas',
-    blurb: 'Multi-tenancy, billing states and permissions that survive an enterprise deal.',
+    blurb: 'Subscription products, billing, and tenant permissions.',
   },
   {
     label: 'Real estate',
     href: '/industries/real-estate',
-    blurb: 'Portfolio operations that currently live in one spreadsheet.',
+    blurb: 'Property data, portfolio operations, and connected workflows.',
   },
   {
     label: 'Healthcare',
     href: '/industries/healthcare',
-    blurb: 'Care coordination with compliance designed in, not retrofitted.',
+    blurb: 'Care coordination, access controls, and sensitive data workflows.',
   },
   {
     label: 'Construction',
     href: '/industries/construction',
-    blurb: 'Takeoffs, bids and change orders that stop leaking margin.',
+    blurb: 'Estimating, bids, project tracking, and change orders.',
   },
   {
     label: 'Payroll & HR',
     href: '/industries/payroll-hr',
-    blurb: 'Reconciliation and jurisdiction rules where correctness is the product.',
+    blurb: 'Payroll reconciliation, approvals, and employee workflows.',
   },
 ]
 
@@ -98,7 +89,7 @@ export const HEADER_LINKS: NavLink[] = [
 /** Which header items open a mega menu rather than navigating directly. */
 export const MEGA_MENU_LINKS = new Set(['/services', '/industries'])
 
-export const PRIMARY_CTA = { label: 'Book a Build Audit', href: '/pricing/build-audit' } as const
+export const PRIMARY_CTA = { label: 'Start a project', href: '/contact' } as const
 
 export const COMPARE: NavLink[] = [
   { label: 'vs In-house hire', href: '/compare/in-house-hire' },
@@ -111,6 +102,7 @@ export const COMPANY: NavLink[] = [
   { label: 'About', href: '/about' },
   { label: 'Process', href: '/process' },
   { label: 'Blog', href: '/blog' },
+  { label: 'Free app check', href: '/scan' },
   { label: 'Contact', href: '/contact' },
 ]
 

@@ -20,6 +20,8 @@ const GROUNDS = {
   greige: { bg: 'bg-greige text-bordeaux', dark: false },
   cherry: { bg: 'bg-cherry text-vanilla', dark: true },
   bordeaux: { bg: 'bg-bordeaux text-vanilla', dark: true },
+  burgundy: { bg: 'bg-burgundy text-vanilla', dark: true },
+  blush: { bg: 'bg-blush text-bordeaux', dark: false },
 } as const
 
 export type Ground = keyof typeof GROUNDS
@@ -50,7 +52,7 @@ export function Band({
       className={`${tone.bg} ${tone.dark ? 'on-dark' : ''} ${className}`}
     >
       {width === 'shell' ? (
-        <div className={`shell ${tight ? 'py-step-6' : 'band'}`}>{children}</div>
+        <div className={`shell ${tight ? 'band-compact' : 'band'}`}>{children}</div>
       ) : (
         children
       )}
@@ -78,7 +80,7 @@ export function BandHeading({
   return (
     <div className={className}>
       {eyebrow ? (
-        <p className="font-mono text-xs tracking-tight text-current/60">{eyebrow}</p>
+        <p className="site-eyebrow font-mono text-xs tracking-tight">{eyebrow}</p>
       ) : null}
       <h2 className={`text-[clamp(1.75rem,3.5vw,3rem)] ${eyebrow ? 'mt-step-2' : ''}`}>
         {title}

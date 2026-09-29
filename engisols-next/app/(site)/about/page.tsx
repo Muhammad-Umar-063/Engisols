@@ -1,23 +1,23 @@
-import type { Metadata } from 'next'
+import { createPageMetadata } from '@/lib/seo'
 import { Band, BandHeading } from '@/components/layout/Band'
 import { CTABlock, PageHero, Prose, TeamRow } from '@/components/sections/shared'
 import { aboutPage } from '@/content/pages'
 
-/** About — content spec section 13. Six sections. {{TODO: TEAM}} */
+/** About — content spec section 13. Six sections. */
 
-export const metadata: Metadata = {
-  title: 'About',
+export const metadata = createPageMetadata({
+  title: 'About Our Engineering Practice',
   description:
-    'Three senior engineers who decided not to become fifteen, and the honest cost of that choice.',
-  alternates: { canonical: '/about' },
-}
+    'Software engineering across AI systems, web applications, integrations, and infrastructure. Explore our client work and approach.',
+  path: '/about',
+})
 
 export default function AboutPage() {
   return (
     <>
       <PageHero eyebrow="About" title={aboutPage.hero.title} lead={aboutPage.hero.lead} />
 
-      <TeamRow title="Who you actually get" ground="vanilla" />
+      <TeamRow title="Engineering expertise" ground="vanilla" />
 
       <Band ground="oat">
         <BandHeading eyebrow="The argument" title={aboutPage.why.title} />
@@ -29,13 +29,13 @@ export default function AboutPage() {
         <Prose paragraphs={aboutPage.history.paragraphs} />
       </Band>
 
-      <Band ground="bordeaux">
+      <Band ground="burgundy">
         <BandHeading
           eyebrow="Limits"
           title={aboutPage.wont.title}
-          lead="Naming the limits is cheaper for everyone than discovering them in week three."
+          lead="Agree expectations and responsibilities before starting."
         />
-        <ul className="mt-step-5 space-y-step-3">
+        <ul className="mt-step-4 space-y-step-3">
           {aboutPage.wont.items.map((item) => (
             <li key={item} className="measure border-t border-current/25 pt-step-3 text-lg">
               {item}

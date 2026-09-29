@@ -1,6 +1,6 @@
-import type { Metadata } from 'next'
+import { createPageMetadata } from '@/lib/seo'
 import Link from 'next/link'
-import { Band, BandHeading, Blocked } from '@/components/layout/Band'
+import { Band, BandHeading } from '@/components/layout/Band'
 import { DataTable, FAQAccordion, PageHero } from '@/components/sections/shared'
 import { scanPage } from '@/content/pages'
 
@@ -14,12 +14,12 @@ import { scanPage } from '@/content/pages'
  * the specific mistake it warns against.
  */
 
-export const metadata: Metadata = {
-  title: 'Free repo health scan',
+export const metadata = createPageMetadata({
+  title: 'Free public app check',
   description:
-    'Point us at the repository and we run the first-pass checks the paid audit starts with. Security, dependencies, architecture, scalability and running cost.',
-  alternates: { canonical: '/scan' },
-}
+    'Inspect a public app URL for observable risk signals, with findings, evidence, and coverage from Production Check.',
+  path: '/scan',
+})
 
 export default function ScanPage() {
   return (
@@ -33,10 +33,10 @@ export default function ScanPage() {
       <Band ground="vanilla">
         <BandHeading
           eyebrow="What it checks"
-          title="Five categories, named specifically"
-          lead="Specificity is what makes a free tool credible. A scan that promises to check everything is checking nothing."
+          title="What is visible from a public URL"
+          lead="Each report states what was observed and what needs a deeper review."
         />
-        <div className="mt-step-5 grid gap-step-4 md:grid-cols-2">
+        <div className="mt-step-4 grid gap-step-4 md:grid-cols-2">
           {scanPage.checks.map((check) => (
             <div key={check.title} className="border-t border-current/20 pt-step-3">
               <h3 className="font-display text-lg">{check.title}</h3>
@@ -58,47 +58,40 @@ export default function ScanPage() {
       </Band>
 
       <Band ground="vanilla">
-        <BandHeading eyebrow="Sample" title="What the output looks like" />
+        <BandHeading eyebrow="Report" title="What the output contains" />
         <div className="mt-step-4 rounded-sm border border-dashed border-current/40 p-step-5">
-          <Blocked
-            marker="{{TODO: SAMPLE_REPORT}}"
-            need="a redacted example scan output — this is the highest-value missing asset on the page"
-          />
+          <p className="measure text-current/80">Your report groups findings as FIX NOW, REVIEW, or EXPECTED. It includes supporting evidence labels, detected technologies, and a coverage summary so you can see the limits of the check.</p>
         </div>
       </Band>
 
       {/* The biggest objection to handing over a repo gets its own section. */}
-      <Band ground="bordeaux">
+      <Band ground="burgundy">
         <BandHeading
           eyebrow="Privacy"
           title={scanPage.privacy.title}
-          lead="This is the real objection to sending anyone your repository, so it gets a section rather than a line in the FAQ."
+          lead="The check uses public information. See the privacy policy for data handling and retention details."
         />
         <DataTable rows={scanPage.privacy.rows} />
       </Band>
 
-      <FAQAccordion items={scanPage.faqs} ground="greige" />
+      <FAQAccordion items={scanPage.faqs} ground="blush" />
 
       <Band ground="vanilla" id="scan-form">
         <BandHeading
           eyebrow="Start"
-          title="Send us the repo"
-          lead="Repository URL, an email to send the findings to, and one question about where you are."
+          title="Check your public app"
+          lead="Start with the public URL of an app you own or are authorised to check."
         />
-        <div className="mt-step-5 rounded-sm border border-dashed border-current/40 p-step-5">
-          <Blocked
-            marker="{{TODO: SCAN_FORM}}"
-            need="the form needs a backend before it exists as a form — an inbox that receives repo URLs and a queue that runs the checks. Section 19 of the spec says this funnel needs its own technical spec first, and it does."
-          />
+        <div className="mt-step-4 rounded-sm border border-dashed border-current/40 p-step-5">
           <p className="measure mt-step-3 text-sm text-current/70">
-            Until that lands, the manual route works and is monitored:
+            Open Production Check to enter the URL and see the scan progress and report.
           </p>
           <Link
-            href="/contact"
+            href="/production-check"
             data-cursor="link"
             className="mt-step-2 inline-block underline decoration-current/40 underline-offset-4"
           >
-            Send it to us directly
+            Open Production Check
           </Link>
         </div>
       </Band>

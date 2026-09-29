@@ -35,7 +35,7 @@ export function DotsMorphButton({
       type="submit"
       disabled={state !== 'idle'}
       aria-busy={state === 'pending'}
-      className="relative min-w-36 rounded-full bg-cherry px-step-4 py-step-2 font-medium text-vanilla transition-opacity disabled:opacity-85"
+      className="site-button site-button-primary relative min-w-36 rounded-full bg-cherry px-step-4 py-step-2 font-medium text-vanilla transition-opacity disabled:opacity-65"
       transition={reduced ? { duration: 0 } : EASE.spring}
     >
       <AnimatePresence mode="wait" initial={false}>

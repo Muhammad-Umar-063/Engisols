@@ -17,7 +17,7 @@ import { EASE } from '@/lib/motion'
  * invented data", and section 7: if no defensible metric exists, delete this
  * and render static figures instead. It is not wired into the homepage for
  * exactly that reason — only one Engisols-attributable metric currently exists.
- * Mount it when {{TODO: PROOF_METRIC}} resolves.
+ * Mount it only when a verified time series is available.
  *
  * Accessibility: an SVG chart is not self-describing. The series is also
  * rendered as a visually-hidden table, so the numbers are readable rather than

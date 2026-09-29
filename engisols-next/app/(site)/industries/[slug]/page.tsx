@@ -1,6 +1,9 @@
+import { breadcrumbData, createPageMetadata } from '@/lib/seo'
+import { JsonLd } from '@/components/seo/JsonLd'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Band, BandHeading, Blocked } from '@/components/layout/Band'
+import { Band, BandHeading } from '@/components/layout/Band'
 import {
   CTABlock,
   CheckList,
@@ -10,14 +13,7 @@ import {
 } from '@/components/sections/shared'
 import { getIndustry, industries } from '@/content/industries'
 
-/**
- * Industry page template — content spec section 7. Seven sections.
- *
- * The spec's rule: an industry page ships only with at least one real case
- * study in it. Four of the six do not have one, so instead of quietly showing
- * unrelated work they render the blocker where RelatedWork would be. That is
- * the honest version of "not ready" and it is visible to whoever opens the page.
- */
+/** Published client evidence and potential project areas remain distinct. */
 
 export function generateStaticParams() {
   return industries.map((industry) => ({ slug: industry.slug }))
@@ -31,13 +27,13 @@ export async function generateMetadata({
   const { slug } = await params
   const industry = getIndustry(slug)
   if (!industry) return {}
-  return {
-    title: industry.label,
+  return createPageMetadata({
+    title: `${industry.label} Software Development`,
     description: industry.hero.lead,
-    alternates: { canonical: `/industries/${industry.slug}` },
+    path: `/industries/${industry.slug}`,
     // Unevidenced verticals stay out of the index until they have a case study.
     robots: industry.evidenced ? undefined : { index: false, follow: true },
-  }
+  })
 }
 
 export default async function IndustryPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -47,15 +43,19 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
 
   return (
     <>
+      <JsonLd data={breadcrumbData([
+        { name: 'Industries', path: '/industries' },
+        { name: industry.label, path: `/industries/${industry.slug}` },
+      ])} />
       <PageHero eyebrow="Industry" title={industry.hero.title} lead={industry.hero.lead} />
 
       <Band ground="vanilla">
         <BandHeading
-          eyebrow="Failure patterns"
-          title="What goes wrong here specifically"
-          lead="Not generic software problems. These are the ones that recur in this sector."
+          eyebrow="Where engineering helps"
+          title="Workflows worth getting right"
+          lead="The data, decisions, and handoffs that shape the product."
         />
-        <div className="mt-step-5 grid gap-step-4 md:grid-cols-2">
+        <div className="mt-step-4 grid gap-step-4 md:grid-cols-2">
           {industry.problems.map((problem) => (
             <div key={problem.title} className="border-t border-current/20 pt-step-3">
               <h3 className="font-display text-lg">{problem.title}</h3>
@@ -66,25 +66,22 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
       </Band>
 
       <Band ground="oat">
-        <BandHeading eyebrow="What we build" title="Systems we have shipped in this space" />
+        <BandHeading eyebrow="What we build" title={industry.evidenced ? "Systems we have worked on in this space" : "Software we can scope with you"} />
         <CheckList items={industry.whatWeBuild} />
         {industry.evidenced ? null : (
-          <div className="mt-step-5">
-            <Blocked
-              marker="{{TODO: VERTICALS}}"
-              need={`no published case study in ${industry.label.toLowerCase()} yet — this list describes capability, not evidence, and the page stays unindexed until that changes`}
-            />
+          <div className="mt-step-4">
+            <p className="measure text-sm text-current/80">These are potential project areas. We do not currently publish a client case study in this sector.</p>
           </div>
         )}
       </Band>
 
-      <Band ground="bordeaux">
+      <Band ground="burgundy">
         <BandHeading
           eyebrow="Constraints"
-          title="The rules this sector plays by"
-          lead="Compliance, data handling and integration reality. These are architecture decisions, not a checklist at the end."
+          title="Requirements to define early"
+          lead="Agree data handling, integrations, and operating responsibilities before implementation."
         />
-        <div className="mt-step-5 grid gap-step-5 md:grid-cols-3">
+        <div className="mt-step-4 grid gap-step-5 md:grid-cols-3">
           {industry.constraints.map((constraint) => (
             <div key={constraint.title} className="border-t border-current/25 pt-step-3">
               <h3 className="font-display text-lg">{constraint.title}</h3>
@@ -102,22 +99,18 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
         />
       ) : (
         <Band ground="vanilla">
-          <BandHeading eyebrow="Related work" title="Nothing published here yet" />
+          <BandHeading eyebrow="Project fit" title="Discuss your sector and requirements" />
           <p className="measure mt-step-3 text-current/80">
-            An industry page with no evidence is worse than not having the page, so this one
-            does not borrow case studies from another sector to fill the gap. When there is
-            work to show here, it appears in this slot.
+            Share your existing systems, integration requirements, and operating constraints.
+            We can discuss the relevant engineering work and the scope your project needs.
           </p>
           <div className="mt-step-4">
-            <Blocked
-              marker="{{TODO: VERTICALS}}"
-              need="at least one cleared case study in this vertical before publication"
-            />
+            <Link href="/contact" className="underline underline-offset-4">Discuss your project</Link>
           </div>
         </Band>
       )}
 
-      <FAQAccordion items={industry.faqs} ground="greige" />
+      <FAQAccordion items={industry.faqs} ground="blush" />
 
       <CTABlock line={industry.cta} />
     </>

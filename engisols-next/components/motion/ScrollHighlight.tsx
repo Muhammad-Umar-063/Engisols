@@ -19,7 +19,7 @@ type Zone = `${MarginValue} ${MarginValue} ${MarginValue} ${MarginValue}`
 /**
  * Scroll highlight — animation spec section 10.1.
  *
- * Rows rest at 30% and brighten to full as each one crosses a thin band
+ * Rows rest at 85% and brighten to full as each one crosses a thin band
  * through the middle of the viewport; a rotated label sticks alongside at the
  * same height, so the reader can see that the band is a fixed line on screen
  * rather than rows lighting up at random.
@@ -43,7 +43,7 @@ export function ScrollHighlight({
   heading,
   items,
   /** Resting opacity for the rows that are not centred. */
-  restOpacity = 0.3,
+  restOpacity = 0.85,
   /**
    * The scroll zone, as an IntersectionObserver rootMargin.
    *
@@ -82,7 +82,7 @@ export function ScrollHighlight({
         */
         <p
           aria-hidden
-          className="sticky top-[50vh] hidden h-max -translate-y-1/2 rotate-180 font-mono text-xs uppercase tracking-[0.35em] text-current/50 [writing-mode:vertical-rl] lg:block"
+          className="sticky top-[50vh] hidden h-max -translate-y-1/2 rotate-180 font-mono text-xs uppercase tracking-[0.35em] text-current/75 [writing-mode:vertical-rl] lg:block"
         >
           {heading}
         </p>
@@ -131,7 +131,7 @@ function Row({
 
   // Mount gate (spec 1.4). `mounted` is false on the server, so the HTML ships
   // every row at full opacity: a JS failure leaves this section readable
-  // instead of five rows of 30% vanilla. Reduced motion holds it there —
+  // instead of dimmed rows. Reduced motion holds it there —
   // dimming and undimming rows as the page scrolls is precisely the motion
   // that preference asks us to drop.
   const dimmed = mounted && !reduced && !inView
@@ -140,7 +140,7 @@ function Row({
   return (
     <m.li
       ref={ref}
-      className="relative border-b border-current/15 py-step-4 pl-step-3"
+      className="relative grid gap-step-1 border-b border-current/25 py-step-3 pl-step-3 sm:grid-cols-[2rem_minmax(0,1fr)_minmax(0,1.3fr)] sm:items-start sm:gap-step-3"
       initial={false}
       animate={{ opacity: dimmed ? restOpacity : 1 }}
       transition={{ duration: DUR.standard, ease: EASE.enter }}
@@ -158,11 +158,11 @@ function Row({
         />
       ) : null}
 
-      <span className="font-mono text-xs text-current/50">
+      <span className="font-mono text-xs text-current/75">
         {String(index + 1).padStart(2, '0')}
       </span>
-      <h3 className="mt-step-1 text-[clamp(1.375rem,2.6vw,2.125rem)]">{title}</h3>
-      <p className="measure mt-step-2 text-current/80">{body}</p>
+      <h3 className="text-[clamp(1.375rem,2.6vw,2.125rem)]">{title}</h3>
+      <p className="measure text-current/85">{body}</p>
     </m.li>
   )
 }

@@ -1,0 +1,21 @@
+import { SITE } from '@/lib/site'
+
+/** A direct contact link; opening WhatsApp does not send the draft. */
+export function WhatsAppButton() {
+  const message = encodeURIComponent('Hi Engisols, I would like to discuss a project.')
+
+  return (
+    <a
+      href={`https://wa.me/${SITE.phone.replace(/\D/g, '')}?text=${message}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Chat with Engisols on WhatsApp (opens in a new tab)"
+      className="site-whatsapp"
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M20.52 3.48A11.9 11.9 0 0 0 12.05 0C5.47 0 .11 5.35.1 11.94c0 2.1.55 4.15 1.6 5.96L0 24l6.26-1.64a11.9 11.9 0 0 0 5.78 1.47h.01C18.63 23.83 24 18.48 24 11.9c0-3.19-1.24-6.19-3.48-8.42ZM12.05 21.8a9.87 9.87 0 0 1-5.04-1.38l-.36-.21-3.72.98.99-3.63-.24-.37a9.87 9.87 0 0 1-1.52-5.25c0-5.48 4.46-9.94 9.95-9.94a9.87 9.87 0 0 1 7.04 2.92 9.9 9.9 0 0 1 2.91 7.04c0 5.48-4.47 9.94-9.95 9.94Zm5.45-7.44c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.76-1.66-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.21 5.08 4.5.71.31 1.27.5 1.7.64.71.23 1.36.2 1.87.12.57-.08 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35Z" />
+      </svg>
+      <span>WhatsApp</span>
+    </a>
+  )
+}

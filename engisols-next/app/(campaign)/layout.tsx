@@ -13,9 +13,8 @@ import { Cursor } from '@/components/motion/Cursor'
  * and the only way out is a mailto or the browser's back button.
  *
  * `noindex, nofollow` applies to everything under this layout and overrides the
- * root layout's `index, follow`. The page is also absent from sitemap.ts and
- * disallowed in robots.ts — three separate statements of the same intent,
- * because each one is read by a different thing.
+ * root layout's `index, follow`. The page is absent from sitemap.ts, but remains
+ * crawlable so search engines can read and honor its noindex metadata.
  *
  * What is still shared, all of it from the root layout: fonts, the palette,
  * smooth scrolling and the toast provider. None of them carry a link.

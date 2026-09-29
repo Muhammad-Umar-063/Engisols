@@ -1,16 +1,16 @@
 import type { ReactNode } from 'react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { WhatsAppButton } from '@/components/layout/WhatsAppButton'
 import {
   FooterReveal,
   FooterRevealContent,
   FooterRevealFooter,
 } from '@/components/motion/FooterReveal'
-import { Cursor } from '@/components/motion/Cursor'
 
 /**
  * Everything that makes a page part of the SITE: the header and its nav, the
- * revealed footer and its link columns, and the custom cursor.
+ * revealed footer and its link columns. Native pointers keep controls visible.
  *
  * This lives outside the root layout because one route — the campaign landing
  * page — must not have it. A layout cannot read the pathname, so "chrome on
@@ -33,7 +33,7 @@ import { Cursor } from '@/components/motion/Cursor'
  */
 export function SiteChrome({ children }: { children: ReactNode }) {
   return (
-    <>
+    <div className="site-surface flex flex-1 flex-col">
       <Header />
       <FooterReveal className="flex-1">
         <FooterRevealContent>
@@ -45,7 +45,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
           </div>
         </FooterRevealFooter>
       </FooterReveal>
-      <Cursor />
-    </>
+      <WhatsAppButton />
+    </div>
   )
 }

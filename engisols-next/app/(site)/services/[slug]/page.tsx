@@ -1,3 +1,6 @@
+import { breadcrumbData, createPageMetadata } from '@/lib/seo'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { SITE } from '@/lib/site'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -35,11 +38,11 @@ export async function generateMetadata({
   const { slug } = await params
   const service = getService(slug)
   if (!service) return {}
-  return {
+  return createPageMetadata({
     title: service.label,
     description: service.hero.lead,
-    alternates: { canonical: `/services/${service.slug}` },
-  }
+    path: `/services/${service.slug}`,
+  })
 }
 
 export default async function ServicePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -51,6 +54,19 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
+      <JsonLd data={breadcrumbData([
+        { name: 'Services', path: '/services' },
+        { name: service.label, path: `/services/${service.slug}` },
+      ])} />
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        '@id': `${SITE.url}/services/${service.slug}#service`,
+        name: service.label,
+        description: service.hero.lead,
+        url: `${SITE.url}/services/${service.slug}`,
+        provider: { '@id': `${SITE.url}/#organization` },
+      }} />
       {/* 1 — Hero. The service named plainly, who it is for, the outcome. */}
       <PageHero eyebrow="Service" title={service.hero.title} lead={service.hero.lead}>
         <Link
@@ -88,11 +104,11 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
       </Band>
 
       {/* 5 — Approach. The section that separates a practice from a body shop. */}
-      <Band ground="bordeaux">
-        <BandHeading eyebrow="Approach" title="How we think about this" />
+      <Band ground="burgundy">
+        <BandHeading eyebrow="Approach" title="Our approach" />
         <Prose paragraphs={service.approach.paragraphs} />
-        <div className="mt-step-6 border-t border-current/25 pt-step-4">
-          <h3 className="font-display text-xl">What we refuse to do</h3>
+        <div className="mt-step-4 border-t border-current/25 pt-step-4">
+          <h3 className="font-display text-xl">What we avoid</h3>
           <ul className="mt-step-3 space-y-step-3">
             {service.approach.refuse.map((item) => (
               <li key={item} className="measure text-current/85">
@@ -110,20 +126,19 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
         ground="oat"
       />
 
-      {/* 7 — Engagement shape. {{TODO: PRICING}} */}
+      {/* 7 — Engagement shape. */}
       <Band ground="vanilla">
-        <BandHeading eyebrow="Engagement" title="How this is usually bought" />
+        <BandHeading eyebrow="Engagement" title="Engagement options" />
         <div className="mt-step-4 grid gap-step-4 border-t border-current/20 pt-step-4 sm:grid-cols-3">
           <div>
-            <p className="font-mono text-xs text-current/60">Shape</p>
+            <p className="font-mono text-xs text-current/75">Shape</p>
             <p className="mt-step-1 font-display text-lg">{service.engagement.shape}</p>
           </div>
           <div>
-            <p className="font-mono text-xs text-current/60">From</p>
+            <p className="font-mono text-xs text-current/75">Pricing</p>
             <p className="mt-step-1 font-display text-lg tabular-nums">
               {service.engagement.from}
             </p>
-            <p className="mt-1 font-mono text-[0.65rem] text-cherry">demo figure</p>
           </div>
           <div className="sm:col-span-1">
             <p className="measure text-sm text-current/80">{service.engagement.note}</p>
@@ -132,7 +147,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
               data-cursor="link"
               className="mt-step-2 inline-block underline decoration-current/40 underline-offset-4"
             >
-              Full pricing
+              View engagement options
             </Link>
           </div>
         </div>
@@ -140,7 +155,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
       </Band>
 
       {/* 8 — FAQ, including the awkward ones. */}
-      <FAQAccordion items={service.faqs} ground="greige" />
+      <FAQAccordion items={service.faqs} ground="blush" />
 
       {/* 9 — CTA. */}
       <CTABlock line={service.cta} />

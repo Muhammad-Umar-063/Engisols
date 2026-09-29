@@ -1,3 +1,5 @@
+import { breadcrumbData, createPageMetadata } from '@/lib/seo'
+import { JsonLd } from '@/components/seo/JsonLd'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Band, BandHeading } from '@/components/layout/Band'
@@ -35,11 +37,12 @@ export async function generateMetadata({
   const { slug } = await params
   const study = caseStudies.find((item) => item.slug === slug)
   if (!study) return {}
-  return {
-    title: study.title,
+  return createPageMetadata({
+    title: `${study.title} — ${study.category} Case Study`,
     description: study.shortDescription,
-    alternates: { canonical: `/work/${study.slug}` },
-  }
+    image: { url: study.imgSrc, alt: `${study.title} client website` },
+    path: `/work/${study.slug}`,
+  })
 }
 
 export default async function CaseStudyPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -51,8 +54,12 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
 
   return (
     <>
+      <JsonLd data={breadcrumbData([
+        { name: 'Work', path: '/work' },
+        { name: study.title, path: `/work/${study.slug}` },
+      ])} />
       {/* 1 — Hero: client, one-line outcome, the hardest number available. */}
-      <PageHero eyebrow={study.category} title={study.title} lead={study.tagline}>
+      <PageHero eyebrow={`Client project · ${study.category}`} title={study.title} lead={study.tagline}>
         {headline ? (
           <p className="font-display text-[clamp(2.5rem,7vw,5rem)] leading-none tabular-nums">
             {headline.value}
@@ -72,11 +79,11 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
             ['Industry', study.category],
             ['Engagement', 'Product build'],
             ['Stack', study.techStack.slice(0, 4).join(', ')],
-            ['Team', 'Three senior engineers'],
+            ['Contribution', 'Software engineering'],
             ['Status', 'Shipped, in production'],
           ]}
         />
-        <ul className="mt-step-5 grid gap-step-4 sm:grid-cols-3">
+        <ul className="mt-step-4 grid gap-step-4 sm:grid-cols-3">
           {study.metrics.map((metric) => (
             <li key={metric.label} className="border-t-2 border-cherry pt-step-2">
               <span className="block font-display text-[clamp(1.75rem,4vw,2.75rem)] tabular-nums">
@@ -90,9 +97,9 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
 
       {/* 3 — Before. Specific, because vague setup makes the result unbelievable. */}
       <Band ground="oat">
-        <BandHeading eyebrow="Before" title="The situation when they came to us" />
+        <BandHeading eyebrow="Before" title="Project context" />
         <Prose paragraphs={[study.overview]} />
-        <ul className="mt-step-5 grid gap-step-3 md:grid-cols-2">
+        <ul className="mt-step-4 grid gap-step-3 md:grid-cols-2">
           {study.challenges.map((challenge) => (
             <li key={challenge} className="border-t border-current/20 pt-step-2">
               <p className="measure text-current/85">{challenge}</p>
@@ -105,7 +112,7 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
       <Band ground="vanilla">
         <BandHeading eyebrow="What we built" title={study.shortDescription} />
         <Reveal>
-          <div className="mt-step-5 overflow-hidden rounded-sm border border-current/15">
+          <div className="mt-step-4 overflow-hidden rounded-sm border border-current/15">
             {/* eslint-disable-next-line @next/next/no-img-element -- next/image
                 lands with the asset pass. */}
             <img src={study.imgSrc} alt={`${study.title} interface`} className="w-full" />
@@ -114,12 +121,12 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
       </Band>
 
       {/* 5 — Technical decisions. The section technical buyers read closely. */}
-      <Band ground="bordeaux">
+      <Band ground="burgundy">
         <BandHeading
           eyebrow="Technical decisions"
-          title="What we chose, and what we gave up for it"
+          title="Engineering decisions"
         />
-        <div className="mt-step-5 grid gap-step-5 md:grid-cols-2">
+        <div className="mt-step-4 grid gap-step-5 md:grid-cols-2">
           {study.solution.map((block) => (
             <div key={block.heading} className="border-t border-current/25 pt-step-3">
               <h3 className="font-display text-xl">{block.heading}</h3>
@@ -127,8 +134,8 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
             </div>
           ))}
         </div>
-        <div className="mt-step-6 border-t border-current/25 pt-step-4">
-          <p className="font-mono text-xs tracking-tight text-current/60">Stack</p>
+        <div className="mt-step-4 border-t border-current/25 pt-step-4">
+          <p className="font-mono text-xs tracking-tight text-current/75">Stack</p>
           <ul className="mt-step-2 flex flex-wrap gap-step-2">
             {study.techStack.map((tech) => (
               <li
@@ -160,7 +167,7 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
       <RelatedWork exclude={study.slug} ground="oat" />
 
       {/* 9 — CTA. */}
-      <CTABlock line="Every one of these started with someone describing a problem badly." />
+      <CTABlock line="Tell us about the software you want to build." />
     </>
   )
 }

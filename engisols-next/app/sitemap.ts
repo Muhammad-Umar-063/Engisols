@@ -8,19 +8,19 @@ import { SITE } from '@/lib/site'
 /**
  * Sitemap — build spec section 12, "required at launch".
  *
- * Two exclusions, both deliberate:
+ * Deliberate exclusions:
  *   Industry pages without a real case study. They are `noindex` in their own
  *   metadata, and listing a noindex URL in the sitemap tells Google two
  *   opposite things about the same page.
  *   `/scan/next`, which is a post-scan handoff and has no standalone value.
+ *   `/blog`, until there are published articles, and noindex campaign/tools.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = SITE.url
-  const now = new Date()
-
+  // Omit lastModified until content has authoritative publication dates.
+  // A deployment timestamp would incorrectly claim that every page changed.
   const entry = (path: string, priority: number): MetadataRoute.Sitemap[number] => ({
     url: `${base}${path}`,
-    lastModified: now,
     priority,
   })
 
@@ -40,7 +40,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry('/industries', 0.5),
     ...industries.filter((i) => i.evidenced).map((i) => entry(`/industries/${i.slug}`, 0.5)),
     entry('/scan', 0.5),
-    entry('/blog', 0.3),
     entry('/privacy', 0.2),
     entry('/terms', 0.2),
   ]

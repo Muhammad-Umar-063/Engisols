@@ -1,5 +1,5 @@
-import type { Metadata } from 'next'
-import { Band, BandHeading, Blocked } from '@/components/layout/Band'
+import { createPageMetadata } from '@/lib/seo'
+import { Band, BandHeading } from '@/components/layout/Band'
 import {
   Booking,
   CaseStudyGrid,
@@ -22,22 +22,19 @@ import { caseStudies } from '@/content/case-studies'
  * guarantee.
  */
 
-export const metadata: Metadata = {
-  title: 'Build Audit',
+export const metadata = createPageMetadata({
+  title: 'Software Build Audit',
   description:
-    'Ten working days, a fixed fee, and a written verdict on your build. Refunded in full if it tells you nothing you did not already know.',
-  alternates: { canonical: '/pricing/build-audit' },
-}
+    'A scoped engineering review of your build, with prioritised findings and next-step recommendations. Fee and schedule agreed in advance.',
+  path: '/pricing/build-audit',
+})
 
 export default function BuildAuditPage() {
   return (
     <>
-      <PageHero eyebrow="The paid front door" title={buildAudit.hero.title} lead={buildAudit.hero.lead}>
+      <PageHero eyebrow="Build Audit" title={buildAudit.hero.title} lead={buildAudit.hero.lead}>
         <div className="max-w-2xl">
           <DataTable rows={buildAudit.hero.facts} />
-          <div className="mt-step-3">
-            <Blocked marker="{{TODO: PRICING}}" need="the fee above is invented" />
-          </div>
         </div>
       </PageHero>
 
@@ -55,22 +52,19 @@ export default function BuildAuditPage() {
           lead={buildAudit.deliverable.lead}
         />
         <CheckList items={buildAudit.deliverable.items} />
-        <div className="mt-step-5 rounded-sm border border-dashed border-current/40 p-step-4">
-          <Blocked
-            marker="{{TODO: SAMPLE_REPORT}}"
-            need="a redacted sample page from a real audit report — the spec is right that showing the artifact converts better than describing it"
-          />
+        <div className="mt-step-4 rounded-sm border border-dashed border-current/40 p-step-4">
+          <p className="measure text-current/80">The findings document identifies the area reviewed, the observed issue, supporting evidence, its priority, and the recommended next step. The agreed scope defines which parts of your system are inspected.</p>
         </div>
       </Band>
 
       {/* 4 — Day by day. */}
       <Band ground="vanilla">
-        <BandHeading eyebrow="Ten days" title="What happens, day by day" />
+        <BandHeading eyebrow="Process" title="From review scope to next steps" />
         <StepList steps={buildAudit.howItWorks} />
       </Band>
 
       {/* 5 — Why it is paid. Short and direct. */}
-      <Band ground="bordeaux">
+      <Band ground="burgundy">
         <BandHeading eyebrow="Why paid" title={buildAudit.whyPaid.title} />
         <div className="mt-step-4 space-y-step-3">
           {buildAudit.whyPaid.body.map((paragraph) => (
@@ -84,34 +78,31 @@ export default function BuildAuditPage() {
       {/* 6 — Proof: work where an audit preceded a build. */}
       <CaseStudyGrid
         studies={caseStudies.slice(0, 3)}
-        title="Builds that started as an audit"
-        lead="Each of these began with someone describing the problem one way and the code saying something else."
+        title="Related client work"
+        lead="Published examples of the software and systems we have worked on for clients."
         ground="oat"
       />
 
       {/* 7 — Guarantee, full terms. */}
       <Band ground="vanilla">
-        <BandHeading eyebrow="Guarantee" title="The actual terms" />
+        <BandHeading eyebrow="Engagement" title="Agree the terms before starting" />
         <ol className="mt-step-4 space-y-step-3">
           <li className="measure border-t border-current/20 pt-step-3">
-            If the report does not tell you something you did not already know, we refund the
-            fee in full. Not a credit against future work — the money back.
+            The proposal defines the review scope, access needed, deliverables, fee, and schedule.
           </li>
           <li className="measure border-t border-current/20 pt-step-3">
-            You decide, not us. There is no adjudication and no requirement to justify it. One
-            line by email is enough, and it is processed that week.
+            Agree confidentiality and data-handling requirements before sharing a private system.
           </li>
           <li className="measure border-t border-current/20 pt-step-3">
-            If you start a build with us within ninety days, the full fee credits against it.
+            Review and implementation are separate decisions. Any credits or commercial conditions must be included in the written proposal.
           </li>
           <li className="measure border-t border-current/20 pt-step-3">
-            The report is yours either way, including if you take it to another team. It is
-            written to be useful to whoever does the work.
+            Confirm ownership, handover requirements, and any follow-up support in the engagement agreement.
           </li>
         </ol>
       </Band>
 
-      <FAQAccordion items={buildAudit.faqs} title="Before you send us a repo" ground="greige" />
+      <FAQAccordion items={buildAudit.faqs} title="Build Audit questions" ground="blush" />
 
       {/* 9 — Booking. A real calendar, not a contact form. */}
       <Booking ground="vanilla" />

@@ -1,26 +1,6 @@
 import type { FAQ } from '@/components/sections/shared'
 
-/**
- * ⚠️  DEMO CONTENT — drafted, not signed off. See content/services.ts header.
- *
- * Content spec section 7: six industry pages, seven sections each.
- *
- * THE RULE THIS FILE BREAKS, DELIBERATELY AND TEMPORARILY. The spec says an
- * industry page ships only if there is at least one real case study in it,
- * because a vertical page with no evidence is worse than not having the page.
- * Only two of these six clear that bar today:
- *
- *   legal        SoloSuit         real
- *   saas         Alula, ProLyrics real
- *   real-estate  none             {{TODO: VERTICALS}}
- *   healthcare   none             {{TODO: VERTICALS}}
- *   construction none             {{TODO: VERTICALS}}
- *   payroll-hr   none             {{TODO: VERTICALS}}
- *
- * All six are built so the template can be reviewed at full length. The four
- * without evidence carry `evidenced: false` and render the blocker on the page
- * rather than quietly showing unrelated work. Do not publish those four.
- */
+/** Industry capabilities. Only sectors with published client evidence are indexed. */
 
 export type IndustryPage = {
   slug: string
@@ -39,387 +19,374 @@ export type IndustryPage = {
 
 export const industries: IndustryPage[] = [
   {
-    slug: 'legal',
-    label: 'Legal',
-    evidenced: true,
-    evidence: ['Legal Tech'],
-    hero: {
-      title: 'Legal software fails on the edge cases, and in law the edge cases are the job.',
-      lead: 'Jurisdiction rules, filing deadlines, document generation that has to be right the first time. We have shipped a platform that turns a court deadline into a flow a non-lawyer can complete.',
+    "slug": "legal",
+    "label": "Legal",
+    "evidenced": true,
+    "evidence": [
+      "Legal Tech"
+    ],
+    "hero": {
+      "title": "Clear workflows for complex legal processes.",
+      "lead": "Intake, document generation, and review workflows. Our SoloSuit case study describes engineering contributed to a client’s legal technology platform."
     },
-    problems: [
+    "problems": [
       {
-        title: 'Jurisdiction multiplies everything',
-        body: 'A flow that works in one state needs rules, deadlines and document formats for the next fifty. Teams model this as configuration far too late, having hard-coded the first jurisdiction into the product.',
+        "title": "Rules that vary by jurisdiction",
+        "body": "Keep supported rules, document formats, and deadlines explicit so they can be reviewed and tested."
       },
       {
-        title: 'Documents have to be exactly right',
-        body: 'A generated filing with a wrong caption is not a bug report, it is a missed deadline with consequences. Generation needs review paths and audit trails, not just a template engine.',
+        "title": "Documents that need review",
+        "body": "Build review steps, version history, and correction paths into document generation."
       },
       {
-        title: 'The user is frightened and not technical',
-        body: 'People arrive at legal software under time pressure and in trouble. Interfaces that assume calm, informed users fail the actual audience.',
+        "title": "Users under time pressure",
+        "body": "Make the next step clear, preserve entered information, and explain errors in plain language."
       },
       {
-        title: 'Privilege and retention are load-bearing',
-        body: 'Who can see a document, for how long, and what is logged about the access. Retrofitting this after launch means touching every query.',
-      },
+        "title": "Sensitive documents and access",
+        "body": "Define who can view or change a record, and how access and retention are managed."
+      }
     ],
-    whatWeBuild: [
-      'Guided response flows that produce court-ready documents',
-      'Jurisdiction rule engines with deadlines modelled as data, not code',
-      'Attorney review queues with audit trails on every action',
-      'Document generation with versioning and diffing',
-      'Settlement and negotiation tooling',
-      'Client intake that reads the file before a human does',
+    "whatWeBuild": [
+      "Guided intake and response workflows",
+      "Document generation and version history",
+      "Attorney review queues",
+      "Rule and deadline configuration",
+      "Case tracking and operational reporting"
     ],
-    constraints: [
+    "constraints": [
       {
-        title: 'Confidentiality and privilege',
-        body: 'Access control designed in from the schema up, with logged access and defensible retention. Retrofitted permissions are the most common serious finding in a legal-tech audit.',
+        "title": "Product and legal boundaries",
+        "body": "Agree the product’s role and review requirements with the client’s legal team before implementation."
       },
       {
-        title: 'Unauthorised practice of law',
-        body: 'Product boundaries between information and advice are a design constraint, and they shape the interface, not just the terms of service.',
-      },
-      {
-        title: 'Record retention',
-        body: 'Retention windows vary by jurisdiction and matter type. Deletion has to be as reliable as storage, and provably so.',
-      },
+        "title": "Access and retention",
+        "body": "Document access, audit logging, and retention requirements as part of the agreed technical scope."
+      }
     ],
-    faqs: [
+    "faqs": [
       {
-        q: 'Have you actually shipped legal software?',
-        a: 'Yes — SoloSuit, a platform helping people respond to debt lawsuits across all fifty states, with guided flows, generated court documents and attorney review. The case study has the detail.',
+        "q": "Can we see relevant work?",
+        "a": "Yes. The SoloSuit case study describes our engineering contribution to guided legal workflows, document generation, and attorney review. SoloSuit is a client platform."
       },
       {
-        q: 'Can you work with our compliance counsel?',
-        a: 'Yes, and the earlier the better. Compliance constraints that arrive after the data model is set are the expensive kind, and most of them are cheap if they arrive in week one.',
+        "q": "Can you work with our legal team?",
+        "a": "Include the people responsible for legal requirements and product approval in scoping. Their requirements inform the workflows and acceptance checks."
       },
       {
-        q: 'How do you handle jurisdiction differences?',
-        a: 'As data, with rules and deadlines in a structure that non-engineers can review and amend. The alternative — encoding them in application logic — makes every new jurisdiction an engineering project.',
-      },
-      {
-        q: 'What about AI in a legal product?',
-        a: 'Useful for drafting and triage, dangerous as an unreviewed authority. We build it with review paths and audit trails, and we will argue against shipping it anywhere a wrong answer is unrecoverable.',
-      },
+        "q": "How would you approach AI features?",
+        "a": "Define the task, evaluation examples, review steps, and failure handling before deciding where AI is appropriate."
+      }
     ],
-    cta: 'Building in legal tech and hitting the jurisdiction wall? We have been here.',
+    "cta": "Tell us about the legal workflow you want to improve."
   },
   {
-    slug: 'saas',
-    label: 'SaaS',
-    evidenced: true,
-    evidence: ['SaaS Platform', 'AI & Automation'],
-    hero: {
-      title: 'The features shipped. The multi-tenancy, billing and permissions did not.',
-      lead: 'The unglamorous middle of a SaaS product is where builds stall: tenant isolation, subscription states nobody mapped, and roles that were a boolean until the first enterprise deal.',
+    "slug": "saas",
+    "label": "SaaS",
+    "evidenced": true,
+    "evidence": [
+      "SaaS Platform",
+      "AI & Automation"
+    ],
+    "hero": {
+      "title": "Engineering for the product behind the subscription.",
+      "lead": "Web applications, tenant permissions, billing workflows, and integrations for new and existing SaaS products."
     },
-    problems: [
+    "problems": [
       {
-        title: 'Multi-tenancy decided too late',
-        body: 'Tenant isolation is a schema decision. Retrofitting it means touching every query in the application, and it usually surfaces the week a customer asks a security question.',
+        "title": "Tenant boundaries",
+        "body": "Make account ownership and data access explicit in the application and its tests."
       },
       {
-        title: 'Billing states nobody modelled',
-        body: 'Trials, upgrades, downgrades mid-cycle, failed payments, dunning, refunds. Each is a state, and the ones nobody modelled become support tickets and revenue leaks.',
+        "title": "Subscription changes",
+        "body": "Map trials, plan changes, failed payments, and cancellations alongside the user experience."
       },
       {
-        title: 'Roles that started as a boolean',
-        body: 'is_admin works until the first customer wants three permission levels and an auditor. Then it is a migration across the whole product.',
+        "title": "Roles and permissions",
+        "body": "Define what each role can see and do before adding administrative controls."
       },
       {
-        title: 'Onboarding is where churn happens',
-        body: 'Most SaaS teams instrument the funnel and not the first session. The first ten minutes decide retention and are usually the least examined part of the product.',
-      },
+        "title": "Onboarding and daily use",
+        "body": "Connect setup steps to a useful first result and make recurring tasks easy to complete."
+      }
     ],
-    whatWeBuild: [
-      'Multi-tenant architecture with isolation you can demonstrate to a buyer',
-      'Subscription and billing flows with the awkward states modelled',
-      'Role and permission systems that survive an enterprise contract',
-      'Usage metering and quota enforcement',
-      'Admin tooling so support does not need an engineer',
-      'Onboarding instrumented properly, so churn has a cause',
+    "whatWeBuild": [
+      "Web applications and APIs",
+      "Tenant and role permissions",
+      "Billing and subscription integrations",
+      "Onboarding and administration flows",
+      "Monitoring and operational tooling"
     ],
-    constraints: [
+    "constraints": [
       {
-        title: 'Data isolation you can prove',
-        body: 'Enterprise buyers ask how tenants are separated and expect a specific answer. "Every query filters by tenant" is not one, because it is a convention rather than a guarantee.',
+        "title": "Data separation",
+        "body": "Review how the product enforces tenant boundaries, including background jobs and administrative access."
       },
       {
-        title: 'Security questionnaires',
-        body: 'They arrive with the first serious deal and are half documentation of controls you already have. Knowing which half is real is the useful part.',
-      },
+        "title": "Operating requirements",
+        "body": "Agree deployment, support, audit logging, and integration requirements as part of the scope."
+      }
     ],
-    faqs: [
+    "faqs": [
       {
-        q: 'We are pre-revenue. Is multi-tenancy premature?',
-        a: 'The schema decision is not, and it is nearly free to make correctly on day one. The tooling around it can wait. Getting this backwards is one of the most expensive avoidable mistakes in early SaaS.',
+        "q": "Can you work on an existing SaaS product?",
+        "a": "Yes. Start with the current product, the work you need, and any technical documentation. An initial review helps establish the scope."
       },
       {
-        q: 'Can you take over billing from Stripe Checkout?',
-        a: 'Yes. The usual work is not the payment call, it is modelling the states around it — proration, failed payments, dunning, plan changes mid-cycle — which is where the revenue leaks are.',
+        "q": "Can you help with billing integrations?",
+        "a": "We can scope payment-provider integrations and the application behavior around subscription changes, failed payments, and account access."
       },
       {
-        q: 'Do you have SaaS work we can look at?',
-        a: 'Yes — Alula, a care coordination platform, and ProLyrics, an AI songwriting product with a real organic traffic figure attached. Both case studies are on the work page.',
+        "q": "Can we see relevant client work?",
+        "a": "ProLyrics.ai and Alula are published client projects. Their case studies describe the product and engineering work."
       },
       {
-        q: 'How long to get enterprise-ready?',
-        a: 'It depends what the first enterprise buyer asks for, which is usually SSO, audit logs, role granularity and a security questionnaire. Assessed in an audit, that scope is typically four to eight weeks.',
-      },
+        "q": "How is the delivery timeline set?",
+        "a": "The estimate depends on the existing codebase, integrations, requirements, and review process. Timing is agreed in the proposal."
+      }
     ],
-    cta: 'The features are done and the middle is missing. That is the normal shape of a stall.',
+    "cta": "Share the next milestone for your SaaS product."
   },
   {
-    slug: 'real-estate',
-    label: 'Real estate',
-    evidenced: false,
-    evidence: [],
-    hero: {
-      title: 'Portfolio operations run on spreadsheets that three people understand.',
-      lead: 'Units, tenants, maintenance, compliance dates and payments, spread across systems that were each bought to fix one of those and do not speak to the others.',
+    "slug": "real-estate",
+    "label": "Real estate",
+    "evidenced": false,
+    "evidence": [],
+    "hero": {
+      "title": "Connect property data and day-to-day operations.",
+      "lead": "Potential project areas include portfolio reporting, maintenance workflows, and integrations with existing property systems."
     },
-    problems: [
+    "problems": [
       {
-        title: 'The spreadsheet is the system of record',
-        body: 'It works, it is fast, and exactly one person can maintain it. That person going on holiday is an operational risk nobody has written down.',
+        "title": "Information spread across tools",
+        "body": "Identify the source of truth for properties, contacts, payments, and operational updates."
       },
       {
-        title: 'Maintenance requests arrive everywhere',
-        body: 'Phone, email, WhatsApp, a portal nobody uses. Response times cannot be measured because there is no single queue to measure.',
+        "title": "Maintenance requests in several channels",
+        "body": "Bring requests into a shared workflow with clear ownership and progress tracking."
       },
       {
-        title: 'Compliance dates are diary entries',
-        body: 'Certificates, inspections, renewals. Tracked manually, remembered by individuals, and expensive precisely when missed.',
-      },
+        "title": "Dates and documents tracked manually",
+        "body": "Make important dates, document versions, and follow-up tasks visible to the people responsible."
+      }
     ],
-    whatWeBuild: [
-      'Portfolio dashboards that consolidate units, tenants and status',
-      'Maintenance intake and routing from every channel into one queue',
-      'Compliance calendars with escalation before a deadline, not after',
-      'Owner and tenant portals with the right things visible to each',
-      'Payment reconciliation against the accounting system',
+    "whatWeBuild": [
+      "Portfolio reporting and dashboards",
+      "Maintenance intake and tracking",
+      "Document and renewal reminders",
+      "Property-system integrations",
+      "Role-based access for operational teams"
     ],
-    constraints: [
+    "constraints": [
       {
-        title: 'Tenant data protection',
-        body: 'Personal data with clear retention obligations, and access that has to differ between owner, manager and contractor.',
+        "title": "Data access",
+        "body": "Agree what owners, managers, contractors, and other users need to see."
       },
       {
-        title: 'Legacy integrations',
-        body: 'Property management platforms with limited or no API, where the honest answer is sometimes a scheduled export rather than a live integration.',
-      },
+        "title": "Integration availability",
+        "body": "Check the existing system’s API, export options, permissions, and data quality before defining the integration."
+      }
     ],
-    faqs: [
+    "faqs": [
       {
-        q: 'Can this connect to our existing property management software?',
-        a: 'Usually. Where there is no usable API the practical answer is a scheduled export or a scraped report, and we will tell you plainly which one you are getting rather than promising a live integration that cannot exist.',
+        "q": "Can this connect to our current software?",
+        "a": "That depends on the system and the access available. We review API and export options before proposing an integration."
       },
       {
-        q: 'Our team is not technical. Who maintains it?',
-        a: 'You, with admin tooling designed for non-engineers, or us on a support arrangement. What we will not do is build something that requires an engineer to change a rule.',
+        "q": "Who would maintain the software?",
+        "a": "Administrative tools, documentation, operating responsibilities, and any ongoing support are agreed as part of the scope."
       },
       {
-        q: 'How long does something like this take?',
-        a: 'A consolidated dashboard with one or two integrations is typically six to ten weeks. The integrations, not the interface, are what moves that number.',
+        "q": "How long would it take?",
+        "a": "The timeline depends on the workflows, integrations, data migration, and rollout requirements. These are reviewed before estimating."
       },
       {
-        q: 'Do you have real estate work we can see?',
-        a: 'Not yet published. We will not put a page up claiming domain evidence we cannot show — this page exists as a template while that is true.',
-      },
+        "q": "Can we see a real estate case study?",
+        "a": "We do not currently publish a real estate case study. This page describes project areas we can discuss and scope."
+      }
     ],
-    cta: 'If one spreadsheet going missing would stop your operation, that is worth fixing.',
+    "cta": "Tell us which property workflow needs to work better."
   },
   {
-    slug: 'healthcare',
-    label: 'Healthcare',
-    evidenced: false,
-    evidence: [],
-    hero: {
-      title: 'Clinical software has to be right, auditable, and usable by someone mid-shift.',
-      lead: 'Care coordination, intake and scheduling, built with the compliance constraints treated as architecture rather than a checklist at the end.',
+    "slug": "healthcare",
+    "label": "Healthcare",
+    "evidenced": false,
+    "evidence": [],
+    "hero": {
+      "title": "Software for care coordination and administration.",
+      "lead": "Potential projects include intake, scheduling, and administrative workflows, with access, data handling, and review requirements defined during scoping."
     },
-    problems: [
+    "problems": [
       {
-        title: 'Compliance retrofitted is compliance rebuilt',
-        body: 'Audit logging, access control and retention are schema-level decisions. Added after launch, they touch everything and delay the deal that triggered them.',
+        "title": "Information moving between systems",
+        "body": "Identify the records and updates each team needs, along with the permissions for exchanging them."
       },
       {
-        title: 'Integration means HL7 or FHIR, or neither',
-        body: 'Standards exist and adherence varies wildly by vendor. The integration surface is the risk in most clinical builds, and it is rarely scoped honestly.',
+        "title": "Integration differences",
+        "body": "Review the specific vendor, interface, contract, and test environment before planning an integration."
       },
       {
-        title: 'The user is busy and interrupted',
-        body: 'Software used mid-shift by someone with four other things happening cannot be designed for an unhurried demo.',
-      },
+        "title": "Busy, interrupted workflows",
+        "body": "Keep tasks clear, preserve progress, and make handoffs visible when people move between responsibilities."
+      }
     ],
-    whatWeBuild: [
-      'Care coordination and patient tracking tools',
-      'Intake and triage flows with structured capture',
-      'Scheduling that models real clinical constraints',
-      'Audit logging designed in from the schema',
-      'Integrations with clinical systems where the API is genuinely usable',
+    "whatWeBuild": [
+      "Administrative intake and scheduling",
+      "Care coordination workflows",
+      "Role-based dashboards",
+      "Operational reporting",
+      "Integrations with agreed data sources"
     ],
-    constraints: [
+    "constraints": [
       {
-        title: 'HIPAA and equivalents',
-        body: 'Access control, audit trails, encryption at rest and in transit, and business associate agreements. Load-bearing, and cheap only if designed in from the start.',
+        "title": "Privacy and governance requirements",
+        "body": "Confirm the client’s requirements with the responsible compliance and governance teams before accepting sensitive data or implementing workflows."
       },
       {
-        title: 'Data residency',
-        body: 'Where records physically live, which varies by market and sometimes by contract.',
-      },
-      {
-        title: 'Clinical safety',
-        body: 'There is a line between administrative tooling and anything influencing a clinical decision. We stay firmly on the administrative side of it.',
-      },
+        "title": "Administrative scope",
+        "body": "Separate administrative requirements from clinical decision functionality when defining the engagement."
+      }
     ],
-    faqs: [
+    "faqs": [
       {
-        q: 'Are you HIPAA compliant?',
-        a: 'Compliance belongs to the covered entity, not to a contractor, and any vendor claiming otherwise is telling you something imprecise. We build to the technical controls it requires and sign a BAA.',
+        "q": "How are compliance requirements handled?",
+        "a": "The applicable requirements, responsibilities, data access, and contractual terms need to be established for the specific engagement. This page does not promise a certification or compliance outcome."
       },
       {
-        q: 'Can you integrate with our EHR?',
-        a: 'Depends entirely on the vendor and the contract. Some expose a workable FHIR API, some expose a flat file overnight, and we will find out which you have before quoting rather than after.',
+        "q": "Can you integrate with our EHR?",
+        "a": "The vendor’s supported interfaces, permissions, and contract determine what is possible. We review these before proposing the work."
       },
       {
-        q: 'Do you build anything clinical-facing?',
-        a: 'Administrative and coordination tooling, yes. Anything that could influence a clinical decision needs a regulatory pathway and a different kind of team, and we will say so.',
+        "q": "What kind of healthcare software is in scope?",
+        "a": "This page focuses on administrative and coordination workflows. Any request involving clinical decisions requires separate assessment."
       },
       {
-        q: 'Do you have healthcare work we can see?',
-        a: 'Nothing published in this vertical. We are not going to imply domain evidence we cannot show.',
-      },
+        "q": "Can we see a healthcare case study?",
+        "a": "We do not currently publish a healthcare-specific case study. The project areas here are for an initial scoping conversation."
+      }
     ],
-    cta: 'Compliance is cheapest when it is designed in. It is never cheaper later.',
+    "cta": "Share the administrative workflow you want to improve."
   },
   {
-    slug: 'construction',
-    label: 'Construction',
-    evidenced: false,
-    evidence: [],
-    hero: {
-      title: 'The estimate takes a week and the margin is decided in that week.',
-      lead: 'Takeoffs, bids, site reporting and change orders — the operational layer where a small accuracy gain moves the number that matters.',
+    "slug": "construction",
+    "label": "Construction",
+    "evidenced": false,
+    "evidence": [],
+    "hero": {
+      "title": "Connect the office, the estimate, and the site.",
+      "lead": "Potential project areas include estimating support, bid tracking, site reporting, and change-order workflows."
     },
-    problems: [
+    "problems": [
       {
-        title: 'Takeoffs are slow and manual',
-        body: 'A skilled estimator reading drawings for days. The bottleneck is real and directly limits how many jobs can be bid.',
+        "title": "Manual estimating steps",
+        "body": "Map repetitive work and the checks an estimator needs before deciding what to automate."
       },
       {
-        title: 'Change orders leak margin',
-        body: 'Agreed verbally on site, documented later or never, disputed at invoice. The gap between the site and the system is where profit goes.',
+        "title": "Changes recorded in different places",
+        "body": "Keep requests, approvals, and related documents together so the team can follow each change."
       },
       {
-        title: 'Site data arrives as photographs',
-        body: 'Progress, delays and quality captured in a phone camera roll and a WhatsApp group, which cannot be reported on.',
-      },
+        "title": "Site updates that are hard to report on",
+        "body": "Turn photos, notes, and progress updates into information the office and site team can use."
+      }
     ],
-    whatWeBuild: [
-      'Takeoff assistance that reads drawings and produces a reviewable quantity list',
-      'Bid assembly with historical cost data attached',
-      'Change order capture on site, with sign-off',
-      'Progress reporting from structured site input',
-      'Integrations with accounting and scheduling systems',
+    "whatWeBuild": [
+      "Estimating and takeoff support",
+      "Bid tracking and approvals",
+      "Mobile site reports",
+      "Change-order workflows",
+      "Accounting and document integrations"
     ],
-    constraints: [
+    "constraints": [
       {
-        title: 'Offline and low signal',
-        body: 'Sites have poor connectivity. Anything used on site has to work offline and reconcile later, which is an architectural constraint rather than a feature.',
+        "title": "Connectivity on site",
+        "body": "Define offline behavior, sync requirements, and recovery from interrupted connections where the workflow needs them."
       },
       {
-        title: 'Documents as the source of truth',
-        body: 'Drawings and specifications are the contract. Version control on documents is load-bearing, and getting it wrong is expensive in a way software teams underestimate.',
-      },
+        "title": "Document versions",
+        "body": "Make drawing and specification versions visible, with an agreed process for updates and review."
+      }
     ],
-    faqs: [
+    "faqs": [
       {
-        q: 'Can AI do our takeoffs?',
-        a: 'It can produce a reviewable first pass and save meaningful time. It cannot be trusted unreviewed, and any vendor telling you otherwise has not carried the risk of a wrong bid.',
+        "q": "Could AI support our takeoffs?",
+        "a": "A scoped evaluation can test whether it produces a useful first pass. The review process and acceptance checks should be defined before relying on the output."
       },
       {
-        q: 'Our site teams will not use new software.',
-        a: 'Correct, if it costs them time. Anything site-facing has to be faster than the WhatsApp message it replaces, offline-capable, and usable in gloves. That constraint drives the design.',
+        "q": "How would you design for site teams?",
+        "a": "Start with the actual task, devices, connectivity, and time available. Test the flow with the people who will use it."
       },
       {
-        q: 'Can it integrate with our accounting system?',
-        a: 'Usually. The integration surface is the first thing we scope, because in this sector it is the part that most often turns out to be harder than the application.',
+        "q": "Can it connect to our accounting system?",
+        "a": "We first review the system’s supported interfaces, access permissions, and the records that need to move between tools."
       },
       {
-        q: 'Do you have construction work we can see?',
-        a: 'Nothing published in this vertical yet.',
-      },
+        "q": "Can we see a construction case study?",
+        "a": "We do not currently publish a construction case study. This page describes possible project areas to scope together."
+      }
     ],
-    cta: 'If bidding is the bottleneck, that is a measurable problem with a measurable fix.',
+    "cta": "Tell us where information gets lost between office and site."
   },
   {
-    slug: 'payroll-hr',
-    label: 'Payroll & HR',
-    evidenced: false,
-    evidence: [],
-    hero: {
-      title: 'Payroll is unforgiving: it is right, or it is a very bad Friday.',
-      lead: 'Reconciliation, multi-jurisdiction rules and integrations with systems that will not change for you. Correctness is the whole product.',
+    "slug": "payroll-hr",
+    "label": "Payroll & HR",
+    "evidenced": false,
+    "evidence": [],
+    "hero": {
+      "title": "Make payroll and people workflows easier to verify.",
+      "lead": "Potential project areas include reconciliation, approvals, employee self-service, and integrations with existing payroll and HR systems."
     },
-    problems: [
+    "problems": [
       {
-        title: 'Reconciliation is manual and monthly',
-        body: 'Someone compares three systems by hand under time pressure. It works until the month it does not, and that month is expensive and public.',
+        "title": "Manual reconciliation",
+        "body": "Compare records across systems and make discrepancies visible for review."
       },
       {
-        title: 'Jurisdiction rules change without notice',
-        body: 'Rates, thresholds and filing requirements move. Encoded in application logic, every change is a deployment.',
+        "title": "Changing rules and configurations",
+        "body": "Keep approved configuration changes traceable and test their effect on expected outputs."
       },
       {
-        title: 'Errors are discovered by employees',
-        body: 'Which is the worst possible detection mechanism, and the reason trust is so hard to rebuild afterwards.',
-      },
+        "title": "Errors found late in the process",
+        "body": "Include validation and review steps before records move into downstream systems."
+      }
     ],
-    whatWeBuild: [
-      'Reconciliation that runs continuously and flags variance early',
-      'Rules engines where rates and thresholds are data, not deployments',
-      'Integrations with payroll providers and accounting systems',
-      'Employee-facing self-service that reduces the query volume',
-      'Audit trails detailed enough to answer a dispute months later',
+    "whatWeBuild": [
+      "Reconciliation and exception reporting",
+      "Approval and review workflows",
+      "Payroll and accounting integrations",
+      "Employee self-service tools",
+      "Change history and audit logging"
     ],
-    constraints: [
+    "constraints": [
       {
-        title: 'Correctness over throughput',
-        body: 'A fast payroll system that is occasionally wrong has negative value. Every design tradeoff resolves toward provable correctness.',
+        "title": "Verification and rollout",
+        "body": "Agree representative test cases, reconciliation checks, and a staged rollout with the people responsible for payroll."
       },
       {
-        title: 'Personal and financial data',
-        body: 'Access control, encryption and retention with real regulatory weight behind them.',
-      },
-      {
-        title: 'Immovable integrations',
-        body: 'Payroll providers do not adapt to you. Their API is the constraint and it shapes the build.',
-      },
+        "title": "Personal and financial data",
+        "body": "Define permissions, data handling, retention, and integration access for the specific engagement."
+      }
     ],
-    faqs: [
+    "faqs": [
       {
-        q: 'Can you integrate with our payroll provider?',
-        a: 'Depends on the provider, and it is the first thing we check. Some have workable APIs, some have a file drop, and one or two effectively have nothing — which changes what is possible before it changes the price.',
+        "q": "Can you integrate with our payroll provider?",
+        "a": "We review the provider’s API or file exchange options, permissions, and test environment before proposing the integration."
       },
       {
-        q: 'How do you test something where errors are this expensive?',
-        a: 'Parallel running against real historical periods until outputs match exactly, then continued shadow running after cutover. Nobody switches off the old process on a promise.',
+        "q": "How would the workflow be tested?",
+        "a": "The scope should include agreed examples, historical comparisons where appropriate, exception handling, and review by the responsible team."
       },
       {
-        q: 'What about multi-country payroll?',
-        a: 'Each jurisdiction is effectively a separate rule set, and the honest answer is that the second country costs nearly as much as the first. Anyone quoting otherwise has not built it.',
+        "q": "What about several countries?",
+        "a": "Each location’s requirements and existing provider setup need to be assessed separately. The proposal should identify the supported scope and the people who approve those requirements."
       },
       {
-        q: 'Do you have payroll work we can see?',
-        a: 'Nothing published in this vertical yet.',
-      },
+        "q": "Can we see payroll-specific work?",
+        "a": "We do not currently publish a payroll case study. The capabilities described here are potential project areas for discussion."
+      }
     ],
-    cta: 'If reconciliation is manual and monthly, you already know the risk.',
-  },
+    "cta": "Share the reconciliation or approval process you want to improve."
+  }
 ]
 
 export function getIndustry(slug: string) {

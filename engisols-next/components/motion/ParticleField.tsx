@@ -33,15 +33,15 @@ import { useReducedMotion } from 'motion/react'
  *    distance checks per frame. Particle count is now derived from area and
  *    capped lower, and the squared distance is compared without a sqrt.
  *  - It ran on every device. This is gated behind (pointer: fine), so phones —
- *    where the interaction is impossible anyway — get a static gradient instead
- *    of burning battery on an effect nobody can trigger.
+ *    where the interaction is impossible anyway — get a static network without
+ *    a running animation loop.
  *
  * Decorative only: aria-hidden, mounts after hydration, and never carries copy.
- * Reduced motion switches it off entirely rather than slowing it down.
+ * Reduced motion preserves a still network rather than hiding the identity.
  */
 
-const PARTICLE = 'rgba(67, 33, 42, 0.75)' // bordeaux
-const LINE_INK = '67, 33, 42' // bordeaux
+const PARTICLE = 'rgba(23, 23, 23, 0.75)' // bordeaux
+const LINE_INK = '23, 23, 23' // bordeaux
 /** Distance-fade alpha: at rest, and while the pair is within pointer range. */
 const LINE_ALPHA = { base: 0.35, near: 0.85 }
 /** CSS pixels. The context is already scaled by dpr, so this is device-independent. */
@@ -64,7 +64,7 @@ export function ParticleField() {
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!enabled || !canvas) return
+    if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
@@ -106,21 +106,23 @@ export function ParticleField() {
       ctx.clearRect(0, 0, width, height)
 
       for (const p of particles) {
-        if (p.x > width || p.x < 0) p.dx = -p.dx
-        if (p.y > height || p.y < 0) p.dy = -p.dy
+        if (enabled) {
+          if (p.x > width || p.x < 0) p.dx = -p.dx
+          if (p.y > height || p.y < 0) p.dy = -p.dy
 
-        // Push away from the pointer.
-        const mdx = mouse.x - p.x
-        const mdy = mouse.y - p.y
-        const md = Math.hypot(mdx, mdy)
-        if (md < mouse.radius && md > 0) {
-          const force = (mouse.radius - md) / mouse.radius
-          p.x -= (mdx / md) * force * 4
-          p.y -= (mdy / md) * force * 4
+          // Push away from the pointer only in the interactive version.
+          const mdx = mouse.x - p.x
+          const mdy = mouse.y - p.y
+          const md = Math.hypot(mdx, mdy)
+          if (md < mouse.radius && md > 0) {
+            const force = (mouse.radius - md) / mouse.radius
+            p.x -= (mdx / md) * force * 4
+            p.y -= (mdy / md) * force * 4
+          }
+
+          p.x += p.dx
+          p.y += p.dy
         }
-
-        p.x += p.dx
-        p.y += p.dy
 
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
@@ -155,7 +157,7 @@ export function ParticleField() {
         }
       }
 
-      raf = requestAnimationFrame(frame)
+      if (enabled) raf = requestAnimationFrame(frame)
     }
 
     const onMove = (e: PointerEvent) => {
@@ -168,15 +170,21 @@ export function ParticleField() {
       mouse.y = -9999
     }
 
-    resize()
-    frame()
-    window.addEventListener('resize', resize)
-    window.addEventListener('pointermove', onMove, { passive: true })
-    window.addEventListener('pointerleave', onLeave)
+    const onResize = () => {
+      resize()
+      if (!enabled) frame()
+    }
+    onResize()
+    if (enabled) {
+      frame()
+      window.addEventListener('pointermove', onMove, { passive: true })
+      window.addEventListener('pointerleave', onLeave)
+    }
+    window.addEventListener('resize', onResize)
 
     return () => {
       cancelAnimationFrame(raf)
-      window.removeEventListener('resize', resize)
+      window.removeEventListener('resize', onResize)
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerleave', onLeave)
     }
@@ -187,7 +195,6 @@ export function ParticleField() {
       ref={canvasRef}
       aria-hidden
       className="absolute inset-0 h-full w-full"
-      style={{ opacity: enabled ? 1 : 0 }}
     />
   )
 }

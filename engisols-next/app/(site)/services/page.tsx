@@ -1,5 +1,6 @@
-import type { Metadata } from 'next'
+import { createPageMetadata } from '@/lib/seo'
 import Link from 'next/link'
+import { ArrowIcon } from '@/components/ui/ActionIcons'
 import { Band, BandHeading } from '@/components/layout/Band'
 import { CTABlock, PageHero, RelatedWork } from '@/components/sections/shared'
 import { Reveal } from '@/components/motion/Reveal'
@@ -8,29 +9,29 @@ import { services } from '@/content/services'
 
 /** Services hub — content spec section 2. Five sections. */
 
-export const metadata: Metadata = {
-  title: 'Services',
+export const metadata = createPageMetadata({
+  title: 'Software Engineering Services',
   description:
     'Five ways in: AI and agentic systems, product and MVP build, build rescue, automation and integrations, cloud and DevOps.',
-  alternates: { canonical: '/services' },
-}
+  path: '/services',
+})
 
 const SHAPES = [
   {
     title: 'Audit first',
-    body: 'Ten working days, fixed fee, a written verdict on what is wrong and what it costs to fix. Credited against a build if you proceed. This is how most engagements start.',
+    body: 'Understand an existing system and its next steps. Agree the review questions, deliverables, fee, and schedule before starting.',
     href: '/pricing/build-audit',
     label: 'Build Audit',
   },
   {
     title: 'Fixed-scope build',
-    body: 'A written scope, a fixed price and a fixed date agreed before we start. Weekly shipped increments on a real URL. Change orders priced in writing, never as a surprise.',
+    body: 'Define the product requirements, implementation milestones, and testing plan. The proposal sets out costs, dependencies, and delivery expectations.',
     href: '/pricing',
     label: 'Pricing',
   },
   {
-    title: 'Ongoing retainer',
-    body: 'Dedicated senior capacity per month with four hours of daily overlap, thirty days notice either way. For teams that need continuity without carrying the hiring risk.',
+    title: 'Ongoing engineering',
+    body: 'Support an existing product with agreed engineering capacity, priorities, and a review cadence that fits your team.',
     href: '/pricing',
     label: 'Pricing',
   },
@@ -41,28 +42,29 @@ export default function ServicesPage() {
     <>
       <PageHero
         eyebrow="Services"
-        title="Five ways in, depending on what is actually wrong."
-        lead="We do not sell capabilities by the hour. Each of these is a different shape of problem, and the first job on any engagement is working out which one you have."
+        title="Engineering for every stage of your product."
+        lead="Build a product, add AI, connect systems, improve infrastructure, or get an existing build moving again."
       />
 
       <Band ground="vanilla">
-        <BandHeading eyebrow="The five" title="Pick the one that sounds like your situation" />
-        <ul className="mt-step-5 grid gap-step-4 md:grid-cols-2">
+        <BandHeading eyebrow="The five" title="Explore our services" />
+        <ul className="mt-step-4 grid gap-step-4 md:grid-cols-2">
           {services.map((service, i) => (
             <li key={service.slug}>
-              <Reveal y={16} delay={i * 0.04}>
+              <Reveal y={16} delay={i * 0.04} className="h-full">
                 <Link
                   href={`/services/${service.slug}`}
                   data-cursor="target"
-                  className="flex h-full flex-col rounded-sm border border-current/20 p-step-4 no-underline transition-colors hover:bg-current/5"
+                  className="site-card flex h-full flex-col border p-step-3 sm:p-step-4 no-underline"
                 >
                   <h3 className="font-display text-xl">{service.label}</h3>
                   <p className="measure mt-step-2 flex-1 text-sm text-current/80">
                     {service.hero.lead}
                   </p>
-                  <span className="mt-step-3 font-mono text-xs text-current/60">
-                    {service.engagement.shape} · from {service.engagement.from}
+                  <span className="mt-step-3 font-mono text-xs text-current/75">
+                    {service.engagement.shape} · {service.engagement.from}
                   </span>
+                  <span className="site-card-action mt-step-3">Explore service <ArrowIcon /></span>
                 </Link>
               </Reveal>
             </li>
@@ -76,7 +78,7 @@ export default function ServicesPage() {
           title="Three ways work starts"
           lead="Whichever service it is, the commercial shape is one of these three."
         />
-        <div className="mt-step-5 grid gap-step-4 md:grid-cols-3">
+        <div className="mt-step-4 grid gap-step-4 md:grid-cols-3">
           {SHAPES.map((shape) => (
             <div key={shape.title} className="border-t-2 border-current pt-step-3">
               <h3 className="font-display text-lg">{shape.title}</h3>
@@ -107,7 +109,7 @@ export default function ServicesPage() {
 
       <RelatedWork title="Recent work" ground="oat" />
 
-      <CTABlock line="Not sure which of the five you need? That is what the audit is for." />
+      <CTABlock line="Tell us about the project. We can help define the next step." />
     </>
   )
 }
