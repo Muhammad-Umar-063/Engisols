@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { ArrowIcon } from '@/components/ui/ActionIcons'
 import {
   m,
   AnimatePresence,
@@ -18,100 +20,47 @@ import {
 } from '@/lib/site'
 import { Logo } from '@/components/layout/Logo'
 import { useMotionPrefs } from '@/hooks/useMotionPrefs'
-import { EASE, STAGGER } from '@/lib/motion'
+import { EASE } from '@/lib/motion'
 
 /**
- * Global header — animation spec sections 2.1 (hide on scroll) and 2.2 (mega
- * menu).
- *
- * 2.1: scrolling down past 120px slides it out; any upward scroll returns it;
- * it never hides while the mega menu is open, and never hides at all under
- * reduced motion. Scroll state comes from useMotionValueEvent, not a manual
- * listener.
- *
- * 2.2: hover intent — 120ms open delay so a pointer crossing the trigger does
- * not fire it, 180ms close delay so a diagonal move into the panel does not
- * dismiss it. Switching between the two menus animates the panel via `layout`
- * rather than closing and reopening. Columns stagger in; a shared-layout
- * indicator slides between rows.
- *
- * Ground handling: the header carries the hero's own oat while it is over the
- * hero and vanilla past it, driven by an IntersectionObserver on the hero's
- * sentinel — never a scroll-position constant. The mega menu overrides both
- * with bordeaux.
+ * Light navigation over the original particle layout. Hover intent supports
+ * pointer use; disclosure buttons support click, Enter, Arrow Down, and Escape.
+ * Each panel follows its trigger in DOM order so Tab can reach every link.
+ * The header stays visible while a menu is open or reduced motion is enabled.
  */
 
-function MegaPanel({ href }: { href: string }) {
+function MegaPanel({ href, close }: { href: string; close: () => void }) {
   const items: NavLink[] = href === '/services' ? SERVICES : INDUSTRIES
-  const [hovered, setHovered] = useState<string | null>(null)
-  const { reduced } = useMotionPrefs()
-
-  const column = {
-    hidden: { opacity: 0, y: reduced ? 0 : 8 },
-    show: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.2, ease: EASE.enter, delay: i * STAGGER },
-    }),
-  }
+  const label = href === '/services' ? 'services' : 'industries'
 
   return (
-    <div className="shell grid gap-x-step-5 gap-y-step-3 py-step-4 md:grid-cols-3">
-      <m.div className="md:col-span-2" custom={0} variants={column} initial="hidden" animate="show">
-        {items.length === 0 ? (
-          // {{TODO: VERTICALS}} — spec section 3 forbids inventing these.
-          <p className="max-w-[42ch] font-mono text-sm text-greige">
-            {'{{TODO: VERTICALS}}'} — needs the 6 industries with real shipped
-            evidence before this menu can render.
-          </p>
-        ) : (
-          <ul className="grid gap-step-1 sm:grid-cols-2" onMouseLeave={() => setHovered(null)}>
-            {items.map((item) => (
-              <li key={item.href} className="relative">
-                <Link
-                  href={item.href}
-                  onMouseEnter={() => setHovered(item.href)}
-                  onFocus={() => setHovered(item.href)}
-                  className="relative block rounded-sm p-step-2 no-underline"
-                >
-                  {hovered === item.href ? (
-                    <m.span
-                      layoutId="mega-indicator"
-                      className="absolute inset-0 -z-10 rounded-sm bg-vanilla/8"
-                      transition={reduced ? { duration: 0 } : EASE.spring}
-                    />
-                  ) : null}
-                  <span className="font-display text-lg text-vanilla">{item.label}</span>
-                  {item.blurb ? (
-                    <span className="mt-1 block max-w-[38ch] text-sm text-greige">
-                      {item.blurb}
-                    </span>
-                  ) : null}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </m.div>
-
-      {/* Column 3: featured case study — blocked on {{TODO: CASE_STUDIES}}. */}
-      <m.div
-        className="border-greige/25 md:border-l md:pl-step-4"
-        custom={1}
-        variants={column}
-        initial="hidden"
-        animate="show"
-      >
-        <p className="font-mono text-xs tracking-tight text-greige">{'{{TODO: CASE_STUDIES}}'}</p>
-        <p className="mt-step-1 max-w-[30ch] text-sm text-greige">
-          Featured case study slot. Needs a named client, industry and one hard number.
-        </p>
-      </m.div>
+    <div className="shell site-menu-content">
+      <div className="site-menu-heading">
+        <p className="font-display text-xl">{href === '/services' ? 'Services' : 'Industries'}</p>
+        <Link href={href} onNavigate={close} className="site-card-action min-h-11">Explore all {label}<ArrowIcon /></Link>
+      </div>
+      <ul className="site-menu-list">
+        {items.map((item) => (
+          <li key={item.href}>
+            <Link href={item.href} onNavigate={close} className="site-menu-row">
+              <span className="site-service-name">{item.label}</span>
+              {item.blurb ? <span className="site-service-description">{item.blurb}</span> : null}
+              <ArrowIcon className="site-service-arrow" />
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
 
 export function Header() {
+  const pathname = usePathname()
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const mobileTrigger = useRef<HTMLButtonElement>(null)
+  const menuTriggers = useRef<Record<string, HTMLButtonElement | null>>({})
+  const menuPanels = useRef<Record<string, HTMLDivElement | null>>({})
+  const focusMenuOnOpen = useRef<string | null>(null)
   const [hidden, setHidden] = useState(false)
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [overHero, setOverHero] = useState(true)
@@ -122,8 +71,8 @@ export function Header() {
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const menuOpenRef = useRef(false)
   useEffect(() => {
-    menuOpenRef.current = openMenu !== null
-  }, [openMenu])
+    menuOpenRef.current = openMenu !== null || mobileOpen
+  }, [openMenu, mobileOpen])
 
   useMotionValueEvent(scrollY, 'change', (latest) => {
     const prev = scrollY.getPrevious() ?? 0
@@ -143,11 +92,12 @@ export function Header() {
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [])
+  }, [pathname])
 
   // Hover intent (spec 2.2): 120ms to open, 180ms grace to close.
   const intendOpen = (href: string) => {
     if (closeTimer.current) clearTimeout(closeTimer.current)
+    if (openTimer.current) clearTimeout(openTimer.current)
     openTimer.current = setTimeout(() => setOpenMenu(href), 120)
   }
   const intendClose = () => {
@@ -159,42 +109,58 @@ export function Header() {
   }
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpenMenu(null)
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      if (openTimer.current) clearTimeout(openTimer.current)
+      if (closeTimer.current) clearTimeout(closeTimer.current)
+      if (openMenu) menuTriggers.current[openMenu]?.focus()
+      setOpenMenu(null)
+      if (mobileOpen) {
+        setMobileOpen(false)
+        mobileTrigger.current?.focus()
+      }
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
+  }, [mobileOpen, openMenu])
+
+  useEffect(() => () => {
+    if (openTimer.current) clearTimeout(openTimer.current)
+    if (closeTimer.current) clearTimeout(closeTimer.current)
   }, [])
 
-  const menuIsOpen = openMenu !== null
-  // Three grounds, not two. Over the hero the header takes the hero's own oat,
-  // so the bar disappears into that block the way it used to disappear into the
-  // dark one; past the hero it is vanilla; and an open mega menu forces
-  // bordeaux, because the panel hanging off it is bordeaux and a light bar on
-  // top of a dark panel reads as a seam rather than as a header.
-  const ground = menuIsOpen ? 'bordeaux' : overHero ? 'oat' : 'vanilla'
-  // `on-dark` only when the header actually IS dark. It switches focus rings to
-  // vanilla, which on the two light grounds would be a ring you cannot see.
-  const onDark = ground === 'bordeaux'
+  const closeNavigation = () => {
+    focusMenuOnOpen.current = null
+    setOpenMenu(null)
+    setMobileOpen(false)
+    if (openTimer.current) clearTimeout(openTimer.current)
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+  }
+
+  const ground = openMenu || mobileOpen ? 'vanilla' : pathname === '/' && overHero ? 'oat' : 'vanilla'
 
   return (
     <m.header
-      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-200 ${onDark ? 'on-dark' : ''}`}
+      className="site-header fixed inset-x-0 top-0 z-50 text-bordeaux transition-colors duration-200"
       style={{
         background: `var(--color-${ground})`,
-        color: onDark ? 'var(--color-vanilla)' : 'var(--color-bordeaux)',
         transitionTimingFunction: 'var(--ease-micro)',
       }}
       initial={false}
       animate={{ y: hidden ? '-100%' : '0%' }}
       transition={{ duration: 0.3, ease: EASE.micro }}
       onMouseLeave={intendClose}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) closeNavigation()
+      }}
     >
-      <div className="shell flex items-center justify-between py-step-2">
+      <div className="shell flex items-center justify-between gap-step-2 py-step-2">
         {/* The logo inherits the header's colour, so it stays legible through
             the ground swap. Height only — the aspect ratio is the SVG's. */}
         <Link
           href="/"
           aria-label="Engisols — home"
-          className="no-underline"
+          className="inline-flex min-h-11 items-center no-underline"
           style={{ color: 'inherit' }}
         >
           <Logo idPrefix="nav" title="Engisols" className="h-6 w-auto md:h-7" />
@@ -208,52 +174,119 @@ export function Header() {
                 key={link.href}
                 onMouseEnter={() => (hasMenu ? intendOpen(link.href) : intendClose())}
               >
-                <Link
+                {hasMenu ? (
+                  <button
+                    ref={(node) => { menuTriggers.current[link.href] = node }}
+                    type="button"
+                    className="site-nav-link"
+                    data-current={pathname === link.href || pathname.startsWith(`${link.href}/`) || undefined}
+                    aria-expanded={openMenu === link.href}
+                    aria-controls={`navigation-${link.label.toLowerCase()}`}
+                    onClick={() => {
+                      if (openTimer.current) clearTimeout(openTimer.current)
+                      cancelClose()
+                      setOpenMenu(openMenu === link.href ? null : link.href)
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'ArrowDown') return
+                      event.preventDefault()
+                      if (openTimer.current) clearTimeout(openTimer.current)
+                      cancelClose()
+                      const firstLink = menuPanels.current[link.href]?.querySelector('a')
+                      if (firstLink) firstLink.focus()
+                      else {
+                        focusMenuOnOpen.current = link.href
+                        setOpenMenu(link.href)
+                      }
+                    }}
+                  >
+                    {link.label}
+                    <svg className="site-nav-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+                  </button>
+                ) : <Link
                   href={link.href}
                   data-cursor="link"
-                  className="py-step-1 text-sm no-underline underline-offset-4 hover:underline"
-                  style={{ color: 'inherit' }}
-                  aria-expanded={hasMenu ? openMenu === link.href : undefined}
-                  aria-haspopup={hasMenu ? 'true' : undefined}
-                  onFocus={() => hasMenu && setOpenMenu(link.href)}
+                  className="site-nav-link"
+                  aria-current={pathname === link.href || pathname.startsWith(`${link.href}/`) ? 'page' : undefined}
+                  onNavigate={closeNavigation}
+                  onFocus={closeNavigation}
                 >
                   {link.label}
-                </Link>
+                </Link>}
+                <AnimatePresence>
+                  {openMenu === link.href ? (
+                    <m.div
+                      id={`navigation-${link.label.toLowerCase()}`}
+                      ref={(node) => {
+                        menuPanels.current[link.href] = node
+                        if (node && focusMenuOnOpen.current === link.href) {
+                          focusMenuOnOpen.current = null
+                          node.querySelector('a')?.focus()
+                        }
+                      }}
+                      className="site-mega-panel absolute inset-x-0 top-full hidden lg:block"
+                      data-lenis-prevent
+                      onMouseEnter={cancelClose}
+                      onMouseLeave={intendClose}
+                      initial={{ opacity: 0, y: reduced ? 0 : -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, pointerEvents: 'none', transition: { duration: 0 } }}
+                      transition={{ duration: reduced ? 0 : 0.18, ease: EASE.enter }}
+                    >
+                      <MegaPanel href={link.href} close={closeNavigation} />
+                    </m.div>
+                  ) : null}
+                </AnimatePresence>
               </div>
             )
           })}
         </nav>
 
-        {/* No data-cursor: this is already a button. See cursor-registry. */}
+        <div className="flex items-center gap-step-1">
         <Link
           href={PRIMARY_CTA.href}
-          className="rounded-full bg-cherry px-step-3 py-step-1 text-sm font-medium text-vanilla no-underline transition-opacity hover:opacity-90"
+          className="site-button site-button-primary site-header-cta text-sm"
+          onNavigate={closeNavigation}
           style={{ transitionTimingFunction: 'var(--ease-micro)' }}
         >
           {PRIMARY_CTA.label}
+          <ArrowIcon />
         </Link>
+        <button
+          ref={mobileTrigger}
+          type="button"
+          className="site-button site-button-outline site-menu-toggle text-sm"
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => { setMobileOpen(!mobileOpen); setOpenMenu(null); setHidden(false) }}
+        >
+          {mobileOpen ? 'Close' : 'Menu'}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+            <path d={mobileOpen ? 'm6 6 12 12M6 18 18 6' : 'M4 7h16M4 12h16M4 17h16'} />
+          </svg>
+        </button>
+        </div>
       </div>
 
-      <AnimatePresence>
-        {openMenu ? (
-          <m.div
-            key="panel"
-            className="absolute inset-x-0 top-full border-t border-greige/30 bg-bordeaux"
-            onMouseEnter={cancelClose}
-            onMouseLeave={intendClose}
-            initial={{ opacity: 0, y: reduced ? 0 : -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: reduced ? 0 : -4, transition: { duration: 0.14, ease: EASE.micro } }}
-            transition={{ duration: 0.2, ease: EASE.enter }}
-          >
-            {/* `layout` animates the height difference when switching between
-                the Services and Industries panels instead of close/reopen. */}
-            <m.div layout transition={reduced ? { duration: 0 } : EASE.spring}>
-              <MegaPanel href={openMenu} />
-            </m.div>
-          </m.div>
-        ) : null}
-      </AnimatePresence>
+      <nav
+        id="mobile-navigation"
+        aria-label="Mobile navigation"
+        hidden={!mobileOpen}
+        className="absolute inset-x-0 top-full max-h-[calc(100svh-5rem)] overflow-y-auto border-t border-greige bg-vanilla text-bordeaux lg:hidden"
+        data-lenis-prevent
+      >
+        <div className="shell py-step-2">
+          {[...HEADER_LINKS, { label: 'About', href: '/about' }, { label: 'Contact', href: '/contact' }].map((link) => (
+            <Link key={link.href} href={link.href} className="site-mobile-link"
+              aria-current={pathname === link.href || pathname.startsWith(`${link.href}/`) ? 'page' : undefined}
+              onNavigate={closeNavigation}>
+              {link.label}<ArrowIcon />
+            </Link>
+          ))}
+          <Link href={PRIMARY_CTA.href} onNavigate={closeNavigation} className="site-button site-button-primary my-step-2 w-full">{PRIMARY_CTA.label}</Link>
+        </div>
+      </nav>
+
     </m.header>
   )
 }

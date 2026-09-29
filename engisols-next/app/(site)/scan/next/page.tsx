@@ -1,16 +1,16 @@
-import type { Metadata } from 'next'
+import { createPageMetadata } from '@/lib/seo'
 import { Band, BandHeading } from '@/components/layout/Band'
 import { Booking, PageHero } from '@/components/sections/shared'
 import { scanNextPage } from '@/content/pages'
 
 /** Scan handoff — content spec section 19. Four sections. */
 
-export const metadata: Metadata = {
+export const metadata = createPageMetadata({
   title: 'After your scan',
   description: 'What a scan can and cannot tell you, and when the paid audit is worth it.',
-  alternates: { canonical: '/scan/next' },
+  path: '/scan/next',
   robots: { index: false, follow: false },
-}
+})
 
 export default function ScanNextPage() {
   return (
@@ -21,7 +21,7 @@ export default function ScanNextPage() {
         <BandHeading
           eyebrow="Honest limits"
           title="What the scan could not tell you"
-          lead="The scan is automated checks plus a human summary. It finds what is wrong. It cannot tell you what to do about it, because that needs somebody to reproduce your specific failures and read the code around them."
+          lead="A public scan cannot verify private code, database permissions, authenticated flows, or server behavior. A deeper review needs an agreed scope and appropriate access."
         />
       </Band>
 
@@ -34,10 +34,9 @@ export default function ScanNextPage() {
             </li>
           ))}
         </ul>
-        <p className="measure mt-step-5 text-current/80">
-          The audit fee is refunded in full if it tells you nothing new, and credits against a
-          build if you proceed. The only outcome where you are out of pocket is the one where we
-          were genuinely wrong.
+        <p className="measure mt-step-4 text-current/80">
+          A review proposal defines the questions to investigate, deliverables, fee, and
+          schedule. Discuss those details before deciding whether to proceed.
         </p>
       </Band>
 

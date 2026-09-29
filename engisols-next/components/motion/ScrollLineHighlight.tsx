@@ -58,7 +58,7 @@ function Line({
   const { mounted, reduced } = useMotionPrefs()
   const start = index / total
   const end = (index + 1) / total
-  const opacity = useTransform(progress, [start, end], [0.18, 1])
+  const opacity = useTransform(progress, [start, end], [0.85, 1])
 
   // Style attaches only after mount: the server ships every line fully
   // readable, and the dimmed scrub state exists only once JS is running.

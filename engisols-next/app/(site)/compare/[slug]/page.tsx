@@ -1,3 +1,5 @@
+import { breadcrumbData, createPageMetadata } from '@/lib/seo'
+import { JsonLd } from '@/components/seo/JsonLd'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Band, BandHeading } from '@/components/layout/Band'
@@ -32,11 +34,11 @@ export async function generateMetadata({
   const { slug } = await params
   const page = getComparePage(slug)
   if (!page) return {}
-  return {
-    title: `Engisols ${page.label}`,
+  return createPageMetadata({
+    title: `Software development ${page.label}`,
     description: page.tldr[0],
-    alternates: { canonical: `/compare/${page.slug}` },
-  }
+    path: `/compare/${page.slug}`,
+  })
 }
 
 export default async function ComparePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -46,11 +48,15 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
+      <JsonLd data={breadcrumbData([
+        { name: 'Compare', path: '/compare' },
+        { name: page.label, path: `/compare/${page.slug}` },
+      ])} />
       <PageHero eyebrow="Comparison" title={page.hero.title} lead={page.hero.lead} />
 
       {/* 1 — TLDR. Many readers only read this. */}
       <Band ground="vanilla">
-        <BandHeading eyebrow="Short version" title="The answer, before the argument" />
+        <BandHeading eyebrow="Short version" title="Which approach fits?" />
         <div className="mt-step-4 space-y-step-3 border-l-2 border-cherry pl-step-4">
           {page.tldr.map((line) => (
             <p key={line} className="measure text-lg">
@@ -63,11 +69,11 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
       {/* 2 — At a glance table. */}
       <Band ground="oat">
         <BandHeading eyebrow="At a glance" title="Side by side" />
-        <div className="mt-step-5 overflow-x-auto">
+        <div className="mt-step-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Engineering options comparison; scroll horizontally on small screens">
           <table className="w-full min-w-[36rem] border-collapse text-left">
             <thead>
               <tr className="border-b border-current/30">
-                <th className="py-step-2 pr-step-3 font-mono text-xs font-normal tracking-tight text-current/60">
+                <th className="py-step-2 pr-step-3 font-mono text-xs font-normal tracking-tight text-current/75">
                   Dimension
                 </th>
                 <th className="py-step-2 pr-step-3 font-display text-sm font-medium">
@@ -93,8 +99,8 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
 
       {/* 3 — Dimension breakdown. Reasoning, not checkmarks. */}
       <Band ground="vanilla">
-        <BandHeading eyebrow="In detail" title="Why each of those is true" />
-        <div className="mt-step-5 grid gap-step-5 md:grid-cols-2">
+        <BandHeading eyebrow="In detail" title="What to consider" />
+        <div className="mt-step-4 grid gap-step-5 md:grid-cols-2">
           {page.dimensions.map((dimension) => (
             <div key={dimension.title} className="border-t border-current/20 pt-step-3">
               <h3 className="font-display text-lg">{dimension.title}</h3>
@@ -105,11 +111,11 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
       </Band>
 
       {/* 4 and 5 — When they win, then when we do. Order matters. */}
-      <Band ground="bordeaux">
+      <Band ground="burgundy">
         <BandHeading
           eyebrow="The honest part"
           title={`When ${page.alternative} is the better answer`}
-          lead="Written without hedging. If one of these describes you, take it — the referral is worth more to us than a bad fit."
+          lead="Choose based on the work, the ownership you need, and the people available to do it."
         />
         <SplitList
           left={{ title: `Choose ${page.alternative}`, items: page.whenTheyWin }}
@@ -120,7 +126,7 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
       {/* 6 — Proof. */}
       <RelatedWork title="Relevant work" ground="oat" />
 
-      <FAQAccordion items={page.faqs} ground="greige" />
+      <FAQAccordion items={page.faqs} ground="blush" />
 
       {/* 7 — CTA, routing to the Build Audit. */}
       <CTABlock line={page.cta} />

@@ -42,7 +42,7 @@ import { offset, spring } from '@/lib/motion'
  * copy scrolls, and the separation between them is the same effect.
  *
  * Spec values, desktop: scale 1→1.32, blur 0→10px (done by 0.9), backdrop gone
- * by 0.85, copy -90px and faded by 0.55. Mobile halves them: 1.12 / 5px / -40px.
+ * by 0.85, copy moves -90px and stays readable. Mobile halves them: 1.12 / 5px / -40px.
  * Scrubbed travel is exempt from the 24px entrance cap (spec 1.2) — large travel
  * is the point of parallax.
  *
@@ -83,7 +83,6 @@ export function ZoomHeroScene({
   const blurPx = useTransform(smooth, [0, 0.9], [0, mobile ? 5 : 10])
   const bgOpacity = useTransform(smooth, [0, 0.85], [1, 0])
   const contentY = useTransform(smooth, [0, 1], [0, mobile ? -40 : -90])
-  const contentOpacity = useTransform(smooth, [0, 0.55], [1, 0])
   const filter = useMotionTemplate`blur(${blurPx}px)`
 
   // `filter` and `will-change` both force this full-screen layer onto the
@@ -135,7 +134,7 @@ export function ZoomHeroScene({
 
       <m.div
         className="relative z-1"
-        style={reduced ? undefined : { y: contentY, opacity: contentOpacity }}
+        style={reduced ? undefined : { y: contentY }}
       >
         {children}
       </m.div>
@@ -145,7 +144,7 @@ export function ZoomHeroScene({
           only: on phones the backdrop is off (particle field is gated behind a
           fine pointer) and the scroll would buy nothing. Reduced motion drops it
           in CSS — nothing zooms there, so it would be scrolling for no reason. */}
-      <div aria-hidden className="zoom-hero-runway hidden md:block md:h-[22vh]" />
+      <div aria-hidden className="zoom-hero-runway hidden md:block md:h-[8vh]" />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { m } from 'motion/react'
 import { useId, useRef, useState, type ReactNode } from 'react'
 import { useMotionPrefs } from '@/hooks/useMotionPrefs'
 import { EASE } from '@/lib/motion'
+import { CheckIcon } from '@/components/ui/ActionIcons'
 
 /**
  * Smooth tabs — animation spec section 7. One component, used by sections 5
@@ -44,9 +45,9 @@ export function SmoothTabs({ tabs, className }: { tabs: Tab[]; className?: strin
     <div className={className}>
       <div
         role="tablist"
-        aria-label="Sections"
+        aria-label="Engineering services"
         onKeyDown={onKeyDown}
-        className="flex flex-wrap gap-step-1 border-b border-greige/40"
+        className="site-tablist"
       >
         {tabs.map((tab, i) => (
           <button
@@ -60,17 +61,14 @@ export function SmoothTabs({ tabs, className }: { tabs: Tab[]; className?: strin
             aria-controls={`${groupId}-panel-${tab.id}`}
             tabIndex={i === active ? 0 : -1}
             onClick={() => setActive(i)}
-            className="relative px-step-2 py-step-2 text-left text-sm font-medium transition-opacity"
-            style={{
-              opacity: i === active ? 1 : 0.6,
-              transitionTimingFunction: 'var(--ease-micro)',
-            }}
+            className="site-tab"
           >
+            <span className="inline-flex w-4 shrink-0" aria-hidden="true">{i === active ? <CheckIcon /> : null}</span>
             {tab.label}
             {i === active ? (
               <m.span
                 layoutId={`${groupId}-indicator`}
-                className="absolute inset-x-0 -bottom-px block h-0.5 bg-cherry"
+                className="absolute inset-x-3 bottom-1 block h-0.5 bg-current"
                 transition={reduced ? { duration: 0 } : EASE.spring}
               />
             ) : null}
@@ -80,11 +78,13 @@ export function SmoothTabs({ tabs, className }: { tabs: Tab[]; className?: strin
 
       {/* Every panel is in the DOM from the server render. Only visibility and
           the entrance animation change client-side. */}
-      <m.div layout className="pt-step-3">
+      <m.div layout>
         {tabs.map((tab, i) => (
           <m.div
             key={tab.id}
             role="tabpanel"
+            className="site-tabpanel"
+            tabIndex={0}
             id={`${groupId}-panel-${tab.id}`}
             aria-labelledby={`${groupId}-tab-${tab.id}`}
             hidden={i !== active}

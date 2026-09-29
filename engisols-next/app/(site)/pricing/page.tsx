@@ -1,19 +1,19 @@
-import type { Metadata } from 'next'
+import { createPageMetadata } from '@/lib/seo'
 import Link from 'next/link'
-import { Band, BandHeading, Blocked } from '@/components/layout/Band'
+import { Band, BandHeading } from '@/components/layout/Band'
 import { CTABlock, DataTable, FAQAccordion, PageHero } from '@/components/sections/shared'
 import { Reveal } from '@/components/motion/Reveal'
 import { pricing } from '@/content/demo'
 import { pricingPage } from '@/content/pages'
 
-/** Pricing — content spec section 8. Seven sections. {{TODO: PRICING}} */
+/** Pricing — content spec section 8. Seven sections. */
 
-export const metadata: Metadata = {
-  title: 'Pricing',
+export const metadata = createPageMetadata({
+  title: 'Software Development Engagements & Pricing',
   description:
-    'Three ways in with published prices: a fixed-fee Build Audit, fixed-scope builds, and an embedded retainer. Including who should not hire us.',
-  alternates: { canonical: '/pricing' },
-}
+    'Engineering reviews, product builds, and ongoing support. Scope, price, and schedule are agreed in a project proposal.',
+  path: '/pricing',
+})
 
 export default function PricingPage() {
   return (
@@ -23,7 +23,7 @@ export default function PricingPage() {
       {/* 2 — The ladder. */}
       <Band ground="vanilla">
         <BandHeading eyebrow="The ladder" title="Three ways in" />
-        <ul className="mt-step-5 grid gap-step-4 lg:grid-cols-3">
+        <ul className="mt-step-4 grid gap-step-4 lg:grid-cols-3">
           {pricing.map((tier, i) => (
             <li key={tier.name}>
               <Reveal y={16} delay={i * 0.05}>
@@ -39,15 +39,12 @@ export default function PricingPage() {
                   ) : null}
                   <h3 className="mt-step-1 font-display text-2xl">{tier.name}</h3>
                   <p className="mt-step-2 font-display text-3xl tabular-nums">{tier.price}</p>
-                  <p className="font-mono text-xs text-current/60">{tier.cadence}</p>
-                  {tier.invented ? (
-                    <p className="mt-1 font-mono text-[0.65rem] text-cherry">demo figure</p>
-                  ) : null}
+                  <p className="font-mono text-xs text-current/75">{tier.cadence}</p>
                   <p className="measure mt-step-3 text-sm text-current/80">{tier.who}</p>
                   <ul className="mt-step-3 flex-1 space-y-step-2 border-t border-current/20 pt-step-3">
                     {tier.includes.map((item) => (
                       <li key={item} className="flex gap-step-2 text-sm text-current/85">
-                        <span aria-hidden className="font-mono text-xs text-current/50">
+                        <span aria-hidden className="font-mono text-xs text-current/75">
                           →
                         </span>
                         {item}
@@ -57,35 +54,26 @@ export default function PricingPage() {
                   <Link
                     href={tier.featured ? '/pricing/build-audit' : '/contact'}
                     data-cursor="target"
-                    className={`mt-step-4 rounded-full px-step-4 py-step-2 text-center font-medium no-underline transition-opacity hover:opacity-90 ${
-                      tier.featured
-                        ? 'bg-cherry text-vanilla'
-                        : 'border border-current/30'
-                    }`}
+                    className={`site-button mt-step-4 ${tier.featured ? 'site-button-primary' : 'site-button-outline'}`}
                   >
-                    {tier.featured ? 'Book a Build Audit' : 'Talk to us'}
+                    {tier.featured ? 'Explore the Build Audit' : 'Discuss this scope'}
                   </Link>
                 </div>
               </Reveal>
             </li>
           ))}
         </ul>
-        <div className="mt-step-5">
-          <Blocked
-            marker="{{TODO: PRICING}}"
-            need="every figure above is invented. Publishing a wrong price is a commercial problem, not a copy problem."
-          />
-        </div>
+        <p className="measure mt-step-4 text-sm text-current/80">Fees, payment stages, and delivery dates are confirmed in your proposal.</p>
       </Band>
 
       {/* 3 — When we are the wrong answer. */}
-      <Band ground="bordeaux">
+      <Band ground="burgundy">
         <BandHeading
           eyebrow="Disqualifiers"
           title={pricingPage.whenWereWrong.title}
           lead={pricingPage.whenWereWrong.lead}
         />
-        <ul className="mt-step-5 space-y-step-3">
+        <ul className="mt-step-4 space-y-step-3">
           {pricingPage.whenWereWrong.items.map((item) => (
             <li key={item} className="measure border-t border-current/25 pt-step-3 text-lg">
               {item}
@@ -99,14 +87,14 @@ export default function PricingPage() {
         <BandHeading
           eyebrow="Billing"
           title={pricingPage.billing.title}
-          lead="Written down here so it is not a conversation later."
+          lead="These details are agreed in the proposal before work starts."
         />
         <DataTable rows={pricingPage.billing.rows} />
       </Band>
 
       {/* 5 — Guarantee, in actual terms. */}
       <Band ground="oat">
-        <BandHeading eyebrow="Guarantee" title={pricingPage.guarantee.title} />
+        <BandHeading eyebrow="Before you commit" title={pricingPage.guarantee.title} />
         <div className="mt-step-4 space-y-step-3">
           {pricingPage.guarantee.body.map((paragraph) => (
             <p key={paragraph} className="measure text-lg text-current/85">
@@ -116,7 +104,7 @@ export default function PricingPage() {
         </div>
       </Band>
 
-      <FAQAccordion items={pricingPage.faqs} title="The uncomfortable questions" ground="greige" />
+      <FAQAccordion items={pricingPage.faqs} title="Pricing questions" ground="blush" />
 
       <CTABlock line={pricingPage.cta} />
     </>

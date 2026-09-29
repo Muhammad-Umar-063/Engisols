@@ -8,6 +8,7 @@ import { MotionProvider } from '@/components/motion/MotionProvider'
 import { SmoothScroll } from '@/components/motion/SmoothScroll'
 import { ToastProvider } from '@/components/motion/Toast'
 import { SITE } from '@/lib/site'
+import { SITE_DESCRIPTION } from '@/lib/seo'
 import './globals.css'
 // Lenis ships five rules its instance depends on — most importantly
 // `html.lenis, html.lenis body { height: auto }`. Imported from the package
@@ -45,15 +46,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
-    // {{TODO: POSITIONING}} — the default title is a positioning decision, not
-    // a copy decision. Left deliberately plain until Build Rescue vs general
-    // AI-native build is settled.
-    default: `${SITE.name} — Senior engineering practice`,
+    default: `Software Engineering & Development — ${SITE.name}`,
     template: `%s — ${SITE.name}`,
   },
-  description:
-    'Three senior engineers. No juniors, no account managers, no handoffs. AI-native software for teams whose last build stalled.',
-  alternates: { canonical: '/' },
+  description: SITE_DESCRIPTION,
   robots: { index: true, follow: true },
 }
 

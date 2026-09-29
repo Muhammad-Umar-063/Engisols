@@ -1,83 +1,27 @@
 import type { FAQ } from '@/components/sections/shared'
 
-/**
- * ⚠️  DEMO CONTENT — drafted, not signed off. See content/services.ts header.
- *
- * The standalone pages: pricing, the Build Audit landing page, process, about,
- * contact, the scan funnel and the legal shells.
- *
- * Every figure in `pricingFaqs`, `buildAudit` and `pricingLadder` is INVENTED.
- * Publishing a wrong price is a commercial problem rather than a copy problem,
- * so all of it is gated behind {{TODO: PRICING}}.
- */
+/** Public page copy. Project evidence is attributed in the case studies. */
 
 /* ------------------------------------------------------------------ */
 /* Pricing (/pricing)                                                   */
 /* ------------------------------------------------------------------ */
 
 export const pricingPage = {
-  hero: {
-    title: 'We publish our prices. Most agencies in this market do not.',
-    lead: 'Three ways in, with real numbers and a plain line on who each one is for. If you can rule us out from this page without a call, the page has done its job.',
-  },
+  hero: { title: 'A quote based on the work your product needs.', lead: 'Choose an engineering review, a defined build, or ongoing support. We discuss the scope before quoting a fee or delivery schedule.' },
   whenWereWrong: {
-    title: 'When you should not hire us',
-    lead: 'This section costs us nothing and it is the fastest way to tell whether we are worth a conversation.',
-    items: [
-      'You need this capability continuously for more than about twelve months. Hire someone. It is cheaper and better, and we will say so on the call.',
-      'You have a small, well-specified task with a clear finish line. A marketplace freelancer will do it faster and for less.',
-      'You need design from scratch — brand, identity, a visual language. We build against a design, we do not originate one.',
-      'You want staff augmentation: bodies under your direction, billed hourly. We take ownership of outcomes or we do not take the work.',
-      'You have no code and no clear problem yet. Spend two weeks with an AI coding tool first. Genuinely.',
-    ],
+    title: 'Choose the right kind of help',
+    lead: 'The shape of the problem matters as much as the technology.',
+    items: ['A permanent role may suit work that needs continuing ownership inside your company.', 'A small, well-defined task may be a good fit for an individual specialist.', 'An unclear codebase benefits from a review before a large build commitment.', 'A new product needs a clear user problem and priorities before a delivery estimate can be useful.'],
   },
-  billing: {
-    title: 'How billing works',
-    rows: [
-      ['Currency', 'USD. GBP and EUR by arrangement.'],
-      ['Audit', '100% up front. Fixed fee, ten working days.'],
-      ['Build', '40% to start, 40% at the agreed midpoint, 20% on handover.'],
-      ['Retainer', 'Monthly in advance, thirty days notice either way.'],
-      ['Change orders', 'Written, priced, and signed before the work starts.'],
-      ['Late payment', 'Work pauses at 14 days overdue. Nothing is deleted or withheld.'],
-      ['Expenses', 'Only what is agreed in writing. No markup.'],
-    ] as [string, string][],
-  },
-  guarantee: {
-    title: 'The guarantee on the Build Audit',
-    body: [
-      'If the audit does not tell you something you did not already know, we refund it in full. Not a credit, not a discount on future work — the fee back.',
-      'You decide, not us. There is no adjudication process and no requirement to explain yourself. Send one line saying it was not useful and the refund is processed that week.',
-      'If you proceed to a build with us within ninety days, the full audit fee credits against it. So the audit is either useful, free, or deducted.',
-    ],
-  },
+  billing: { title: 'What your proposal should settle', rows: [['Scope', 'Deliverables, exclusions, and assumptions'], ['Price', 'The fee and currency for the agreed work'], ['Schedule', 'Milestones, dependencies, and availability'], ['Billing', 'Payment stages and any agreed expenses'], ['Changes', 'How changes to scope, fees, or timing are agreed'], ['Handover', 'Access, documentation, and support requirements']] as [string, string][] },
+  guarantee: { title: 'Decide with the scope in front of you', body: ['A website cannot price an unfamiliar codebase accurately. Share the product, the blocked work, and your constraints so we can determine what needs reviewing.', 'Any payment, cancellation, support, or ownership terms belong in the written proposal and engagement agreement. Review those terms before proceeding.'] },
   faqs: [
-    {
-      q: 'Why is the range on a build so wide?',
-      a: 'Because a focused internal tool and a customer-facing product with payments, roles and an integration surface are genuinely different jobs. The audit exists to turn the range into a number before you commit to anything.',
-    },
-    {
-      q: 'What happens if the project overruns?',
-      a: 'On fixed-scope work, an overrun caused by our estimating error is ours to absorb. An overrun caused by added scope is a change order, priced and agreed before the work happens. The distinction is written down before we start, which is the only time it can be discussed calmly.',
-    },
-    {
-      q: 'What if we want to stop halfway?',
-      a: 'You can, at any milestone. You pay for work completed to that point, you keep everything — the repo is yours from the first commit — and we write a handover note so the next team is not starting cold.',
-    },
-    {
-      q: 'What if we disagree about whether something was in scope?',
-      a: 'The written scope from week zero is the reference, which is exactly why we will not start without one. In practice the argument is usually about a genuine ambiguity, and our default is to absorb small ones and quote honestly for large ones.',
-    },
-    {
-      q: 'What happens if you disappear?',
-      a: 'Everything is already in your GitHub organisation and your cloud account, with documentation written as we go rather than at the end. Losing us costs you continuity and time, not access or ownership. That is deliberate.',
-    },
-    {
-      q: 'Do you take equity instead of fees?',
-      a: 'No. It complicates the relationship, misaligns the incentives on scope, and we are not investors. Cash for work, priced up front.',
-    },
+    { q: 'Can you quote before seeing the code?', a: 'An initial conversation can establish fit. A reliable estimate for existing software may also require an agreed review of its architecture, dependencies, and current behavior.' },
+    { q: 'Is the initial inquiry a paid commitment?', a: 'No. Sending an inquiry asks us to discuss your project. It does not purchase an audit or start an engagement.' },
+    { q: 'How are changes handled?', a: 'The proposal should identify how new requirements affect the scope, cost, and schedule. Ask for any change to be recorded before it is implemented.' },
+    { q: 'What determines the cost?', a: 'The current codebase, required behavior, integrations, data migration, testing, and handover needs all affect the work. Include any fixed budget or deadline in your inquiry.' },
   ] as FAQ[],
-  cta: 'Still not sure which tier you are? That is what the audit is for.',
+  cta: 'Tell us what you need to ship and what is blocking it.',
 }
 
 /* ------------------------------------------------------------------ */
@@ -85,111 +29,24 @@ export const pricingPage = {
 /* ------------------------------------------------------------------ */
 
 export const buildAudit = {
-  hero: {
-    title: 'Ten working days. A written verdict on your build. Refunded if it is not useful.',
-    lead: 'The paid front door. We read the code, reproduce the failures, and tell you plainly what is wrong, what it costs to fix, and whether it is worth fixing at all.',
-    facts: [
-      ['Price', '$2,400 fixed'],
-      ['Duration', '10 working days'],
-      ['You get', 'Written report, roadmap, risk register, walkthrough call'],
-      ['Guarantee', 'Full refund if it tells you nothing new'],
-    ] as [string, string][],
-  },
+  hero: { title: 'Understand the build before you commit to the next step.', lead: 'A scoped engineering review can help you decide what to repair, what to replace, and what to do first. Start by describing the product and the problem.', facts: [['Price', 'Quoted after review scope is agreed'], ['Schedule', 'Confirmed with the proposal'], ['Possible deliverables', 'Findings, priorities, and next-step recommendations'], ['First step', 'Send a project inquiry']] as [string, string][] },
   whoFor: {
-    left: {
-      title: 'For you if',
-      items: [
-        'You inherited a codebase and nobody remaining understands it.',
-        'The MVP got to roughly 70% and has stayed there for months.',
-        'An AI feature works in the demo and fails on real data.',
-        'The developer who built it has left.',
-        'Every estimate to finish comes back longer than the last one.',
-        'You are raising, and someone is about to read this codebase.',
-      ],
-    },
-    right: {
-      title: 'Not for you if',
-      items: [
-        'You need a design from scratch. That is not what we do.',
-        'You want staff augmentation billed by the hour.',
-        'You have no code yet — there is nothing to audit.',
-        'You want a second opinion to win an argument with your current team.',
-        'You need it in three days. Ten working days is the honest minimum.',
-      ],
-    },
+    left: { title: 'Useful when', items: ['You inherited a codebase without a clear technical owner.', 'An AI feature behaves differently with real data.', 'A build is stalled and the remaining work is unclear.', 'You need to compare repair and rebuild options.'] },
+    right: { title: 'A different starting point may help when', items: ['There is no code or system to review yet.', 'You need visual design or product research first.', 'The task is already narrow enough to implement directly.'] },
   },
-  deliverable: {
-    title: 'What you physically get',
-    lead: 'Four artifacts. All written, all yours, all useful to whoever does the work next — including if that is not us.',
-    items: [
-      'A written findings report, prioritised by what stops you shipping',
-      'A remediation roadmap with effort estimates against each item',
-      'A risk register: what breaks first and what it takes down with it',
-      'A recorded ninety-minute walkthrough call where you argue with all of it',
-      'The rebuild-or-repair recommendation, with the reasoning shown',
-      'Your repo untouched — we read, we do not commit',
-    ],
-  },
+  deliverable: { title: 'Agree what the review needs to answer', lead: 'The proposal defines the deliverables for your system. A review can include:', items: ['Prioritised engineering findings', 'Architecture and dependency observations', 'Repair and rebuild options', 'Recommended next steps with assumptions'] },
   howItWorks: [
-    {
-      meta: 'Day 1',
-      title: 'NDA, repo access, environment',
-      body: 'Signed before access. We get it running locally on day one, and how long that takes is itself the first finding.',
-    },
-    {
-      meta: 'Days 2–4',
-      title: 'Read everything, change nothing',
-      body: 'Architecture, data model, dependencies, deploy path, test coverage, permissions. Building an accurate picture before having opinions about it.',
-    },
-    {
-      meta: 'Days 5–8',
-      title: 'Reproduce the failures',
-      body: 'The bugs you can describe, and the ones you have stopped mentioning because they seem permanent. Both matter, and the second set is usually more diagnostic.',
-    },
-    {
-      meta: 'Day 9',
-      title: 'Write it up',
-      body: 'Prioritised findings, effort estimates, the risk register, and a number against each path forward.',
-    },
-    {
-      meta: 'Day 10',
-      title: 'Walkthrough call',
-      body: 'Ninety minutes, recorded. You push back, we defend or concede, and you leave with a decision rather than a document.',
-    },
+    { meta: 'Scope', title: 'Describe the blocked work', body: 'Share the product context, known failures, and the decision you need to make.' },
+    { meta: 'Access', title: 'Agree the review boundaries', body: 'Confirm the required access, confidentiality terms, deliverables, fee, and schedule before a review begins.' },
+    { meta: 'Review', title: 'Inspect and reproduce', body: 'Examine the agreed areas of the system and investigate the behavior behind the reported problems.' },
+    { meta: 'Findings', title: 'Choose the next step', body: 'Discuss the findings, remaining uncertainty, and the options for moving forward.' },
   ],
-  whyPaid: {
-    title: 'Why it is paid',
-    body: [
-      'A free audit is a sales call with a document attached. The incentive is to find enough wrong to justify a proposal, and everyone in the room knows it.',
-      'A paid audit is work. We are being paid to be right, not to be hired, which is why the deliverable is useful whether or not you ever speak to us again.',
-      'The fee credits in full against a build within ninety days, so if you do hire us, the audit cost you nothing. And if the report is not useful, it is refunded. The only outcome where you are out of pocket is the one where we were genuinely wrong.',
-    ],
-  },
+  whyPaid: { title: 'Separate diagnosis from the build decision', body: ['A focused review is engineering work with its own scope. It can answer a technical question before a larger implementation is commissioned.', 'Discuss the proposed outputs and fee first. Sending an inquiry does not commit you to an audit or a subsequent build.'] },
   faqs: [
-    {
-      q: 'Will you sign an NDA?',
-      a: 'Yes, before repo access, every time. It is step one on day one and we have a standard mutual NDA ready if you do not have your own.',
-    },
-    {
-      q: 'What happens to our code?',
-      a: 'Read-only access, cloned to an encrypted machine, deleted within thirty days of delivery. Nothing is retained, nothing is reused, and nothing goes near a training pipeline.',
-    },
-    {
-      q: 'What if you find nothing?',
-      a: 'Then the report says so and you have the confidence you paid for — which for a team about to raise or about to commit a quarter to a rebuild is worth the fee on its own. If you disagree, it is refunded.',
-    },
-    {
-      q: 'What if you find too much?',
-      a: 'The report is prioritised precisely for that case: what must be fixed to ship, what can wait, what you can live with permanently. A hundred findings with no order is a document nobody acts on.',
-    },
-    {
-      q: 'Does the fee credit against a build?',
-      a: 'In full, against any build starting within ninety days of delivery.',
-    },
-    {
-      q: 'Can we use the report to brief a different team?',
-      a: 'Yes. It is written to be useful to whoever does the work, not as a sales document for us. Several clients have done exactly that, and one of them came back eighteen months later.',
-    },
+    { q: 'Should I send repository access in the inquiry?', a: 'Start with a description and an optional public product URL. Access and confidentiality requirements can be agreed separately. Do not send credentials through the form.' },
+    { q: 'How long does a review take?', a: 'The codebase, review questions, and access requirements determine the schedule. Timing is confirmed in the proposal.' },
+    { q: 'Will a review prove the whole system is production-ready?', a: 'No review can establish that from a limited scope. The findings should state what was inspected, what was not, and which questions remain.' },
+    { q: 'Does an inquiry commit me to a build?', a: 'No. Review and implementation are separate decisions. You can discuss the findings before deciding what happens next.' },
   ] as FAQ[],
 }
 
@@ -198,68 +55,17 @@ export const buildAudit = {
 /* ------------------------------------------------------------------ */
 
 export const processPage = {
-  hero: {
-    title: 'Working with three engineers on the other side of the world.',
-    lead: 'The offshore objection is legitimate. This page answers it in specifics — overlap hours, who you talk to, who owns the code, and what happens if we go quiet.',
-  },
+  hero: { title: 'Make the work, decisions, and next steps clear.', lead: 'Start with the problem, agree the scope, and inspect progress together. The details depend on the product and the people who will operate it.' },
   phases: [
-    {
-      meta: '1–2 weeks',
-      title: 'Discovery',
-      body: 'Scope, constraints, and the written definition of done. Ends with a fixed price and a date, or an honest statement that we are the wrong fit.',
-    },
-    {
-      meta: '4–12 weeks',
-      title: 'Build',
-      body: 'Weekly shipped increments on a real URL. Your repo, your cloud, from the first commit. Written updates you read rather than meetings you attend.',
-    },
-    {
-      meta: '1 week',
-      title: 'Handover',
-      body: 'Documentation, architecture notes, a recorded walkthrough, and access confirmed. Written for the engineer who joins after us.',
-    },
-    {
-      meta: '30–90 days',
-      title: 'Support window',
-      body: 'Defined response times in writing. After that, either your team owns it or we move to a retainer — both are normal.',
-    },
+    { meta: 'Understand', title: 'Review the starting point', body: 'Clarify the product, users, current system, and the reason the work matters.' },
+    { meta: 'Plan', title: 'Agree a workable scope', body: 'Set out deliverables, dependencies, assumptions, and how progress will be reviewed.' },
+    { meta: 'Build', title: 'Implement and validate', body: 'Work through the agreed priorities, test the important behavior, and surface decisions as they arise.' },
+    { meta: 'Handover', title: 'Prepare the next owner', body: 'Include deployment, operating notes, documentation, and support expectations in the scope.' },
   ],
-  communication: {
-    title: 'Communication',
-    rows: [
-      ['Overlap, US Eastern', '9am – 1pm ET, every working day'],
-      ['Overlap, UK and EU', '2pm – 6pm GMT, every working day'],
-      ['Who you talk to', 'The engineer writing the code, by name'],
-      ['Written update', 'Every Friday, whether or not anything went wrong'],
-      ['Response time, working hours', 'Within 2 hours'],
-      ['Response time, outside', 'Next working morning'],
-      ['Escalation', 'Direct phone number for all three of us'],
-      ['Tools', 'Your Slack or ours, your tracker, your repo'],
-    ] as [string, string][],
-  },
-  legal: {
-    title: 'Legal and ownership',
-    items: [
-      'IP assignment signed before any code is written. Everything produced is yours outright.',
-      'Mutual NDA as standard, or yours if you prefer it.',
-      'Code lands in your GitHub organisation from the first commit. Never ours, never mirrored.',
-      'Infrastructure runs in your cloud account, under your billing.',
-      'No licence-back clauses, no shared ownership, no portfolio rights without written permission.',
-      'If the engagement ends early, for any reason, you keep everything and we write the handover note anyway.',
-    ],
-  },
-  fromYou: {
-    title: 'What we need from you',
-    lead: 'Expectations in both directions. Most delays on projects this size are not engineering delays.',
-    items: [
-      'One decision maker who can say yes without a committee.',
-      'Access on day one: repo, cloud, the third-party accounts we will need.',
-      'Review turnaround within two working days on anything blocking.',
-      'Somebody who knows the domain available for questions during overlap hours.',
-      'Honesty about deadlines that are real versus deadlines that are aspirational.',
-    ],
-  },
-  cta: 'Every one of those commitments is in the contract, not just on this page.',
+  communication: { title: 'Agree communication before starting', rows: [['Project contact', 'Who can answer product and technical questions'], ['Working overlap', 'Hours that fit the people on the project'], ['Progress reviews', 'A cadence suited to the scope'], ['Decisions', 'Where changes and approvals are recorded'], ['Tools', 'Repository, issue tracker, and communication channels']] as [string, string][] },
+  legal: { title: 'Settle access and ownership in writing', items: ['Confirm who owns the repository and infrastructure.', 'Agree any confidentiality and data-handling requirements before access.', 'Record the deliverables, payment terms, and change process.', 'Define handover requirements and any support after delivery.'] },
+  fromYou: { title: 'Useful context for the first conversation', lead: 'A short description is enough to begin.', items: ['What the product does and who uses it.', 'What is blocked or needs to change.', 'Existing technical documentation, if available.', 'Budget, deadlines, and dependencies we should understand.'] },
+  cta: 'Start with the part of the product that needs attention.',
 }
 
 /* ------------------------------------------------------------------ */
@@ -267,37 +73,11 @@ export const processPage = {
 /* ------------------------------------------------------------------ */
 
 export const aboutPage = {
-  hero: {
-    title: 'Three senior engineers who decided not to become fifteen.',
-    lead: 'Scaling an agency means hiring people cheaper than yourself and selling their time at your rate. That is a business model, and it is the one that produces the codebases we get hired to rescue.',
-  },
-  why: {
-    title: 'Why we work this way',
-    paragraphs: [
-      'The economics of a growing agency push in one direction: hire juniors, bill them at senior-adjacent rates, and add a project manager to keep the client away from the seams. It works commercially, which is why it is so common.',
-      'It also produces the specific failure we spend most of our time repairing — a system with no single owner, where every individual decision was defensible and the whole is incoherent. We would rather not manufacture our own pipeline.',
-      'The honest cost of that choice is capacity. Three people can run a small number of builds at once, which is why the availability line on the homepage is real and why we sometimes say no. We would rather turn work away than staff it with someone we would not want on our own project.',
-    ],
-  },
-  history: {
-    title: 'How we got here',
-    paragraphs: [
-      'We met working on the same platform from three different contracts, which is a slow way to learn that you agree about how software should be built.',
-      'Engisols started in 2023 taking overflow work from teams who had run out of senior capacity. The rescue work arrived on its own — by 2025 it was most of what came in, largely because AI coding tools had put a great many products at 70% and left them there.',
-      'Since then: shipped products across legal tech, AI SaaS, care coordination and Web3, for clients in the US, UK, EU, Australia, New Zealand and Saudi Arabia.',
-    ],
-  },
-  wont: {
-    title: 'What we do not do',
-    items: [
-      'Design from scratch. No brand work, no identity, no visual language origination.',
-      'Staff augmentation. We take ownership of outcomes, not tickets.',
-      'Anything we cannot staff with a senior. If it needs a fourth person, it is not our project.',
-      'Fixed-price work with no written scope. That is not a price, it is an argument scheduled for later.',
-      'Native mobile. We will build the API and be honest about who should build the app.',
-    ],
-  },
-  cta: 'If a small senior team is the shape you want, we should talk.',
+  hero: { title: 'Engineering for products with work still to do.', lead: 'Engisols works on AI systems, web applications, integrations, and the infrastructure behind them. The project stories show the work in detail.' },
+  why: { title: 'Start with the behavior that matters', paragraphs: ['A useful engineering decision connects the code to a real user need. For a stalled build, that starts with understanding what is working, what is blocked, and which assumptions need testing.', 'We focus on inspectable systems: clear data flow, explicit failure handling, and documentation that helps the next person understand the decisions.'] },
+  history: { title: 'Work you can inspect', paragraphs: ['Published projects include SoloSuit, PastPresent, ProLyrics.ai, Quick Sync, and Alula. They cover legal workflows, agentic AI, automation, Web3, and SaaS applications.', 'Each case study describes the product, the engineering work, and the available results. Platform metrics remain attributed to the platform they describe.'] },
+  wont: { title: 'Define the fit before the engagement', items: ['Start with a problem and the decision or result you need.', 'Treat timing and cost as scope questions.', 'Agree access and confidentiality requirements before sharing private systems.', 'Use the published project work to assess relevant experience.'] },
+  cta: 'Tell us about your product and the work ahead.',
 }
 
 /* ------------------------------------------------------------------ */
@@ -305,40 +85,13 @@ export const aboutPage = {
 /* ------------------------------------------------------------------ */
 
 export const contactPage = {
-  hero: {
-    title: 'Talk to the person who would do the work.',
-    lead: 'Not a sales team, not a form that routes to a queue. One of the three of us answers, usually the one whose area it is.',
-  },
-  next: {
-    title: 'What happens after you book',
-    steps: [
-      {
-        meta: 'Immediately',
-        title: 'Confirmation with the call link',
-        body: 'Plus a short note asking for anything useful in advance — a repo, a doc, a screenshot of the thing that is broken. Optional, and it makes the call better.',
-      },
-      {
-        meta: 'On the call, 30 minutes',
-        title: 'We work out whether this is real',
-        body: 'What is broken, what you have tried, what the deadline actually is. If we are the wrong answer we will say so and point you at the right one.',
-      },
-      {
-        meta: 'Within two working days',
-        title: 'A written follow-up',
-        body: 'What we heard, what we would do, what it would cost and how long. In writing, so you can forward it to whoever else has to agree.',
-      },
-    ],
-  },
-  alternatives: {
-    title: 'Or skip the calendar',
-    rows: [
-      ['Email', 'growth@engisols.com'],
-      ['Response time', 'Within one working day'],
-      ['Overlap, US Eastern', '9am – 1pm ET'],
-      ['Overlap, UK and EU', '2pm – 6pm GMT'],
-      ['Markets', 'US, UK, EU, Australia, New Zealand, Saudi Arabia'],
-    ] as [string, string][],
-  },
+  hero: { title: 'Tell us what you are building.', lead: 'Tell us about your product, the work you need, and what you want to achieve.' },
+  next: { title: 'What happens after your inquiry', steps: [
+    { meta: 'Context', title: 'We read your project details', body: 'Your description helps establish the technical problem and whether the work fits.' },
+    { meta: 'Discussion', title: 'Clarify the next step', body: 'We may ask for more context or arrange a conversation before proposing a scope.' },
+    { meta: 'Scope', title: 'Review a proposal', body: 'Any proposed engagement sets out the work, timing, and commercial terms before you decide to proceed.' },
+  ] },
+  alternatives: { title: 'Contact details', rows: [['Email', 'growth@engisols.com']] as [string, string][] },
 }
 
 /* ------------------------------------------------------------------ */
@@ -347,71 +100,27 @@ export const contactPage = {
 
 export const scanPage = {
   hero: {
-    title: 'Free repo and app health scan.',
-    lead: 'Point us at the repository. We run the same first-pass checks the paid audit starts with and send you the findings. No call, no invoice, no obligation.',
-    facts: [
-      ['Price', 'Free'],
-      ['Turnaround', '2 working days'],
-      ['You get', 'A written findings summary by severity'],
-      ['Your code', 'Deleted within 7 days'],
-    ] as [string, string][],
+    title: 'A first look at your public app.',
+    lead: 'Production Check inspects a public app URL and its browser assets for observable risk signals. The report separates findings from expected public configuration and states what could not be checked.',
+    facts: [['Price', 'Free'], ['Input', 'A public app URL'], ['You get', 'Findings, evidence labels, and coverage'], ['Access', 'No repository credentials required']] as [string, string][],
   },
   checks: [
-    {
-      title: 'Security',
-      body: 'Exposed secrets, dependency vulnerabilities with a known exploit path, authentication and permission gaps, and anything writing sensitive data somewhere it should not.',
-    },
-    {
-      title: 'Dependency risk',
-      body: 'Unmaintained packages, versions pinned so far back that upgrading is now a project, and licences that will fail an enterprise procurement review.',
-    },
-    {
-      title: 'Architecture',
-      body: 'Coupling, the shape of the data model, and whether the seams between subsystems are consistent — the specific place AI-generated code tends to come apart.',
-    },
-    {
-      title: 'Scalability',
-      body: 'Queries that will not survive a hundred times the rows, missing indexes, N+1 patterns, and work being done in a request that should be in a queue.',
-    },
-    {
-      title: 'Running cost',
-      body: 'Where the money goes at your current volume and what happens to that number at ten times the traffic. Usually one endpoint or one query.',
-    },
+    { title: 'Public credential signals', body: 'Known server-secret and private-key patterns in public assets. Detected values are not tested against provider APIs.' },
+    { title: 'Expected public keys', body: 'Client-side configuration such as publishable keys, distinguished from server credentials.' },
+    { title: 'Public integration references', body: 'Observable references to providers, tables, and endpoints that may need engineering review.' },
+    { title: 'Browser asset coverage', body: 'The public pages and assets the scanner could inspect, with limits stated beside the findings.' },
+    { title: 'Review priorities', body: 'Findings grouped as FIX NOW, REVIEW, or EXPECTED, with context for deciding the next step.' },
   ],
-  whoFor: [
-    'You built on Lovable, v0, Bolt, Base44, Cursor or Claude and are now stuck.',
-    'You inherited a codebase and want a second opinion before committing to it.',
-    'You are about to raise and would rather find the problems before diligence does.',
-    'You are scaling and something is getting slower in a way nobody has diagnosed.',
-  ],
+  whoFor: ['You have a publicly accessible app and want to inspect what its browser assets expose.', 'You are preparing to launch and want a starting point for an engineering review.', 'You need to distinguish expected client configuration from potential server-secret exposure.', 'You want an initial report before deciding whether to commission a deeper review.'],
   privacy: {
-    title: 'What happens to your code',
-    rows: [
-      ['Access', 'Read-only. We never commit, never open a pull request.'],
-      ['Storage', 'Cloned to an encrypted machine, never a shared drive.'],
-      ['Retention', 'Deleted within 7 days of the report being sent.'],
-      ['Training', 'Never used to train anything, by us or anyone else.'],
-      ['Sharing', 'Never shared, quoted or used as an example without written permission.'],
-      ['NDA', 'Available before you send anything. Ask and we sign it same day.'],
-    ] as [string, string][],
+    title: 'What the check accesses',
+    rows: [['Access', 'Public pages and browser assets'], ['Credentials', 'No login or repository credentials required'], ['Stored report', 'Sanitized findings and coverage information'], ['Report links', 'Anyone with a shared report link may be able to view it'], ['Limits', 'Private code, authenticated behavior, and database policies are not verified']] as [string, string][],
   },
   faqs: [
-    {
-      q: 'Why is it free? What is the catch?',
-      a: 'It is the top of our funnel and we are not pretending otherwise. Some people who get a scan book the paid audit. Most do not, and that is fine — the scan is cheap for us to run because it is largely automated.',
-    },
-    {
-      q: 'Is this just a tool running lint?',
-      a: 'The first pass is automated. A person reads the output before it is sent, which is why it takes two days rather than two minutes, and why the summary says what the findings mean rather than listing rule violations.',
-    },
-    {
-      q: 'What if the repo is private?',
-      a: 'Most are. Add us as a read-only collaborator, or send an archive. We will sign an NDA first if you want one.',
-    },
-    {
-      q: 'How is this different from the paid audit?',
-      a: 'The scan is automated checks plus a human summary, across two days. The audit is ten days of a senior engineer reading the code, reproducing your specific failures, and producing a prioritised roadmap with effort estimates. The scan tells you whether something is wrong; the audit tells you what to do about it.',
-    },
+    { q: 'Does this inspect my private repository?', a: 'No. Production Check inspects a public URL and public browser assets. A private code review requires a separately agreed scope and access.' },
+    { q: 'Does a clear report prove the app is secure?', a: 'No. A public scan has limited coverage. Authentication, database permissions, payments, and server behavior can require deeper inspection.' },
+    { q: 'Are detected keys tested?', a: 'No. The scanner identifies observable patterns without using them to call provider APIs.' },
+    { q: 'What happens after the report?', a: 'Review the findings and coverage. You can request an Engineer Scope Review if you want help deciding what to inspect next.' },
   ] as FAQ[],
 }
 

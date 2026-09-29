@@ -38,9 +38,8 @@ const nextConfig: NextConfig = {
         destination: `/work/${study.slug}`,
         permanent: true,
       })),
-      // Anything else under the old prefix goes to the index rather than a 404.
+      // Preserve the collection URL; unknown study slugs should remain 404s.
       { source: '/case-studies', destination: '/work', permanent: true },
-      { source: '/case-studies/:slug*', destination: '/work', permanent: true },
     ]
   },
 

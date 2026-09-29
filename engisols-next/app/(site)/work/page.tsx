@@ -1,15 +1,15 @@
-import type { Metadata } from 'next'
+import { createPageMetadata } from '@/lib/seo'
 import { CaseStudyGrid, CTABlock, PageHero } from '@/components/sections/shared'
 import { caseStudies } from '@/content/case-studies'
 
 /** Work index — content spec section 4. Three sections. */
 
-export const metadata: Metadata = {
-  title: 'Work',
+export const metadata = createPageMetadata({
+  title: 'Client Software Engineering Case Studies',
   description:
     'Shipped products across legal tech, agentic AI, SaaS and Web3. Every metric is a verified figure or a product fact.',
-  alternates: { canonical: '/work' },
-}
+  path: '/work',
+})
 
 export default function WorkPage() {
   const categories = [...new Set(caseStudies.map((study) => study.category))]
@@ -18,14 +18,14 @@ export default function WorkPage() {
     <>
       <PageHero
         eyebrow="Work"
-        title="Shipped, in production, with the numbers attached."
-        lead="Five projects. Where a hard performance figure exists it is stated; where it does not, the metric is a verifiable product fact rather than a number we would like to be true."
+        title="Software built for our clients."
+        lead="Explore five client projects across legal technology, AI, SaaS, and Web3. Each case study describes our engineering contribution and the project results."
       >
-        <ul className="flex flex-wrap gap-step-2">
+        <ul aria-label="Project areas" className="flex flex-wrap gap-x-step-3 gap-y-step-1">
           {categories.map((category) => (
             <li
               key={category}
-              className="rounded-full border border-current/30 px-step-3 py-1.5 font-mono text-xs text-current/75"
+              className="text-sm text-current/80"
             >
               {category}
             </li>
@@ -35,7 +35,7 @@ export default function WorkPage() {
 
       <CaseStudyGrid title="All work" />
 
-      <CTABlock line="Your project would be the sixth. Start with an audit." />
+      <CTABlock line="Have a project in mind? Let’s discuss it." />
     </>
   )
 }

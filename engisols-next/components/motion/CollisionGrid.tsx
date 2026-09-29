@@ -38,7 +38,7 @@ function Tag({ label, cell }: { label: string; cell: Cell }) {
   return (
     <m.li
       style={{ x, y, scale }}
-      className="rounded-full border border-vanilla/30 px-step-3 py-step-1 font-mono text-sm text-vanilla will-change-transform"
+      className="rounded-full border border-current/30 px-step-3 py-step-1 font-mono text-sm text-current will-change-transform"
     >
       {label}
     </m.li>
@@ -113,8 +113,7 @@ export function CollisionGrid({ items }: { items: string[] }) {
         {items.map((item) => (
           <li
             key={item}
-            tabIndex={0}
-            className="rounded-full border border-vanilla/30 px-step-3 py-step-1 font-mono text-sm text-vanilla transition-colors hover:border-vanilla focus-visible:border-vanilla"
+            className="rounded-full border border-current/30 px-step-3 py-step-1 font-mono text-sm text-current transition-colors hover:border-current"
           >
             {item}
           </li>

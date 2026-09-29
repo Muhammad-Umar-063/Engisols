@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { Band, BandHeading, Blocked, type Ground } from '@/components/layout/Band'
+import { ArrowIcon, PlusIcon } from '@/components/ui/ActionIcons'
+import { Band, BandHeading, type Ground } from '@/components/layout/Band'
 import { Reveal } from '@/components/motion/Reveal'
 import { caseStudies, type CaseStudy } from '@/content/case-studies'
 import { PRIMARY_CTA, SITE } from '@/lib/site'
@@ -48,13 +49,13 @@ export function PageHero({
   children?: ReactNode
 }) {
   return (
-    <Band ground={ground} className="pt-[calc(var(--spacing-step-6)+3rem)]">
+    <Band ground={ground} className="page-hero">
       {eyebrow ? (
-        <p className="font-mono text-xs tracking-tight text-current/60">{eyebrow}</p>
+        <p className="site-eyebrow font-mono text-xs tracking-tight">{eyebrow}</p>
       ) : null}
       <h1 className="mt-step-3 max-w-[20ch] text-[clamp(2.25rem,5vw,4.5rem)]">{title}</h1>
       {lead ? <p className="measure mt-step-4 text-lg text-current/85">{lead}</p> : null}
-      {children ? <div className="mt-step-5">{children}</div> : null}
+      {children ? <div className="mt-step-4">{children}</div> : null}
     </Band>
   )
 }
@@ -78,19 +79,19 @@ export function CTABlock({
     <Band ground={ground}>
       <Reveal>
         <h2 className="max-w-[22ch] text-[clamp(1.75rem,4vw,3.25rem)]">{line}</h2>
-        <div className="mt-step-5 flex flex-wrap items-center gap-step-3">
+        <div className="mt-step-4 flex flex-wrap items-center gap-step-3">
           <Link
             href={PRIMARY_CTA.href}
-            className="rounded-full bg-vanilla px-step-4 py-step-2 font-medium text-bordeaux no-underline transition-opacity hover:opacity-90"
+            className="site-button site-button-light"
           >
             {PRIMARY_CTA.label}
           </Link>
           <Link
-            href="/contact"
+            href="/pricing/build-audit"
             data-cursor="link"
-            className="px-step-1 py-step-2 underline decoration-current/40 underline-offset-4 hover:decoration-current"
+            className="site-button site-button-ghost"
           >
-            Or just talk to us first
+            Explore the Build Audit
           </Link>
         </div>
       </Reveal>
@@ -114,7 +115,7 @@ export type FAQ = { q: string; a: string }
  */
 export function FAQAccordion({
   items,
-  title = 'Questions people actually ask',
+  title = 'Frequently asked questions',
   ground = 'vanilla',
 }: {
   items: FAQ[]
@@ -123,22 +124,24 @@ export function FAQAccordion({
 }) {
   return (
     <Band ground={ground}>
-      <BandHeading eyebrow="FAQ" title={title} />
-      <div className="mt-step-5 max-w-3xl">
-        {items.map((item) => (
-          <details key={item.q} className="group border-t border-current/20 py-step-3">
-            <summary className="flex cursor-pointer list-none items-start justify-between gap-step-3 font-display text-lg">
-              {item.q}
-              <span
-                aria-hidden
-                className="mt-1 shrink-0 font-mono text-sm text-current/50 transition-transform group-open:rotate-45"
-              >
-                +
-              </span>
-            </summary>
-            <p className="measure mt-step-2 text-current/80">{item.a}</p>
-          </details>
-        ))}
+      <div className="grid items-start gap-step-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-step-5">
+        <BandHeading eyebrow="FAQ" title={title} />
+        <div className="space-y-step-2">
+          {items.map((item) => (
+            <details key={item.q} className="site-faq group">
+              <summary className="flex cursor-pointer list-none items-start justify-between gap-step-3 font-display text-lg">
+                {item.q}
+                <span
+                  aria-hidden
+                  className="shrink-0 text-cherry transition-transform group-open:rotate-45"
+                >
+                  <PlusIcon />
+                </span>
+              </summary>
+              <p className="measure mt-step-2 text-current/80">{item.a}</p>
+            </details>
+          ))}
+        </div>
       </div>
     </Band>
   )
@@ -154,20 +157,21 @@ export function CaseStudyCard({ study }: { study: CaseStudy }) {
   return (
     <Link
       href={`/work/${study.slug}`}
-      className="group block no-underline"
+      className="site-card group block h-full border p-step-2 no-underline"
       data-cursor="target"
     >
-      <div className="aspect-4/3 overflow-hidden rounded-sm bg-bordeaux/10">
+      <div className="aspect-4/3 overflow-hidden rounded-lg bg-oat">
         {/* eslint-disable-next-line @next/next/no-img-element -- next/image lands
             with the asset pass; these are real screenshots at known sizes. */}
         <img
           src={study.imgSrc}
+          loading="lazy"
           alt=""
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           style={{ transitionTimingFunction: 'var(--ease-enter)' }}
         />
       </div>
-      <p className="mt-step-2 font-mono text-xs tracking-tight text-current/60">
+      <p className="mt-step-2 font-mono text-xs tracking-tight text-current/75">
         {study.category}
       </p>
       <h3 className="mt-step-1 font-display text-xl">{study.title}</h3>
@@ -177,6 +181,7 @@ export function CaseStudyCard({ study }: { study: CaseStudy }) {
           {metric.label.toLowerCase()}
         </p>
       ) : null}
+      <span className="site-card-action mt-step-3">View case study <ArrowIcon /></span>
     </Link>
   )
 }
@@ -198,13 +203,13 @@ export function CaseStudyGrid({
     <Band ground={ground}>
       <BandHeading eyebrow="Work" title={title} lead={lead} />
       <ul
-        className={`mt-step-5 grid gap-step-4 sm:grid-cols-2 ${
+        className={`mt-step-4 grid gap-step-4 sm:grid-cols-2 ${
           columns === 3 ? 'lg:grid-cols-3' : ''
         }`}
       >
         {studies.map((study, i) => (
           <li key={study.slug}>
-            <Reveal y={16} delay={i * 0.04}>
+            <Reveal y={16} delay={i * 0.04} className="h-full">
               <CaseStudyCard study={study} />
             </Reveal>
           </li>
@@ -252,7 +257,7 @@ export function ProofStrip({ ground = 'bordeaux' }: { ground?: Ground }) {
         ))}
       </div>
       <div className="mt-step-3 border-t border-current/20 pt-step-3">
-        <Blocked marker="{{TODO: LOGOS}}" need="client logos cleared for public use" />
+        <Link href="/work" className="text-sm underline underline-offset-4">Explore the client case studies</Link>
       </div>
     </Band>
   )
@@ -263,7 +268,7 @@ export function ProofStrip({ ground = 'bordeaux' }: { ground?: Ground }) {
 /* ------------------------------------------------------------------ */
 
 export function TeamRow({
-  title = 'The three of you actually get',
+  title = 'Engineering expertise',
   lead,
   ground = 'oat',
 }: {
@@ -273,25 +278,18 @@ export function TeamRow({
 }) {
   return (
     <Band ground={ground}>
-      <BandHeading eyebrow="The team" title={title} lead={lead} />
-      <ul className="mt-step-5 grid gap-step-4 md:grid-cols-3">
+      <BandHeading eyebrow="Expertise" title={title} lead={lead} />
+      <ul className="mt-step-4 grid gap-step-4 md:grid-cols-3">
         {team.map((person, i) => (
           <li key={person.name}>
             <Reveal y={16} delay={i * 0.06}>
-              {/* Portraits deliberately omitted rather than stocked: a stock
-                  face attached to a named engineer is the single most damaging
-                  thing this site could ship. */}
-              <div className="aspect-4/5 rounded-sm border border-current/20 bg-current/5" />
               <h3 className="mt-step-2 font-display text-xl">{person.name}</h3>
-              <p className="font-mono text-xs tracking-tight text-current/60">{person.role}</p>
+              <p className="font-mono text-xs tracking-tight text-current/75">{person.role}</p>
               <p className="measure mt-step-2 text-sm text-current/80">{person.bio}</p>
             </Reveal>
           </li>
         ))}
       </ul>
-      <div className="mt-step-4">
-        <Blocked marker="{{TODO: TEAM}}" need="three names, photos, one-line bios" />
-      </div>
     </Band>
   )
 }
@@ -312,13 +310,13 @@ export function ScanCapture({ ground = 'greige' }: { ground?: Ground }) {
         <div>
           <BandHeading
             eyebrow="Free"
-            title="Not ready to book anything?"
-            lead="Point us at the repo and we will run a health scan — security, dependency risk, architecture, scalability and running cost. No call, no invoice."
+            title="Check your public app first"
+            lead="Run Production Check on a public app URL. See observable findings and coverage before deciding whether a deeper engineering review would help."
           />
         </div>
         <Link
           href="/scan"
-          className="shrink-0 rounded-full border border-current px-step-4 py-step-2 font-medium no-underline transition-colors hover:bg-current/10"
+          className="site-button site-button-secondary shrink-0"
           data-cursor="target"
         >
           Run a free scan
@@ -335,15 +333,15 @@ export function ScanCapture({ ground = 'greige' }: { ground?: Ground }) {
 /** Numbered commitments. Used by HowItWorks, Phases, HowWeWork. */
 export function StepList({ steps }: { steps: { title: string; body: string; meta?: string }[] }) {
   return (
-    <ol className="mt-step-5 grid gap-step-4 md:grid-cols-2">
+    <ol className="mt-step-4 grid gap-step-4 md:grid-cols-2">
       {steps.map((step, i) => (
         <li key={step.title} className="border-t border-current/20 pt-step-3">
           <div className="flex items-baseline gap-step-2">
-            <span className="font-mono text-xs text-current/50">
+            <span className="font-mono text-xs text-current/75">
               {String(i + 1).padStart(2, '0')}
             </span>
             {step.meta ? (
-              <span className="font-mono text-xs text-current/60">{step.meta}</span>
+              <span className="font-mono text-xs text-current/75">{step.meta}</span>
             ) : null}
           </div>
           <h3 className="mt-step-1 font-display text-lg">{step.title}</h3>
@@ -363,7 +361,7 @@ export function SplitList({
   right: { title: string; items: string[] }
 }) {
   return (
-    <div className="mt-step-5 grid gap-step-5 md:grid-cols-2">
+    <div className="mt-step-4 grid gap-step-5 md:grid-cols-2">
       {[left, right].map((column) => (
         <div key={column.title} className="border-t-2 border-current pt-step-3">
           <h3 className="font-display text-xl">{column.title}</h3>
@@ -389,7 +387,7 @@ export function DataTable({ rows }: { rows: [string, string][] }) {
           key={term}
           className="flex justify-between gap-step-3 border-b border-current/20 py-step-2"
         >
-          <dt className="font-mono text-xs tracking-tight text-current/60">{term}</dt>
+          <dt className="font-mono text-xs tracking-tight text-current/75">{term}</dt>
           <dd className="text-right font-mono text-xs">{value}</dd>
         </div>
       ))}
@@ -416,7 +414,7 @@ export function CheckList({ items }: { items: string[] }) {
     <ul className="mt-step-4 grid gap-step-2 sm:grid-cols-2">
       {items.map((item) => (
         <li key={item} className="flex gap-step-2 border-t border-current/20 pt-step-2">
-          <span aria-hidden className="font-mono text-xs text-current/50">
+          <span aria-hidden className="font-mono text-xs text-current/75">
             →
           </span>
           <span className="text-current/85">{item}</span>
@@ -426,30 +424,26 @@ export function CheckList({ items }: { items: string[] }) {
   )
 }
 
-/** Calendar embed slot. Real embed lands with the booking tool decision. */
+/** Direct contact using the published business details. */
 export function Booking({ ground = 'vanilla' }: { ground?: Ground }) {
   return (
     <Band ground={ground} id="book">
       <BandHeading
-        eyebrow="Booking"
-        title="Pick a time"
-        lead="A real calendar, not a contact form. You see the slot, you take it, you get a confirmation with the call link."
+        eyebrow="Contact"
+        title="Arrange a conversation"
+        lead="Email a short description of your project, or call to discuss the work and arrange a time."
       />
-      <div className="mt-step-5 rounded-sm border border-dashed border-current/40 p-step-5">
-        <Blocked
-          marker="{{TODO: BOOKING}}"
-          need="calendar embed — Cal.com or Savvycal account, then the inline widget replaces this box"
-        />
+      <div className="mt-step-4 rounded-xl bg-oat p-step-3 sm:p-step-4">
         <p className="measure mt-step-3 text-sm text-current/70">
-          Until the embed lands, the fallback below is live and monitored.
+          Include what you are building, what needs attention, and any deadline or budget to consider.
         </p>
-        <div className="mt-step-3 flex flex-wrap gap-step-3 font-mono text-sm">
-          <a href={`mailto:${SITE.email}`} className="underline underline-offset-4">
+        <div className="mt-step-3 flex flex-wrap gap-step-2">
+          <a href={`mailto:${SITE.email}`} className="site-button site-button-primary break-all">
             {SITE.email}
           </a>
           <a
             href={`tel:${SITE.phone.replace(/\s/g, '')}`}
-            className="underline underline-offset-4"
+            className="site-button site-button-outline"
           >
             {SITE.phone}
           </a>
