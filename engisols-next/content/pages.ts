@@ -177,6 +177,7 @@ export const legalPages = {
       {
         heading: 'Analytics, session replay, and advertising measurement',
         paragraphs: [
+          'We use Google Analytics to measure visits and interactions on public website pages. Google may process page addresses, referrers, browser and device information, and cookie identifiers. Collection is disabled when a visit opens a private Production Check scan, report, offer, or internal operator page, and stays disabled until a new page document is loaded.',
           'We use PostHog for product analytics, error capture, and session replay. Depending on your use of the site, it may record pages visited, navigation, clicks, scrolls, browser and device information, performance information, and other page interactions. Input values are masked in session replay, while sensitive rendered evidence is blocked. Replay and PostHog events are disabled on internal Production Check operator pages, and automatic capture is disabled on capability-bearing offer pages.',
           'We use the Meta Pixel and Meta Conversions API to understand advertising and conversions. Meta may receive page-view or conversion events, Meta cookie identifiers such as _fbp and _fbc, a hashed version of a submitted email for saved lead events, IP address, browser user agent, event time, and the page where an event happened. We do not send Meta scanned app URLs, inquiry text, findings, source code, builder answers, shipping context, UTM values, or report contents as conversion-event data.',
           'We respect Global Privacy Control and any stored Engisols Meta tracking preference. A denied decision prevents browser Pixel events and server-side Meta conversion events. Browser privacy tools may also block provider requests.',
@@ -203,7 +204,7 @@ export const legalPages = {
       {
         heading: 'Service providers',
         paragraphs: [
-          'We use Vercel for website hosting and request processing, Upstash for retained application records, Resend for transactional email delivery, PostHog for analytics, error capture, and session replay, and Meta for advertising and conversion measurement. These providers process information for the functions described above under their own service and privacy terms.',
+          'We use Vercel for website hosting and request processing, Upstash for retained application records, Resend for transactional email delivery, Google Analytics for website analytics, PostHog for analytics, error capture, and session replay, and Meta for advertising and conversion measurement. These providers process information for the functions described above under their own service and privacy terms.',
           'We may also disclose information when required by law, to protect users or the service, or as part of a business reorganization where appropriate safeguards apply. We do not sell personal information for money. Some laws may classify advertising measurement with Meta as “sharing” or targeted advertising; the tracking choice described above controls Engisols-initiated Meta events.',
         ],
       },
@@ -211,7 +212,7 @@ export const legalPages = {
         heading: 'Retention',
         paragraphs: [
           'Production Check scan records, including sanitized reports, expire 90 days after creation. AI App Audit inquiries and Production Check lead records expire after 365 days. Engineer Scope Review records and scoped-offer records are also retained for up to 365 days; an offer itself is normally open for 30 days unless it says otherwise.',
-          'The Engisols Meta preference cookie lasts 180 days. Browser storage may keep a conversion-event identifier to avoid sending the same event twice. PostHog and Meta apply their own retention periods under Engisols account settings and their terms; those periods are not defined in this application code.',
+          'The Engisols Meta preference cookie lasts 180 days. Browser storage may keep a conversion-event identifier to avoid sending the same event twice. Google Analytics, PostHog, and Meta apply their own retention periods under Engisols account settings and their terms; those periods are not defined in this application code.',
           'These application retention periods do not automatically delete transactional email copies held by Resend or message recipients. Provider, inbox, backup, and account-retention settings may apply separately.',
           'We may delete data sooner when it is no longer needed, and may keep limited records longer where a signed contract, dispute, security investigation, or legal obligation requires it.',
         ],

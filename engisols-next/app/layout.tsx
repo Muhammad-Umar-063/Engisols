@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { DM_Sans, Geist_Mono } from 'next/font/google'
 import localFont from 'next/font/local'
+import Script from 'next/script'
 import { Suspense } from 'react'
 import { PostHogRouteCommit } from '@/components/analytics/PostHogRouteCommit'
 import { MetaPixel } from '@/components/meta/MetaPixel'
@@ -9,6 +10,7 @@ import { SmoothScroll } from '@/components/motion/SmoothScroll'
 import { ToastProvider } from '@/components/motion/Toast'
 import { SITE } from '@/lib/site'
 import { SITE_DESCRIPTION } from '@/lib/seo'
+import { GOOGLE_ANALYTICS_ID } from '@/src/analytics/google'
 import './globals.css'
 // Lenis ships five rules its instance depends on — most importantly
 // `html.lenis, html.lenis body { height: auto }`. Imported from the package
@@ -65,6 +67,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       {/* min-h-dvh, not min-h-full: a percentage min-height resolves against
           <html>'s height, which Lenis sets to auto. Viewport units do not care. */}
       <body className="flex min-h-dvh flex-col">
+        <Script id="engisols-google-tag" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GOOGLE_ANALYTICS_ID}');
+          `}
+        </Script>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ANALYTICS_ID}`}
+          strategy="afterInteractive"
+        />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-60 focus:rounded-sm focus:bg-cherry focus:px-4 focus:py-2 focus:text-vanilla"
