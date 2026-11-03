@@ -7,6 +7,7 @@ const read = (path: string) => readFileSync(path, 'utf8')
 const legalContent = read('content/pages.ts')
 const termsRoute = read('app/(site)/terms/page.tsx')
 const privacyRoute = read('app/(site)/privacy/page.tsx')
+const metadataHelper = read('lib/seo.ts')
 const legacyTermsRoute = read('app/(campaign)/ai-app-audit/terms/page.tsx')
 const legacyPrivacyRoute = read('app/(campaign)/ai-app-audit/privacy/page.tsx')
 const campaignContent = read('content/campaign.ts')
@@ -19,9 +20,12 @@ const startScanForm = read('components/production-check/StartScanForm.tsx')
 test('global legal routes are canonical, indexable documents in the site visual system', () => {
   for (const [source, canonical] of [[termsRoute, '/terms'], [privacyRoute, '/privacy']] as const) {
     assert.match(source, /import \{ LegalDocument \} from '@\/components\/legal\/LegalDocument'/)
-    assert.match(source, new RegExp(`alternates: \\{ canonical: '${canonical}' \\}`))
+    assert.match(source, /import \{ createPageMetadata \} from '@\/lib\/seo'/)
+    assert.match(source, new RegExp(`createPageMetadata\\(\\{[\\s\\S]*?path: '${canonical}'`))
     assert.doesNotMatch(source, /robots:\s*\{\s*index:\s*false/)
   }
+  assert.match(metadataHelper, /const url = new URL\(path, SITE\.url\)\.href/)
+  assert.match(metadataHelper, /alternates: \{ canonical: url \}/)
 })
 
 test('terms cover every public tool and the commercial boundary without inventing checkout', () => {

@@ -1,4 +1,5 @@
 import posthog from 'posthog-js'
+import { protectGoogleAnalyticsRoute } from './src/analytics/google'
 
 import {
   INTERNAL_PRODUCTION_CHECK_URL_PATTERN,
@@ -14,6 +15,8 @@ const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
 const host = process.env.NEXT_PUBLIC_POSTHOG_HOST
 const posthogConfigured = Boolean(projectToken && host)
 const initialUrl = globalThis.location?.href ?? ''
+protectGoogleAnalyticsRoute(initialUrl)
+protectGoogleAnalyticsRoute(document.referrer)
 let posthogInitialized = false
 let replayNavigationGeneration = 0
 
@@ -75,6 +78,7 @@ function initializePostHog(recordingDisabled: boolean): void {
  * replay sampling and trigger rules.
  */
 export function onRouterTransitionStart(url: string): void {
+  protectGoogleAnalyticsRoute(url)
   if (!posthogConfigured) return
 
   replayNavigationGeneration += 1

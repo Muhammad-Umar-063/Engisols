@@ -1,3 +1,5 @@
+import { protectGoogleAnalyticsRoute } from '../analytics/google'
+
 export const productionLandingPath = '/production-check'
 
 export function productionScanPath(publicId: string): string {
@@ -8,7 +10,9 @@ export function replaceProductionScanHistory(
   history: Pick<History, 'replaceState'>,
   publicId: string,
 ): void {
-  history.replaceState(null, '', productionScanPath(publicId))
+  const path = productionScanPath(publicId)
+  protectGoogleAnalyticsRoute(path)
+  history.replaceState(null, '', path)
 }
 
 export function productionReportPath(publicId: string): string {
